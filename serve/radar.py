@@ -467,7 +467,10 @@ def render_radar_page(obs_key: str = "keck", filter_mode: str = "rising") -> str
 </head>
 <body>
   <header class="cockpit-hdr">
-    <a class="brand-title" href="/">sne.space</a>
+    <a class="brand-title" href="/" style="display:inline-flex;align-items:center;gap:0.55rem;text-decoration:none;color:#fff;font-weight:700;">
+      <img src="/assets/img/logo-color.png" alt="sne.space logo" style="height:30px;width:auto;vertical-align:middle;filter:drop-shadow(0 0 6px rgba(56,189,248,0.35));">
+      <span>sne.space</span>
+    </a>
     <div style="font-size:0.85rem;color:var(--text-muted)">
       Live Alert Feeds: <span style="color:#22c55e">● TNS / ZTF / ATLAS Online</span>
     </div>

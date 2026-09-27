@@ -53,7 +53,13 @@ def render_api_docs_page() -> str:
       text-decoration: none;
       display: flex;
       align-items: center;
-      gap: 0.5rem;
+      gap: 0.6rem;
+    }
+    .brand-logo-img {
+      height: 30px;
+      width: auto;
+      vertical-align: middle;
+      filter: drop-shadow(0 0 6px rgba(56, 189, 248, 0.35));
     }
     .brand-badge {
       font-size: 0.65rem;
@@ -238,6 +244,7 @@ def render_api_docs_page() -> str:
 <body>
   <header class="cockpit-hdr">
     <a href="/" class="brand-link">
+      <img src="/assets/img/logo-color.png" alt="sne.space logo" class="brand-logo-img">
       <span>sne.space</span>
       <span class="brand-badge">Open Supernova Catalog</span>
     </a>

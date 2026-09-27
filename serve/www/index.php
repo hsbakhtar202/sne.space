@@ -114,7 +114,14 @@ require __DIR__ . '/wp-content/plugins/transient-table/transient-table.php';
     text-decoration: none;
     display: flex;
     align-items: center;
-    gap: 0.4rem;
+    gap: 0.6rem;
+  }
+  .brand-logo-img {
+    height: 34px;
+    width: auto;
+    display: inline-block;
+    vertical-align: middle;
+    filter: drop-shadow(0 0 8px rgba(56, 189, 248, 0.4));
   }
   .brand-pill {
     font-size: 0.65rem;
@@ -363,6 +370,7 @@ require __DIR__ . '/wp-content/plugins/transient-table/transient-table.php';
   <header class="global-nav">
     <div class="brand-group">
       <a href="/" class="brand-title">
+        <img src="/assets/img/logo-color.png" alt="sne.space logo" class="brand-logo-img">
         <span>sne.space</span>
       </a>
       <span class="brand-pill">Open Supernova Catalog</span>

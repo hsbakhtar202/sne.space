@@ -1035,12 +1035,13 @@ def build_faq_jsonld(faqs: List[Dict[str, str]]) -> str:
         }}
       }}""")
 
+    entities_joined = ",\n".join(entities)
     jsonld = f"""  <script type="application/ld+json">
   {{
     "@context": "https://schema.org",
     "@type": "FAQPage",
     "mainEntity": [
-{",\n".join(entities)}
+{entities_joined}
     ]
   }}
   </script>"""

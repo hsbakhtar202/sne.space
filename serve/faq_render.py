@@ -132,15 +132,53 @@ def render_faq_page() -> str:
       }}
     }}''')
 
+    faq_jsonld_str = ",\n".join(schema_entities)
     faq_jsonld = f"""<script type="application/ld+json">
 {{
   "@context": "https://schema.org",
   "@type": "FAQPage",
   "mainEntity": [
-{",\n".join(schema_entities)}
+{faq_jsonld_str}
   ]
 }}
 </script>"""
+
+    cat_blocks_html = "".join(category_blocks)
+    webmcp_script = """<script>
+  (function() {
+    function registerWebMCP() {
+      const ctx = (window.navigator && window.navigator.modelContext) || 
+                  (window.document && window.document.modelContext) || null;
+      if (!ctx || typeof ctx.registerTool !== 'function') return;
+
+      try {
+        ctx.registerTool({
+          name: "search_supernovae",
+          description: "Search 110,000+ supernovae by IAU designation, name, or survey alias",
+          inputSchema: {
+            type: "object",
+            properties: {
+              q: {
+                type: "string",
+                description: "Supernova name, IAU designation (e.g. SN2023ixf, SN 1987A), or alias"
+              }
+            },
+            required: ["q"]
+          },
+          execute: async function(args) {
+            if (!args || !args.q) return { error: "Missing query parameter 'q'" };
+            return { status: "success", query: args.q, url: "/sne/" + encodeURIComponent(args.q) };
+          }
+        });
+      } catch (e) {}
+    }
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', registerWebMCP);
+    } else {
+      registerWebMCP();
+    }
+  })();
+  </script>"""
 
     html = f"""<!DOCTYPE html>
 <html lang="en">
@@ -188,6 +226,15 @@ def render_faq_page() -> str:
       font-size: 1.25rem;
       color: #fff;
       text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.55rem;
+    }}
+    .brand-logo-img {{
+      height: 30px;
+      width: auto;
+      vertical-align: middle;
+      filter: drop-shadow(0 0 6px rgba(56, 189, 248, 0.35));
     }}
     .brand-badge {{
       font-size: 0.75rem;
@@ -328,7 +375,10 @@ def render_faq_page() -> str:
 <body>
   <header class="cockpit-hdr">
     <div class="brand-group">
-      <a class="brand-title" href="/">sne.space</a>
+      <a class="brand-title" href="/">
+        <img src="/assets/img/logo-color.png" alt="sne.space logo" class="brand-logo-img">
+        <span>sne.space</span>
+      </a>
       <span class="brand-badge">Open Supernova Catalog</span>
     </div>
     <form class="hdr-search-form" action="/" method="GET" toolname="search_supernovae" tooldescription="Search 110,000+ supernovae by IAU designation, name, or survey alias">
@@ -347,45 +397,11 @@ def render_faq_page() -> str:
   </div>
 
   <main class="faq-container">
-    {"".join(category_blocks)}
+    {cat_blocks_html}
   </main>
 
   <!-- WebMCP Agentic Tools Script -->
-  <script>
-  (function() {
-    function registerWebMCP() {
-      const ctx = (window.navigator && window.navigator.modelContext) || 
-                  (window.document && window.document.modelContext) || null;
-      if (!ctx || typeof ctx.registerTool !== 'function') return;
-
-      try {
-        ctx.registerTool({
-          name: "search_supernovae",
-          description: "Search 110,000+ supernovae by IAU designation, name, or survey alias",
-          inputSchema: {
-            type: "object",
-            properties: {
-              q: {
-                type: "string",
-                description: "Supernova name, IAU designation (e.g. SN2023ixf, SN 1987A), or alias"
-              }
-            },
-            required: ["q"]
-          },
-          execute: async function(args) {
-            if (!args || !args.q) return { error: "Missing query parameter 'q'" };
-            return { status: "success", query: args.q, url: "/sne/" + encodeURIComponent(args.q) };
-          }
-        });
-      } catch (e) {}
-    }
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', registerWebMCP);
-    } else {
-      registerWebMCP();
-    }
-  })();
-  </script>
+  {webmcp_script}
 </body>
 </html>"""
     return html

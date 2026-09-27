@@ -430,12 +430,13 @@ def _fallback_event_page(name: str, entered: str | None = None) -> bytes:
             f"<td>{p.get('telescope', p.get('instrument', '—'))}</td></tr>"
             for p in sample_photo
         )
+        note_p = '<p class="note">Showing first 15 points. Full light curve in JSON.</p>' if photo_count > 15 else ""
         extra_sections.append(
             f'<section class="extra-block"><h2>Photometry ({photo_count} points)</h2>'
             f'<div class="tbl-wrap"><table class="sub-table"><thead><tr>'
             f'<th>Time (MJD)</th><th>Mag</th><th>± Err</th><th>Band</th><th>Telescope / Inst</th>'
             f'</tr></thead><tbody>{photo_rows}</tbody></table></div>'
-            f'{"<p class=\"note\">Showing first 15 points. Full light curve in JSON.</p>" if photo_count > 15 else ""}'
+            f'{note_p}'
             f'</section>'
         )
 

@@ -999,6 +999,10 @@ def render_pro_cockpit(name: str, meta: dict, entered: str | None = None, legacy
     if entered and entered != name:
         warn_html = f'<div class="banner-warn">Resolved "{urllib.parse.unquote(entered)}" to canonical transient <strong>{name}</strong></div>'
 
+    re_num = re.compile(r'^-?\d+(\.\d+)?$')
+    redshift_val = float(redshift) if redshift != "—" and re_num.match(redshift) else 0.0
+    maxdate_val = float(maxdate) if maxdate != "—" and re_num.match(maxdate) else 'null'
+
     html = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1076,6 +1080,15 @@ def render_pro_cockpit(name: str, meta: dict, entered: str | None = None, legacy
       font-size: 1.25rem;
       color: #fff;
       text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.55rem;
+    }}
+    .brand-logo-img {{
+      height: 30px;
+      width: auto;
+      vertical-align: middle;
+      filter: drop-shadow(0 0 6px rgba(56, 189, 248, 0.35));
     }}
     .brand-badge {{
       font-size: 0.75rem;
@@ -1632,7 +1645,10 @@ def render_pro_cockpit(name: str, meta: dict, entered: str | None = None, legacy
 <body>
   <header class="cockpit-hdr">
     <div class="brand-group">
-      <a class="brand-title" href="/">sne.space</a>
+      <a class="brand-title" href="/">
+        <img src="/assets/img/logo-color.png" alt="sne.space logo" class="brand-logo-img">
+        <span>sne.space</span>
+      </a>
       <span class="brand-badge">Open Supernova Catalog</span>
     </div>
     <form class="hdr-search-form" action="/" method="GET" toolname="search_supernovae" tooldescription="Search 110,000+ supernovae by IAU designation, name, or survey alias">
@@ -1879,8 +1895,8 @@ def render_pro_cockpit(name: str, meta: dict, entered: str | None = None, legacy
     const SKYVIEW_DSS_URL = "{skyview_dss_url}";
     const PHOTO_DATA = {json.dumps(photo_points)};
     const SPEC_DATA = {json.dumps(spec_samples)};
-    const REDSHIFT = {float(redshift) if redshift != "—" and re.match(r'^-?\d+(\.\d+)?$', redshift) else 0.0};
-    const MAX_DATE = {float(maxdate) if maxdate != "—" and re.match(r'^-?\d+(\.\d+)?$', maxdate) else 'null'};
+    const REDSHIFT = {redshift_val};
+    const MAX_DATE = {maxdate_val};
 
     // Cutout layer switcher & Archival Blink Comparator
     let primaryLayer = '{default_layer}';
@@ -4179,6 +4195,21 @@ def render_story_mode(name: str, meta: dict, entered: str | None = None) -> str:
       color: #7dd3fc;
     }}
 
+    .brand-title {{
+      font-weight: 700;
+      font-size: 1.25rem;
+      color: #fff;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.55rem;
+    }}
+    .brand-logo-img {{
+      height: 30px;
+      width: auto;
+      vertical-align: middle;
+      filter: drop-shadow(0 0 6px rgba(56, 189, 248, 0.35));
+    }}
     .btn-return {{
       display: inline-block;
       margin-top: 2rem;
@@ -4196,7 +4227,10 @@ def render_story_mode(name: str, meta: dict, entered: str | None = None) -> str:
 
   <header class="cockpit-hdr">
     <div class="brand-group">
-      <a class="brand-title" href="/">sne.space</a>
+      <a class="brand-title" href="/">
+        <img src="/assets/img/logo-color.png" alt="sne.space logo" class="brand-logo-img">
+        <span>sne.space</span>
+      </a>
     </div>
     <form class="hdr-search-form" action="/" method="GET" toolname="search_supernovae" tooldescription="Search 110,000+ supernovae by IAU designation, name, or survey alias">
       <input type="text" name="q" placeholder="Search 110,000+ transients..." autocomplete="off" toolparamdescription="Supernova name, IAU designation (e.g. SN2023ixf, SN 1987A), or alias" aria-label="Search supernovae">
