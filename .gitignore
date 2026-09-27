@@ -27,7 +27,10 @@ ingest/cache/
 
 # Large Astronomical Data Repositories (12GB+ / 110,000 JSONs)
 vendor/
-serve/www/astrocats/
+serve/www/astrocats/astrocats/supernovae/output/catalog.min.json
+serve/www/astrocats/astrocats/supernovae/output/catalog.json
+serve/www/astrocats/astrocats/supernovae/output/catalog.csv
+serve/www/astrocats/astrocats/supernovae/output/json/
 serve/www/wp-content/themes/astrocats-child-theme/astrocats-child-theme/node_modules/
 *.csv
 

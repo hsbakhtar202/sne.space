@@ -17,6 +17,7 @@ import re
 import subprocess
 import threading
 import urllib.parse
+import urllib.request
 from functools import lru_cache
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -169,6 +170,20 @@ def _alias_lookup_map() -> dict[str, str]:
     return alias_map
 
 
+def _ensure_catalog_files():
+    """Ensure catalog.min.json is uncompressed and available on disk."""
+    cat_gz = WWW / "astrocats/astrocats/supernovae/output/catalog.min.json.gz"
+    cat_json = WWW / "astrocats/astrocats/supernovae/output/catalog.min.json"
+    if cat_gz.is_file() and (not cat_json.is_file() or cat_json.stat().st_size == 0):
+        try:
+            import gzip
+            with gzip.open(cat_gz, "rb") as f_in:
+                cat_json.write_bytes(f_in.read())
+            print("Extracted catalog.min.json from catalog.min.json.gz", flush=True)
+        except Exception as e:
+            print(f"Warning: could not extract catalog.min.json.gz: {e}", flush=True)
+
+
 def _find_event_file_direct(raw_name: str) -> tuple[str | None, Path | None]:
     """Fast direct filesystem check for event JSON before hitting alias maps or Levenshtein."""
     output_dir = WWW / "astrocats/astrocats/supernovae/output"
@@ -186,6 +201,78 @@ def _find_event_file_direct(raw_name: str) -> tuple[str | None, Path | None]:
     for c in flip_candidates:
         if c.is_file():
             return flip, c
+
+    return None, None
+
+
+def _fetch_remote_event(name: str) -> tuple[str | None, Path | None]:
+    """Fetch event JSON from upstream repositories or live astronomical brokers and cache locally."""
+    clean = _normalize_event_name(name)
+    output_dir = WWW / "astrocats/astrocats/supernovae/output"
+
+    match = re.search(r'\b(19\d{2}|20\d{2})\b', clean)
+    year = int(match.group(1)) if match else 2025
+    if year <= 1989:
+        epoch = "sne-pre-1990"
+    elif year <= 1999:
+        epoch = "sne-1990-1999"
+    elif year <= 2004:
+        epoch = "sne-2000-2004"
+    elif year <= 2009:
+        epoch = "sne-2005-2009"
+    elif year <= 2014:
+        epoch = "sne-2010-2014"
+    elif year <= 2019:
+        epoch = "sne-2015-2019"
+    elif year <= 2024:
+        epoch = "sne-2020-2024"
+    else:
+        epoch = "sne-2025-2029"
+
+    dest_dir = output_dir / epoch
+    dest_dir.mkdir(parents=True, exist_ok=True)
+    dest_file = dest_dir / f"{clean}.json"
+
+    # 1. Try raw GitHub from historical archive repos
+    repos_to_try = [
+        epoch,
+        "sne-2020-2024",
+        "sne-2015-2019",
+        "sne-2010-2014",
+        "sne-2005-2009",
+        "sne-2000-2004",
+        "sne-1990-1999",
+        "sne-pre-1990",
+        "sne-boneyard",
+    ]
+    seen = set()
+    repos_ordered = [r for r in repos_to_try if not (r in seen or seen.add(r))]
+
+    for r in repos_ordered:
+        for branch in ("master", "main"):
+            for cand_name in (clean, clean.replace("SN", "AT"), clean.replace("AT", "SN")):
+                url = f"https://raw.githubusercontent.com/astrocatalogs/{r}/{branch}/{cand_name}.json"
+                try:
+                    req = urllib.request.Request(url, headers={"User-Agent": "sne.space/1.0"})
+                    with urllib.request.urlopen(req, timeout=4) as resp:
+                        if resp.status == 200:
+                            data = resp.read()
+                            if data and len(data) > 10:
+                                dest_file.write_bytes(data)
+                                return clean, dest_file
+                except Exception:
+                    pass
+
+    # 2. Try live ingest/enrichment from TNS / ALeRCE / WISeREP if modern
+    if enrich_event is not None:
+        try:
+            ok = enrich_event(clean, force=True)
+            if ok:
+                c, fp = _find_event_file_direct(clean)
+                if fp and fp.is_file():
+                    return c, fp
+        except Exception:
+            pass
 
     return None, None
 
@@ -218,7 +305,14 @@ def _resolve_event(raw: str) -> tuple[str | None, str | None]:
                     return c, None
             return canon, None
 
-    # 2. Levenshtein fallback for typos
+    # 2. Regex pattern recognition for standard IAU transient designations (e.g. SN2023ixf, AT2024nrb)
+    clean_test = eventname.upper().replace(" ", "")
+    if re.match(r'^(SN|AT)?\d{4}[A-Z]{1,4}$', clean_test, re.IGNORECASE):
+        if not clean_test.startswith(("SN", "AT")):
+            clean_test = "SN" + clean_test
+        return clean_test, oname
+
+    # 3. Levenshtein fallback for typos
     names, names_by = _names_maps()
     levs: dict[str, int] = {}
     for mapping in (names, names_by):
@@ -251,9 +345,14 @@ def _find_event_file(raw_name: str) -> tuple[str | None, Path | None]:
 
     resolved, _ = _resolve_event(raw_name)
     if resolved:
-        return _find_event_file_direct(resolved)
+        d_name, d_path = _find_event_file_direct(resolved)
+        if d_path:
+            return d_name, d_path
+        # On-demand streaming from GitHub archives or live TNS / ALeRCE / WISeREP
+        return _fetch_remote_event(resolved)
 
-    return None, None
+    norm = _normalize_event_name(raw_name)
+    return _fetch_remote_event(norm)
 
 
 @lru_cache(maxsize=1)
@@ -515,6 +614,9 @@ def _event_page(name: str, entered: str | None = None, is_story: bool = False) -
                 meta = raw.get(name) or raw
         except Exception:
             meta = {}
+    else:
+        # If no JSON exists on disk or remotely, build fallback metadata from name
+        meta = {"name": [{"value": name}]}
     if is_story and render_story_mode is not None:
         return render_story_mode(name, meta, entered).encode("utf-8")
     if render_pro_cockpit is not None:
@@ -891,11 +993,9 @@ class Handler(SimpleHTTPRequestHandler):
                                 pass
                     self._send(200, "text/html; charset=utf-8", _event_page(resolved, entered, is_story=is_story))
                 else:
-                    msg = (
-                        f'<!DOCTYPE html><html><body style="text-align:center;font-family:sans-serif;padding:2rem">'
-                        f'Error: Invalid event name "{_normalize_event_name(raw)}"!</body></html>'
-                    )
-                    self._send(404, "text/html; charset=utf-8", msg.encode())
+                    # Permissive fallback: render pro cockpit or story page directly for the requested event name
+                    fallback_name = _normalize_event_name(raw)
+                    self._send(200, "text/html; charset=utf-8", _event_page(fallback_name, is_story=is_story))
                 return
 
         # 5. Gzip HTML when .html empty/missing
@@ -968,6 +1068,7 @@ class ReusableThreadingServer(ThreadingHTTPServer):
 
 def main():
     os.environ["OSC_DOCROOT"] = str(WWW)
+    _ensure_catalog_files()
     # Warm names cache & spatial cone index
     _names_maps()
     if init_cone_index is not None:

@@ -17,8 +17,12 @@ from ingest.wiserep import convert_wiserep_to_astrocats_spectra, search_wiserep_
 
 logger = logging.getLogger(__name__)
 
-REPO_BASE = Path("vendor/astrocats")
-SUPERNOVAE_OUTPUT = REPO_BASE / "astrocats/supernovae/output"
+_OUTPUT_CANDIDATES = [
+    Path("serve/www/astrocats/astrocats/supernovae/output"),
+    Path(__file__).resolve().parent.parent / "serve/www/astrocats/astrocats/supernovae/output",
+    Path("vendor/astrocats/astrocats/supernovae/output"),
+]
+SUPERNOVAE_OUTPUT = next((p for p in _OUTPUT_CANDIDATES if p.is_dir()), _OUTPUT_CANDIDATES[0])
 
 _enrich_locks: Dict[str, threading.Lock] = {}
 _enrich_meta_lock = threading.Lock()
