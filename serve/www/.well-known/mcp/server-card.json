@@ -1,0 +1,24 @@
+{
+  "$schema": "https://modelcontextprotocol.io/schemas/server-card.json",
+  "name": "sne-space-mcp",
+  "version": "1.0.0",
+  "description": "Open Supernova Catalog Model Context Protocol (MCP) server providing access to 110,000+ supernovae, photometry, and spectra.",
+  "website": "https://sne.space",
+  "transports": [
+    {
+      "type": "stdio",
+      "command": "python3",
+      "args": ["serve/mcp_server.py"]
+    }
+  ],
+  "capabilities": {
+    "tools": {
+      "search_supernovae": "Search 110,000+ supernovae by name or alias",
+      "get_supernova": "Retrieve astrophysical metadata, redshift, host galaxy, and coordinates",
+      "get_lightcurve": "Retrieve multi-band calibrated photometric observations",
+      "get_spectrum": "Retrieve calibrated 1D optical spectra (wavelengths and flux arrays)",
+      "calculate_cosmology": "Calculate luminosity distance, distance modulus, and lookback time",
+      "spatial_cone_search": "Spatial 3D cone search on RA/Dec"
+    }
+  }
+}

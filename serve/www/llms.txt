@@ -1,0 +1,22 @@
+# Open Supernova Catalog (sne.space)
+
+> The Open Supernova Catalog (OSC) is an open-access, community-curated repository containing data for over 110,222 supernovae and explosive cosmic transients from 1000 AD to 2026+. It provides multi-band optical, UV, and infrared light curves, calibrated spectra, host galaxy associations, NASA ADS literature provenance, and cosmological distance metrics.
+
+## Core Web Interfaces
+
+- [/sne/{name}/](https://sne.space/sne/SN2011fe/): Professional Astrophysics Cockpit featuring interactive multi-band WebGL light curves, vertically stacked calibrated spectra with rest-frame de-redshifting, Aladin Lite v3 sky viewer, and DESI DR10 host galaxy optical cutouts.
+- [/sne/{name}/story](https://sne.space/sne/SN2011fe/story): Observer Dossier & Story Mode presenting plain-English explosion narratives, distance in millions of light-years, telescope visibility aperture ratings, and discovery context.
+
+## API & Structured Data Endpoints
+
+- [/sne/{name}.json](https://sne.space/sne/SN2011fe.json): Full Open Supernova Catalog JSON event schema containing complete metadata, photometry epochs, calibrated spectra data arrays, and source citations.
+- [/sne/{name}.csv](https://sne.space/sne/SN2011fe.csv): Photometry CSV table including time (MJD), apparent magnitude, measurement uncertainty, photometric band, and telescope/instrument.
+- [/sne/{name}/host.jpg](https://sne.space/sne/SN2024nrb/host.jpg): Direct 302 redirect to high-resolution (0.262″/pixel) optical host galaxy cutout from DESI Legacy Survey DR10 or NASA SkyView DSS2 Color.
+- [/api/names.json](https://sne.space/api/names.json): Name resolution index mapping aliases, survey internal names (ZTF, ATLAS, Gaia, PS1), and IAU designations to canonical catalog identifiers.
+- [/api/stats.json](https://sne.space/api/stats.json): Real-time catalog summary statistics including total event counts, spectral type distributions, and survey contributions.
+
+## Schema & Astrophysics Standards
+
+- [AstroCats Schema Specification](https://github.com/astrocatalogs/supernovae/blob/master/SCHEMA.md): Complete data dictionary detailing keys for photometry, spectra, coordinates, redshifts, and source bibcodes.
+- [NASA Astrophysics Data System (ADS)](https://ui.adsabs.harvard.edu/): Primary literature source indexing for all 19-digit bibcodes cited in event records.
+- [IVOA Simple Cone Search](http://www.ivoa.net/documents/ConeSearch/): Standards-compliant coordinate search protocol for astronomical cross-matching.

@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Find conflicts — Open Supernova Catalog</title>
+<link rel="stylesheet" href="/assets/ia.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/1.10.16/css/jquery.dataTables.min.css">
+<style>
+  main { max-width: 1100px; }
+  #conflicts { width: 100%; background: #fff; font-size: 0.9rem; }
+</style>
+</head>
+<body>
+<header class="site">
+  <a class="brand" href="/">Open Supernova Catalog</a>
+  <nav>
+    <a href="/">Catalog</a>
+    <a href="/about/">About</a>
+    <a href="/contribute/">Contribute</a>
+    <a href="/download/">Download</a>
+    <a href="/contribute/find-duplicates/">Duplicates</a>
+    <a href="/contribute/find-conflicts/">Conflicts</a>
+  </nav>
+</header>
+<main>
+  <h1>Find conflicts</h1>
+  <p>Quantity conflicts from webcat <code>conflicts.json</code> (<span id="count">…</span> rows).</p>
+  <table id="conflicts" class="display compact">
+    <thead>
+      <tr>
+        <th>Name</th><th>Quantity</th><th>Max fractional difference</th><th>Values</th>
+      </tr>
+    </thead>
+  </table>
+</main>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.10.16/js/jquery.dataTables.min.js"></script>
+<script>
+jQuery(function ($) {
+  $.getJSON('/astrocats/astrocats/supernovae/output/conflicts.json', function (data) {
+    $('#count').text(data.length.toLocaleString());
+    $('#conflicts').DataTable({
+      data: data,
+      pageLength: 50,
+      deferRender: true,
+      columns: [
+        { data: 'name', render: function (d) {
+            return d ? '<a href="/sne/' + encodeURIComponent(d) + '/" target="_blank">' + d + '</a>' : '';
+          }},
+        { data: 'quantity', defaultContent: '' },
+        { data: 'difference', defaultContent: '' },
+        { data: 'values', render: function (d) {
+            return Array.isArray(d) ? d.join(', ') : (d || '');
+          }}
+      ]
+    });
+  });
+});
+</script>
+</body>
+</html>

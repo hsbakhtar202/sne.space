@@ -1,0 +1,13 @@
+services:
+  sne-space:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: sne-space
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - OSC_HOST=0.0.0.0
+      - OSC_PORT=8080
+      - PYTHONUNBUFFERED=1

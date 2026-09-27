@@ -1,0 +1,50 @@
+{
+  "$schema": "https://agenticresourcediscovery.org/schemas/v0.91/ard-manifest.json",
+  "specVersion": "0.91",
+  "host": {
+    "identifier": "did:web:sne.space",
+    "displayName": "Open Supernova Catalog",
+    "url": "https://sne.space"
+  },
+  "entries": [
+    {
+      "identifier": "urn:air:sne.space:default:mcp-server",
+      "displayName": "sne.space MCP Server",
+      "type": "application/mcp-server-card+json",
+      "description": "Native Model Context Protocol (MCP) server for querying 110,000+ supernovae, multi-band light curves, calibrated spectra, and cosmological distance metrics.",
+      "url": "https://sne.space/.well-known/mcp/server-card.json",
+      "capabilities": [
+        "SupernovaSearch",
+        "LightCurvePhotometry",
+        "CalibratedSpectra",
+        "CosmologyCalculator",
+        "SpatialConeSearch"
+      ],
+      "representativeQueries": [
+        "Find photometric light curve for SN 2023ixf",
+        "Get calibrated classification spectrum for Type Ia supernova",
+        "Calculate distance and lookback time for redshift z=0.033",
+        "Search for transients near RA 210.91 Dec 54.31"
+      ],
+      "updatedAt": "2026-09-26T12:00:00Z"
+    },
+    {
+      "identifier": "urn:air:sne.space:default:webmcp",
+      "displayName": "sne.space WebMCP In-Browser Tools",
+      "type": "application/webmcp+json",
+      "description": "In-browser WebMCP declarative and imperative tools exposing interactive supernova searching, photometry extraction, and coordinate cone searching to AI browsing agents.",
+      "url": "https://sne.space/",
+      "capabilities": [
+        "search_supernovae",
+        "get_supernova_photometry",
+        "cone_search"
+      ],
+      "representativeQueries": [
+        "Search supernovae on sne.space",
+        "Query transient light curve in browser",
+        "Perform spatial coordinate cone search"
+      ],
+      "updatedAt": "2026-09-26T12:00:00Z"
+    }
+  ]
+}

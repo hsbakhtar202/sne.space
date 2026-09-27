@@ -1,0 +1,98 @@
+# Open Supernova Catalog (sne.space) — Full Documentation for AI Agents & Systems
+
+> The Open Supernova Catalog (OSC) is an open-access astronomical repository of 110,222+ supernovae and explosive transients spanning more than a millennium of observational astronomy. This document serves as the comprehensive schema and API guide for autonomous agents, LLM tool integrations, and scientific workflows.
+
+## 1. URL Architecture & Routing
+
+All transient events in the catalog are addressed by their canonical designation or any known survey alias:
+
+| URL Pattern | Content-Type | Purpose |
+| :--- | :--- | :--- |
+| `/sne/{name}/` | `text/html` | Modern Pro Cockpit (WebGL light curve, stacked spectra, Aladin sky map, DESI cutout, Schema.org `Dataset` JSON-LD) |
+| `/sne/{name}/story` | `text/html` | Observer Dossier & Story Mode (human-readable distance, telescope aperture requirements, Schema.org `Article` JSON-LD) |
+| `/sne/{name}.json` | `application/json` | Full AstroCats JSON data payload |
+| `/sne/{name}.csv` | `text/csv` | Flat CSV table of all photometric observations |
+| `/sne/{name}/host.jpg` | `image/jpeg` | Direct 302 redirect to high-resolution DESI DR10 (0.262″/pix) or NASA DSS2 host cutout |
+| `/api/names.json` | `application/json` | Fast name-resolution dictionary of aliases to canonical IDs |
+| `/api/stats.json` | `application/json` | Catalog-wide statistics, counts, and spectral class tallies |
+
+## 2. Event JSON Schema Specification
+
+The event JSON returned at `/sne/{name}.json` follows the hierarchical AstroCats specification:
+
+```json
+{
+  "<canonical_name>": {
+    "name": "<canonical_name>",
+    "alias": [
+      {"value": "SN 2011fe", "source": "1"},
+      {"value": "PTF11kly", "source": "2"}
+    ],
+    "ra": [{"value": "14:03:05.81", "source": "1"}],
+    "dec": [{"value": "+54:16:25.2", "source": "1"}],
+    "redshift": [{"value": "0.000804", "kind": "spectroscopic", "source": "3"}],
+    "claimedtype": [{"value": "Ia", "source": "1"}],
+    "photometry": [
+      {
+        "time": "55797.16",
+        "magnitude": "17.3",
+        "e_magnitude": "0.1",
+        "band": "g",
+        "telescope": "Palomar 48-inch",
+        "instrument": "PTF-CFH12K",
+        "source": "2"
+      }
+    ],
+    "spectra": [
+      {
+        "time": "55797.3",
+        "telescope": "Lick 3-m",
+        "instrument": "Kast",
+        "u_wavelengths": "Ångström",
+        "u_fluxes": "erg/s/cm^2/Å",
+        "source": "4",
+        "data": [
+          ["3400.0", "1.23e-15"],
+          ["3402.0", "1.28e-15"]
+        ]
+      }
+    ],
+    "sources": [
+      {
+        "alias": "1",
+        "bibcode": "2011Natur.480..344N",
+        "name": "Nugent et al. (2011)",
+        "reference": "Nature, 480, 344"
+      }
+    ]
+  }
+}
+```
+
+## 3. Astrophysical Constants & Derived Parameter Protocol
+
+All cosmological calculations in sne.space adhere strictly to Flat $\Lambda\text{CDM}$ cosmology using Planck Collaboration (2016) parameters:
+- Hubble constant: $H_0 = 67.8\text{ km s}^{-1}\text{ Mpc}^{-1}$
+- Matter density parameter: $\Omega_m = 0.308$
+- Dark energy density parameter: $\Omega_\Lambda = 0.692$
+- Speed of light: $c = 299,792.458\text{ km s}^{-1}$
+
+### Key Formulae:
+1. **Comoving Distance:**
+   $$d_C(z) = \frac{c}{H_0} \int_0^z \frac{dz'}{\sqrt{\Omega_m(1+z')^3 + \Omega_\Lambda}}$$
+2. **Luminosity Distance:**
+   $$d_L(z) = (1+z) \, d_C(z)$$
+3. **Distance Modulus:**
+   $$\mu(z) = 5 \log_{10}\left(\frac{d_L(z)}{10\text{ pc}}\right) = 5 \log_{10}(d_L\text{ [Mpc]}) + 25$$
+4. **Relativistic Recession Velocity:**
+   $$v(z) = c \cdot \frac{(1+z)^2 - 1}{(1+z)^2 + 1}$$
+5. **Absolute Magnitude from Peak Apparent Magnitude:**
+   $$M_{\text{peak}} = m_{\text{peak}} - \mu(z) - A_V$$
+   *(where $A_V \approx 3.1 \cdot E(B-V)$ from Schlafly & Finkbeiner 2011 dust maps).*
+
+## 4. Primary Academic Provenance
+
+sne.space does not host publisher copyrighted PDFs. Every data point links to primary literature indexed via 19-character NASA ADS bibcodes:
+- Format: `YYYYJJJJJVVVVMPPPPA` (e.g. `2011Natur.480..344N`)
+- ADS Resolver URL: `https://ui.adsabs.harvard.edu/abs/{bibcode}`
+- ArXiv Preprints: `https://arxiv.org/abs/{arxiv_id}`

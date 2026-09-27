@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+
+# Canonical Sitemaps
+Sitemap: https://sne.space/sitemap.xml
+Sitemap: https://sne.space/sitemap_current.xml
+Sitemap: https://sne.space/sitemap_stories.xml
+
+# Agentic Resource Discovery (ARD & AI Agent Catalog)
+Agentmap: https://sne.space/.well-known/ai-catalog.json
+Agentmap: https://sne.space/.well-known/ard.json

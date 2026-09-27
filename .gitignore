@@ -1,0 +1,34 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+
+# macOS
+.DS_Store
+
+# IDEs
+.cursor/
+.vscode/
+.idea/
+
+# Large temporary cache files
+ingest/cache/
+*.log
+
+# Large Astronomical Data Repositories (12GB+ / 110,000 JSONs)
+vendor/
+serve/www/astrocats/
+serve/www/wp-content/themes/astrocats-child-theme/astrocats-child-theme/node_modules/
+*.csv
+
+
