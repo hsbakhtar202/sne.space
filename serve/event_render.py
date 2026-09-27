@@ -1085,10 +1085,15 @@ def render_pro_cockpit(name: str, meta: dict, entered: str | None = None, legacy
       gap: 0.55rem;
     }}
     .brand-logo-img {{
-      height: 30px;
+      height: 38px;
       width: auto;
       vertical-align: middle;
-      filter: drop-shadow(0 0 6px rgba(56, 189, 248, 0.35));
+      filter: drop-shadow(0 0 10px rgba(56, 189, 248, 0.4));
+      transition: transform 0.2s ease, filter 0.2s ease;
+    }}
+    .brand-logo-img:hover {{
+      transform: scale(1.04);
+      filter: drop-shadow(0 0 16px rgba(56, 189, 248, 0.7));
     }}
     .brand-badge {{
       font-size: 0.75rem;
@@ -1645,9 +1650,8 @@ def render_pro_cockpit(name: str, meta: dict, entered: str | None = None, legacy
 <body>
   <header class="cockpit-hdr">
     <div class="brand-group">
-      <a class="brand-title" href="/">
-        <img src="/assets/img/logo-color.png" alt="sne.space logo" class="brand-logo-img">
-        <span>sne.space</span>
+      <a class="brand-title" href="/" title="sne.space — The Open Supernova Catalog">
+        <img src="/assets/img/logo-color.png" alt="sne.space" class="brand-logo-img">
       </a>
       <span class="brand-badge">Open Supernova Catalog</span>
     </div>
@@ -4205,10 +4209,15 @@ def render_story_mode(name: str, meta: dict, entered: str | None = None) -> str:
       gap: 0.55rem;
     }}
     .brand-logo-img {{
-      height: 30px;
+      height: 38px;
       width: auto;
       vertical-align: middle;
-      filter: drop-shadow(0 0 6px rgba(56, 189, 248, 0.35));
+      filter: drop-shadow(0 0 10px rgba(56, 189, 248, 0.4));
+      transition: transform 0.2s ease, filter 0.2s ease;
+    }}
+    .brand-logo-img:hover {{
+      transform: scale(1.04);
+      filter: drop-shadow(0 0 16px rgba(56, 189, 248, 0.7));
     }}
     .btn-return {{
       display: inline-block;
@@ -4227,9 +4236,8 @@ def render_story_mode(name: str, meta: dict, entered: str | None = None) -> str:
 
   <header class="cockpit-hdr">
     <div class="brand-group">
-      <a class="brand-title" href="/">
-        <img src="/assets/img/logo-color.png" alt="sne.space logo" class="brand-logo-img">
-        <span>sne.space</span>
+      <a class="brand-title" href="/" title="sne.space — The Open Supernova Catalog">
+        <img src="/assets/img/logo-color.png" alt="sne.space" class="brand-logo-img">
       </a>
     </div>
     <form class="hdr-search-form" action="/" method="GET" toolname="search_supernovae" tooldescription="Search 110,000+ supernovae by IAU designation, name, or survey alias">

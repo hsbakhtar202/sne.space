@@ -1,0 +1,90 @@
+/*
+ Theme Name:   Parabola Child
+ Description:  Parabola Child Theme
+ Author:       James Guillochon
+ Author URI:   http://astrocrash.net
+ Template:     parabola
+ Version:      1.0.0
+ License:      GNU General Public License v2 or later
+ License URI:  http://www.gnu.org/licenses/gpl-2.0.html
+ Text Domain:  parabola-child
+*/
+
+a:hover {
+	text-decoration: underline;
+}
+
+input[type="search"] {
+	padding: 2px!important;
+}
+
+div.post, div.page, div.hentry, .yoyo > li {
+	padding: 1.5em!important;
+}
+
+#content, #content input, #content textarea {
+	// line-height: inherit!important;
+}
+
+.home .entry-content > p:first-of-type,
+.home .entry-content > p:nth-of-type(2) {
+	margin-bottom: 0!important;
+}
+
+.aptf-template-5 .aptf-tweet-actions {
+	padding-top: 0;
+	padding-left: 0;
+	padding-right: 0;
+	padding-bottom: 3px;
+	white-space: nowrap;
+	float: right;
+}
+
+.aptf-template-5 .aptf-tweet-actions a {
+	margin-right: 0;
+	color: #aaa!important;
+}
+
+.aptf-template-5 .aptf-tweet-box a {
+	color: #55acee!important;
+}
+
+.aptf-template-5 .aptf-tweet-content {
+	color: inherit!important;
+	background: #eee;
+	padding-bottom: 0;
+	padding-left: 0.5rem;
+	padding-top: 0;
+	padding-right: 5px;
+	margin-bottom: 5px;
+}
+
+.aptf-template-5 .aptf-tweet-content:after {
+	border-top: 7px solid #eeeeee;
+	left: 7px;
+}
+
+.aptf-template-5 .aptf-tweet-box {
+	font-size: 9pt;
+	color: inherit;
+	padding-top: 3px;
+	padding-right: 5px;
+	display: inline-block;
+	margin-bottom: 2px;
+}
+
+.aptf-template-5 .aptf-tweet-box-footer {
+	font-size: 9pt;
+}
+
+i.fa.fa-reply {
+	margin-right: 9px;
+}
+
+i.fa:hover {
+	color: #55acee;
+}
+
+.fa-star:before {
+	content: "\f004"!important;
+}

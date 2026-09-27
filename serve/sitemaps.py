@@ -16,7 +16,8 @@ from typing import Dict, List, Optional
 logger = logging.getLogger(__name__)
 
 BASE_URL = "https://sne.space"
-CATALOG_PATH = Path("serve/www/astrocats/astrocats/supernovae/output/catalog.min.json")
+ROOT_DIR = Path(__file__).resolve().parent.parent
+CATALOG_PATH = ROOT_DIR / "serve/www/astrocats/astrocats/supernovae/output/catalog.min.json"
 
 # In-memory byte cache for generated sitemaps
 _CACHE: Dict[str, bytes] = {}
@@ -27,8 +28,7 @@ _CACHE_TIMESTAMP: Optional[datetime.date] = None
 def _get_catalog_events() -> List[Dict]:
     """Load lightweight event summaries from catalog.min.json."""
     if not CATALOG_PATH.is_file():
-        # Fallback to local relative check
-        alt = Path("vendor/astrocats/astrocats/supernovae/output/catalog.min.json")
+        alt = ROOT_DIR / "vendor/astrocats/astrocats/supernovae/output/catalog.min.json"
         if alt.is_file():
             return json.loads(alt.read_text(encoding="utf-8"))
         return []
@@ -168,8 +168,9 @@ def get_sitemap(filename: str) -> Optional[bytes]:
     """Retrieve sitemap bytes from memory cache, refreshing daily."""
     global _CACHE, _CACHE_TIMESTAMP
     today = datetime.date.today()
+    clean_name = filename.lstrip("/")
     with _CACHE_LOCK:
         if not _CACHE or _CACHE_TIMESTAMP != today:
             _CACHE = build_sitemaps()
             _CACHE_TIMESTAMP = today
-        return _CACHE.get(filename)
+        return _CACHE.get(clean_name)

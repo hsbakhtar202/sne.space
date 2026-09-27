@@ -1,0 +1,12 @@
+tde
+tidaldisruptions
+tde
+tde
+alias,maxdate,velocity,maxabsmag,masses,ra,dec,hostoffsetang,hostoffsetdist,radiolink,instruments,ebv,lumdist,references,altitude,azimuth,airmass,skybrightness,discoverer
+maxdate,discoverdate,xraylink
+download,photolink
+photolink,xraylink,spectralink
+photolink
+10,100
+TDE
+TDE

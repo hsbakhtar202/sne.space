@@ -483,7 +483,7 @@ def _fallback_event_page(name: str, entered: str | None = None) -> bytes:
   table.sub-table th {{ background: #f7f7f7; font-weight: 600; }}
 </style></head><body>
 <header class="site">
-  <a class="brand" href="/">Open Supernova Catalog</a>
+  <a class="brand" href="/" title="sne.space — The Open Supernova Catalog"><img src="/assets/img/logo-plain.png" alt="sne.space" class="brand-logo-ia"><span>Open Supernova Catalog</span></a>
   <nav><a href="/">Catalog</a><a href="/download/">Download</a></nav>
 </header>
 <main>
@@ -669,6 +669,16 @@ class Handler(SimpleHTTPRequestHandler):
                 return
             else:
                 self._send(400, "text/plain", b"Error: Missing valid coordinates (ra, dec) or recognized event name.")
+                return
+
+        # Sharded XML Sitemaps: /sitemap.xml, /sitemap_index.xml, /sitemap_*.xml
+        if path.startswith("/sitemap") and path.endswith(".xml") and get_sitemap is not None:
+            xml_bytes = get_sitemap(path)
+            if xml_bytes:
+                self._send(200, "application/xml; charset=utf-8", xml_bytes)
+                return
+            else:
+                self._send(404, "application/xml; charset=utf-8", b'<?xml version="1.0" encoding="UTF-8"?><error>Sitemap shard not found</error>')
                 return
 
         # Observers Radar & Real-Time Alerts: /radar, /tonight, /api/radar.json

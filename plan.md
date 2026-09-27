@@ -576,7 +576,7 @@ Every pipeline build and on-demand enrichment runs through automated validation 
 - [ ] **4.4 Native Model Context Protocol (MCP) Server**: Deploy `sne-space-mcp` for direct AI tool calling.
 
 ### Phase 5: SEO, Scale & IVOA Standards (Days 11–12)
-- [ ] **5.1 Sharded XML Sitemaps**: Hierarchical sitemaps index split to stay below 50,000 URLs per shard.
+- [x] **5.1 Sharded XML Sitemaps**: Hierarchical sitemaps index split to stay below 50,000 URLs per shard (`/sitemap.xml`, `/sitemap_current.xml`, `/sitemap_stories.xml`, etc.). *(Completed)*
 - [x] **5.2 OpenGraph & Twitter Social Cards**: Dynamic cards embedding host optical cutouts. *(Completed)*
 - [ ] **5.3 Automated Cron Synchronization**: Nightly delta ingest from TNS, ALeRCE, and WISeREP.
 - [x] **5.4 IVOA Simple Cone Search & VOTable**: Virtual Observatory endpoints (`/api/cone`, `?format=votable`). *(Completed)*

@@ -1,0 +1,6 @@
+@import url("event-iframe.common.css");
+
+.event-body {
+	background-color: white;
+	padding: 6px;
+}

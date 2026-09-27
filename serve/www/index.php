@@ -7,9 +7,17 @@ declare(strict_types=1);
 
 $ttPath = __DIR__ . '/wp-content/plugins/transient-table/tt.dat';
 if (!is_file($ttPath)) {
+    $ttPath = __DIR__ . '/wp-content/plugins/transient-table/tt.sne.dat';
+}
+if (!is_file($ttPath)) {
     $ttPath = dirname(__DIR__, 2) . '/vendor/transient-table/tt.sne.dat';
 }
-$tt = explode("\n", file_get_contents($ttPath));
+if (!is_file($ttPath)) {
+    $raw = "sne\nsupernovae\nsne\nsne\nalias,maxdate,velocity,maxabsmag,masses,hostra,hostdec,hostoffsetang,hostoffsetdist,references,instruments,ebv,lumdist,altitude,azimuth,airmass,skybrightness,discoverer\nmaxdate,discoverdate\ndownload,spectralink,photolink,radiolink,xraylink\nphotolink,spectralink,radiolink,xraylink\nphotolink\n10,50,250\nSNe\nSupernova";
+} else {
+    $raw = (string)file_get_contents($ttPath);
+}
+$tt = explode("\n", $raw);
 $stem = trim($tt[0]);
 $modu = trim($tt[1]);
 $subd = trim($tt[2]);
@@ -117,11 +125,16 @@ require __DIR__ . '/wp-content/plugins/transient-table/transient-table.php';
     gap: 0.6rem;
   }
   .brand-logo-img {
-    height: 34px;
+    height: 42px;
     width: auto;
     display: inline-block;
     vertical-align: middle;
-    filter: drop-shadow(0 0 8px rgba(56, 189, 248, 0.4));
+    filter: drop-shadow(0 0 12px rgba(56, 189, 248, 0.45));
+    transition: transform 0.2s ease, filter 0.2s ease;
+  }
+  .brand-logo-img:hover {
+    transform: scale(1.04);
+    filter: drop-shadow(0 0 18px rgba(56, 189, 248, 0.75));
   }
   .brand-pill {
     font-size: 0.65rem;
@@ -369,9 +382,8 @@ require __DIR__ . '/wp-content/plugins/transient-table/transient-table.php';
 <body>
   <header class="global-nav">
     <div class="brand-group">
-      <a href="/" class="brand-title">
-        <img src="/assets/img/logo-color.png" alt="sne.space logo" class="brand-logo-img">
-        <span>sne.space</span>
+      <a href="/" class="brand-title" title="sne.space — The Open Supernova Catalog">
+        <img src="/assets/img/logo-color.png" alt="sne.space" class="brand-logo-img">
       </a>
       <span class="brand-pill">Open Supernova Catalog</span>
     </div>
@@ -383,7 +395,6 @@ require __DIR__ . '/wp-content/plugins/transient-table/transient-table.php';
       <a href="/about/">About</a>
       <a href="/download/">Download</a>
       <a href="/statistics/">Stats</a>
-      <a href="https://github.com/astrocatalogs/supernovae" target="_blank" rel="noopener" class="nav-action-btn">GitHub ↗</a>
     </nav>
   </header>
 
