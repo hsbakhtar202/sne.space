@@ -100,22 +100,95 @@ _API_STATS_LOCK = threading.Lock()
 _API_STATS = {
     "started_at": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC"),
     "total_requests": 0,
+    "human_requests": 0,
+    "bot_requests": 0,
     "api_requests": 0,
     "unique_ips": set(),
+    "ip_stats": {},  # ip -> dict of per-ip metrics
     "top_targets": collections.Counter(),
     "top_user_agents": collections.Counter(),
+    "top_clients": collections.Counter(),
     "top_paths": collections.Counter(),
+    "top_referrers": collections.Counter(),
+    "top_countries": collections.Counter(),
     "status_codes": collections.Counter(),
-    "recent_requests": collections.deque(maxlen=100),
+    "recent_requests": collections.deque(maxlen=300),
+    "recent_human_requests": collections.deque(maxlen=100),
+    "recent_api_requests": collections.deque(maxlen=100),
 }
-
 
 LOGS_DIR = ROOT / "logs"
 LOG_FILE = LOGS_DIR / "access.log"
 _LOG_LOCK = threading.Lock()
 
 
-def _write_access_log(ip: str, host: str, method: str, path: str, code: int, size: int, dur_ms: float, ua: str):
+def _classify_client(ua: str) -> dict:
+    ua_raw = ua or ""
+    ua_lower = ua_raw.lower()
+    
+    # 1. AI Agents & Crawlers
+    if "gptbot" in ua_lower or "chatgpt" in ua_lower or "oai-searchbot" in ua_lower:
+        return {"type": "AI Agent", "client": "OpenAI / GPTBot", "is_bot": True, "icon": "🤖"}
+    if "claudebot" in ua_lower or "claude-web" in ua_lower or "anthropic" in ua_lower:
+        return {"type": "AI Agent", "client": "Anthropic / Claude", "is_bot": True, "icon": "🧠"}
+    if "perplexity" in ua_lower:
+        return {"type": "AI Agent", "client": "Perplexity AI", "is_bot": True, "icon": "🔮"}
+    if "google-extended" in ua_lower:
+        return {"type": "AI Agent", "client": "Google-Extended", "is_bot": True, "icon": "🤖"}
+    if "googlebot" in ua_lower or "googleother" in ua_lower:
+        return {"type": "Search Crawler", "client": "Googlebot", "is_bot": True, "icon": "🔍"}
+    if "bingbot" in ua_lower:
+        return {"type": "Search Crawler", "client": "Bingbot", "is_bot": True, "icon": "🔎"}
+    if "applebot" in ua_lower:
+        return {"type": "AI / Crawler", "client": "Applebot", "is_bot": True, "icon": "🍏"}
+    if "meta-externalagent" in ua_lower or "facebookbot" in ua_lower:
+        return {"type": "AI Agent", "client": "Meta External Agent", "is_bot": True, "icon": "🌐"}
+    if any(b in ua_lower for b in ("bot", "spider", "crawl", "slurp", "headless")):
+        return {"type": "Web Bot", "client": "Web Crawler", "is_bot": True, "icon": "🕷️"}
+
+    # 2. Astrophysics tools & CLI
+    if "astroquery" in ua_lower or "astropy" in ua_lower:
+        return {"type": "Astro Library", "client": "Astropy / Astroquery", "is_bot": True, "icon": "🔭"}
+    if "python" in ua_lower or "urllib" in ua_lower or "requests" in ua_lower or "httpx" in ua_lower:
+        return {"type": "Script", "client": "Python Script", "is_bot": True, "icon": "🐍"}
+    if "curl" in ua_lower:
+        return {"type": "CLI", "client": "curl", "is_bot": True, "icon": "💻"}
+    if "wget" in ua_lower:
+        return {"type": "CLI", "client": "wget", "is_bot": True, "icon": "📥"}
+
+    # 3. Human Browsers
+    os_name = "Desktop"
+    if "macintosh" in ua_lower or "mac os x" in ua_lower:
+        os_name = "Mac"
+    elif "iphone" in ua_lower:
+        os_name = "iPhone"
+    elif "ipad" in ua_lower:
+        os_name = "iPad"
+    elif "android" in ua_lower:
+        os_name = "Android"
+    elif "windows" in ua_lower:
+        os_name = "Windows"
+    elif "linux" in ua_lower:
+        os_name = "Linux"
+
+    browser = "Browser"
+    if "edg/" in ua_lower:
+        browser = "Edge"
+    elif "chrome/" in ua_lower or "crios/" in ua_lower:
+        browser = "Chrome"
+    elif "safari/" in ua_lower and not ("chrome" in ua_lower or "crios" in ua_lower):
+        browser = "Safari"
+    elif "firefox/" in ua_lower or "fxios/" in ua_lower:
+        browser = "Firefox"
+
+    is_mobile = os_name in ("iPhone", "iPad", "Android")
+    cat = f"Human ({'Mobile' if is_mobile else 'Desktop'})"
+    label = f"{browser} ({os_name})"
+    icon = "📱" if is_mobile else "🖥️"
+    return {"type": cat, "client": label, "is_bot": False, "icon": icon}
+
+
+def _write_access_log(ip: str, country: str, host: str, method: str, path: str, code: int, size: int, dur_ms: float, ua: str, referer: str, client_info: dict):
     try:
         LOGS_DIR.mkdir(parents=True, exist_ok=True)
         with _LOG_LOCK:
@@ -126,15 +199,20 @@ def _write_access_log(ip: str, host: str, method: str, path: str, code: int, siz
                     old_file.unlink(missing_ok=True)
                 LOG_FILE.rename(old_file)
             now_iso = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
-            line = f'[{now_iso}] {code} {method} "{path}" ({dur_ms:.1f}ms, {size}B) - IP: {ip} - Host: {host} - UA: "{ua}"\n'
+            c_tag = f" ({country})" if country else ""
+            c_icon = client_info.get("icon", "")
+            c_name = client_info.get("client", "Unknown")
+            c_type = client_info.get("type", "")
+            ref_str = f' - Ref: "{referer}"' if referer and referer != "-" else ""
+            line = f'[{now_iso}] {code} {method} "{path}" ({dur_ms:.1f}ms, {size}B) - IP: {ip}{c_tag} - Client: {c_icon} {c_name} [{c_type}]{ref_str} - Host: {host} - UA: "{ua}"\n'
             with open(LOG_FILE, "a", encoding="utf-8") as f:
                 f.write(line)
     except Exception as e:
         print(f"[LOG ERROR] {e}", flush=True)
 
 
-def _record_api_stat(ip: str, host: str, path: str, method: str, code: int, size: int, dur_ms: float, ua: str):
-    _write_access_log(ip, host, method, path, code, size, dur_ms, ua)
+def _record_api_stat(ip: str, country: str, host: str, path: str, method: str, code: int, size: int, dur_ms: float, ua: str, referer: str, client_info: dict):
+    _write_access_log(ip, country, host, method, path, code, size, dur_ms, ua, referer, client_info)
     with _API_STATS_LOCK:
         _API_STATS["total_requests"] += 1
         _API_STATS["unique_ips"].add(ip)
@@ -142,29 +220,82 @@ def _record_api_stat(ip: str, host: str, path: str, method: str, code: int, size
         clean_path = path.split("?")[0]
         _API_STATS["top_paths"][clean_path] += 1
 
+        if country:
+            _API_STATS["top_countries"][country] += 1
+        if referer and referer != "-":
+            ref_parsed = urllib.parse.urlparse(referer).netloc or referer[:40]
+            _API_STATS["top_referrers"][ref_parsed] += 1
+
+        is_bot = client_info.get("is_bot", False)
+        if is_bot:
+            _API_STATS["bot_requests"] += 1
+        else:
+            _API_STATS["human_requests"] += 1
+
+        client_name = client_info.get("client", "Unknown")
+        client_type = client_info.get("type", "Unknown")
+        client_icon = client_info.get("icon", "🌐")
+        _API_STATS["top_clients"][f"{client_icon} {client_name}"] += 1
+
+        now_ts = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
+        if ip not in _API_STATS["ip_stats"]:
+            _API_STATS["ip_stats"][ip] = {
+                "ip": ip,
+                "country": country,
+                "client": client_name,
+                "client_type": client_type,
+                "icon": client_icon,
+                "count": 0,
+                "first_seen": now_ts,
+                "last_seen": now_ts,
+                "last_path": path,
+                "last_status": code,
+                "is_bot": is_bot,
+                "user_agent": ua,
+            }
+        ip_entry = _API_STATS["ip_stats"][ip]
+        ip_entry["count"] += 1
+        ip_entry["last_seen"] = now_ts
+        ip_entry["last_path"] = path
+        ip_entry["last_status"] = code
+        if not ip_entry["country"] and country:
+            ip_entry["country"] = country
+
         is_api = host.startswith("api.") or clean_path.startswith(("/api", "/cone", "/catalog", "/sne/")) or clean_path.endswith((".json", ".csv"))
         if is_api:
             _API_STATS["api_requests"] += 1
-            ua_clean = ua[:60] if ua else "unknown"
+            ua_clean = ua if ua else "unknown"
             _API_STATS["top_user_agents"][ua_clean] += 1
 
             m = re.match(r"^/(?:api/|sne/)?([A-Za-z0-9+_-]+)(?:\.[a-z]+|/[a-z]+)?$", clean_path)
             if m:
                 target_cand = m.group(1).upper()
-                if target_cand not in ("API", "CATALOG", "CONE", "RADAR", "RECENT", "SEARCH", "BY-TYPE", "DOCS", "FAQS", "SITEMAP", "STATS", "TELEMETRY", "COUNT"):
+                if target_cand not in ("API", "CATALOG", "CONE", "RADAR", "RECENT", "SEARCH", "BY-TYPE", "DOCS", "FAQS", "SITEMAP", "STATS", "TELEMETRY", "COUNT", "LOGS"):
                     _API_STATS["top_targets"][target_cand] += 1
 
-        _API_STATS["recent_requests"].appendleft({
-            "timestamp": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC"),
+        req_record = {
+            "timestamp": now_ts,
             "ip": ip,
+            "country": country,
             "host": host,
             "method": method,
             "path": path,
             "status": code,
             "bytes": size,
             "duration_ms": round(dur_ms, 1),
-            "user_agent": ua[:80] if ua else "-"
-        })
+            "client": client_name,
+            "client_type": client_type,
+            "icon": client_icon,
+            "is_bot": is_bot,
+            "referer": referer if referer != "-" else "",
+            "user_agent": ua,
+        }
+
+        _API_STATS["recent_requests"].appendleft(req_record)
+        if not is_bot:
+            _API_STATS["recent_human_requests"].appendleft(req_record)
+        if is_api:
+            _API_STATS["recent_api_requests"].appendleft(req_record)
 
 
 def _php_render(script: Path, env: dict | None = None, query: str = "") -> bytes:
@@ -882,15 +1013,23 @@ def _event_page(name: str, entered: str | None = None, is_story: bool = False, f
     return 200, _fallback_event_page(name, entered)
 
 
-def _render_logs_page() -> bytes:
+def _render_logs_page(current_ip: str = "", current_client: dict | None = None) -> bytes:
     with _API_STATS_LOCK:
         total = _API_STATS["total_requests"]
+        human_total = _API_STATS["human_requests"]
+        bot_total = _API_STATS["bot_requests"]
         api_count = _API_STATS["api_requests"]
         unique_ips = len(_API_STATS["unique_ips"])
         uptime_sec = int(time.time() - _START_TIME)
         uptime_str = str(datetime.timedelta(seconds=uptime_sec))
         top_targets = ", ".join(f"{k} ({v})" for k, v in _API_STATS["top_targets"].most_common(5)) or "None yet"
-        recent = list(_API_STATS["recent_requests"])[:100]
+        
+        recent = list(_API_STATS["recent_requests"])[:200]
+        recent_humans = list(_API_STATS["recent_human_requests"])[:100]
+        
+        ip_summary_list = []
+        for ip, s in sorted(_API_STATS["ip_stats"].items(), key=lambda item: item[1]["count"], reverse=True)[:50]:
+            ip_summary_list.append(s)
 
     raw_tail = ""
     if LOG_FILE.is_file():
@@ -901,9 +1040,8 @@ def _render_logs_page() -> bytes:
         except Exception:
             raw_tail = "Unable to read access.log"
 
-    rows = []
-    for r in recent:
-        code = r["status"]
+    def format_row(r: dict) -> str:
+        code = r.get("status", 200)
         if 200 <= code < 300:
             badge_cls = "badge-success"
         elif 300 <= code < 400:
@@ -913,23 +1051,70 @@ def _render_logs_page() -> bytes:
         else:
             badge_cls = "badge-error"
 
-        p = r["path"]
-        link = f'<a href="{html.escape(p)}" target="_blank">{html.escape(p)}</a>' if r["method"] == "GET" else html.escape(p)
+        p = r.get("path", "-")
+        link = f'<a href="{html.escape(p)}" target="_blank">{html.escape(p)}</a>' if r.get("method") == "GET" else html.escape(p)
         ua = html.escape(r.get("user_agent", "-"))
-        rows.append(f"""
-        <tr>
-          <td class="mono text-muted">{html.escape(r['timestamp'])}</td>
+        rip = r.get("ip", "-")
+        is_me = (rip == current_ip and bool(current_ip))
+        me_badge = ' <span class="badge badge-me">YOU</span>' if is_me else ""
+        country_str = f"[{html.escape(r['country'])}] " if r.get("country") else ""
+        icon = r.get("icon", "🌐")
+        client_name = r.get("client", "Client")
+        is_bot = r.get("is_bot", False)
+        pill_cls = "pill-bot" if is_bot else "pill-human"
+        row_cls = "row-me" if is_me else ""
+
+        return f"""
+        <tr class="{row_cls}" data-ip="{html.escape(rip)}" data-isbot="{'1' if is_bot else '0'}">
+          <td class="mono text-muted">{html.escape(r.get('timestamp', ''))}</td>
           <td><span class="badge {badge_cls}">{code}</span></td>
-          <td class="mono bold">{html.escape(r['method'])}</td>
+          <td><span class="client-pill {pill_cls}">{icon} {html.escape(client_name)}</span></td>
+          <td class="mono ip-cell"><a href="javascript:void(0)" onclick="filterToIP('{html.escape(rip)}')">{html.escape(rip)}</a>{me_badge} <span class="text-muted">{country_str}</span></td>
+          <td class="mono bold">{html.escape(r.get('method', 'GET'))}</td>
           <td class="mono path-cell">{link}</td>
-          <td class="mono">{r['duration_ms']}ms</td>
-          <td class="mono">{r['bytes']} B</td>
-          <td class="mono">{html.escape(r['ip'])}</td>
-          <td class="mono text-muted">{html.escape(r['host'])}</td>
+          <td class="mono">{r.get('duration_ms', 0)}ms</td>
+          <td class="mono">{r.get('bytes', 0)} B</td>
           <td class="ua-cell" title="{ua}">{ua}</td>
         </tr>
+        """
+
+    table_rows_all = "".join(format_row(r) for r in recent) if recent else '<tr><td colspan="9" style="text-align:center;padding:2rem;color:#64748b;">No requests recorded yet.</td></tr>'
+    
+    # Pre-render human rows
+    human_rows = [format_row(r) for r in recent_humans]
+    table_rows_humans = "".join(human_rows) if human_rows else '<tr><td colspan="9" style="text-align:center;padding:2rem;color:#64748b;">No human visitor requests recorded yet.</td></tr>'
+
+    # Pre-render IP directory rows
+    ip_dir_rows = []
+    for s in ip_summary_list:
+        rip = s.get("ip", "-")
+        is_me = (rip == current_ip and bool(current_ip))
+        me_badge = ' <span class="badge badge-me">YOU</span>' if is_me else ""
+        country_val = s.get("country", "")
+        icon = s.get("icon", "🌐")
+        client_name = s.get("client", "Unknown")
+        is_bot = s.get("is_bot", False)
+        pill_cls = "pill-bot" if is_bot else "pill-human"
+        row_cls = "row-me" if is_me else ""
+        last_p = s.get("last_path", "-")
+        ip_dir_rows.append(f"""
+        <tr class="{row_cls}">
+          <td class="mono bold ip-cell"><a href="javascript:void(0)" onclick="filterToIP('{html.escape(rip)}')">{html.escape(rip)}</a>{me_badge}</td>
+          <td>{html.escape(country_val) if country_val else '—'}</td>
+          <td><span class="client-pill {pill_cls}">{icon} {html.escape(client_name)}</span></td>
+          <td>{'🤖 Bot/Crawler' if is_bot else '👤 Human'}</td>
+          <td class="mono bold text-cyan">{s.get('count', 0):,}</td>
+          <td class="mono text-muted">{html.escape(s.get('first_seen', ''))}</td>
+          <td class="mono text-muted">{html.escape(s.get('last_seen', ''))}</td>
+          <td class="mono path-cell"><a href="{html.escape(last_p)}" target="_blank">{html.escape(last_p)}</a></td>
+          <td><button class="btn btn-sm" onclick="filterToIP('{html.escape(rip)}')">Inspect IP</button></td>
+        </tr>
         """)
-    table_rows = "".join(rows) if rows else '<tr><td colspan="9" style="text-align:center;padding:2rem;color:#64748b;">No requests recorded in memory yet.</td></tr>'
+    table_rows_ips = "".join(ip_dir_rows) if ip_dir_rows else '<tr><td colspan="9" style="text-align:center;padding:2rem;color:#64748b;">No unique IPs recorded yet.</td></tr>'
+
+    cur_client_str = ""
+    if current_client:
+        cur_client_str = f"{current_client.get('icon', '💻')} {current_client.get('client', 'Desktop')}"
 
     page = f"""<!DOCTYPE html>
 <html lang="en">
@@ -940,17 +1125,17 @@ def _render_logs_page() -> bytes:
     window.dataLayer = window.dataLayer || [];
     function gtag(){{dataLayer.push(arguments);}}
     gtag('js', new Date());
-
     gtag('config', 'G-P1SCVZ0V7T');
   </script>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Live Access &amp; API Logs — sne.space</title>
+  <title>Live Traffic, Client IPs &amp; API Logs — sne.space</title>
   <link rel="icon" href="/favicon.ico">
   <style>
     :root {{
       --bg: #070a12;
       --card: #0d1424;
+      --card-hover: #121c33;
       --border: #1e293b;
       --accent: #38bdf8;
       --text: #e2e8f0;
@@ -959,6 +1144,7 @@ def _render_logs_page() -> bytes:
       --warn: #f59e0b;
       --error: #ef4444;
       --info: #3b82f6;
+      --purple: #a855f7;
     }}
     * {{ box-sizing: border-box; }}
     body {{
@@ -977,7 +1163,7 @@ def _render_logs_page() -> bytes:
       gap: 1rem;
       border-bottom: 1px solid var(--border);
       padding-bottom: 1rem;
-      margin-bottom: 1.5rem;
+      margin-bottom: 1.25rem;
     }}
     .brand {{
       display: flex;
@@ -999,26 +1185,94 @@ def _render_logs_page() -> bytes:
     .badge-info {{ background: rgba(59, 130, 246, 0.15); color: var(--info); border: 1px solid rgba(59, 130, 246, 0.3); }}
     .badge-warn {{ background: rgba(245, 158, 11, 0.15); color: var(--warn); border: 1px solid rgba(245, 158, 11, 0.3); }}
     .badge-error {{ background: rgba(239, 68, 68, 0.15); color: var(--error); border: 1px solid rgba(239, 68, 68, 0.3); }}
+    .badge-me {{ background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid #f59e0b; font-size: 0.65rem; margin-left: 4px; }}
+    
+    .client-pill {{
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      padding: 0.2rem 0.6rem;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      white-space: nowrap;
+    }}
+    .pill-human {{ background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }}
+    .pill-bot {{ background: rgba(168, 85, 247, 0.15); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.3); }}
+
+    .row-me {{ background: rgba(56, 189, 248, 0.08) !important; }}
+    .row-me td {{ border-color: rgba(56, 189, 248, 0.2) !important; }}
+
     .stats-grid {{
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 1rem;
-      margin-bottom: 1.5rem;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 0.85rem;
+      margin-bottom: 1.25rem;
     }}
     .card {{
       background: var(--card);
       border: 1px solid var(--border);
       border-radius: 8px;
-      padding: 1rem;
+      padding: 0.9rem 1rem;
     }}
-    .card .label {{ font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 600; letter-spacing: 0.05em; }}
-    .card .val {{ font-size: 1.6rem; font-weight: 700; color: #fff; margin-top: 0.25rem; }}
+    .card .label {{ font-size: 0.72rem; text-transform: uppercase; color: var(--text-muted); font-weight: 600; letter-spacing: 0.05em; }}
+    .card .val {{ font-size: 1.6rem; font-weight: 700; color: #fff; margin-top: 0.2rem; }}
+
+    .my-ip-banner {{
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      background: linear-gradient(90deg, rgba(56, 189, 248, 0.12), rgba(99, 102, 241, 0.08));
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      border-radius: 8px;
+      padding: 0.75rem 1.2rem;
+      margin-bottom: 1.25rem;
+      font-size: 0.9rem;
+    }}
+
+    .tabs-bar {{
+      display: flex;
+      gap: 0.4rem;
+      margin-bottom: 1rem;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 0.5rem;
+      overflow-x: auto;
+    }}
+    .tab-btn {{
+      padding: 0.5rem 1rem;
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: 6px;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+    }}
+    .tab-btn:hover {{ color: #fff; background: rgba(255,255,255,0.03); }}
+    .tab-btn.active {{
+      color: #fff;
+      background: var(--card);
+      border-color: var(--border);
+      border-bottom: 2px solid var(--accent);
+    }}
+    .tab-count {{
+      background: rgba(255,255,255,0.08);
+      border-radius: 10px;
+      padding: 0.1rem 0.45rem;
+      font-size: 0.7rem;
+    }}
+
     .actions-bar {{
       display: flex;
       justify-content: space-between;
       align-items: center;
       flex-wrap: wrap;
-      gap: 1rem;
+      gap: 0.75rem;
       margin-bottom: 1rem;
     }}
     .search-input {{
@@ -1027,8 +1281,8 @@ def _render_logs_page() -> bytes:
       color: #fff;
       padding: 0.5rem 0.9rem;
       border-radius: 6px;
-      font-size: 0.9rem;
-      width: 320px;
+      font-size: 0.88rem;
+      width: 340px;
       max-width: 100%;
     }}
     .btn {{
@@ -1045,9 +1299,11 @@ def _render_logs_page() -> bytes:
       background: var(--card);
       color: var(--text);
     }}
+    .btn-sm {{ padding: 0.25rem 0.6rem; font-size: 0.78rem; }}
     .btn:hover {{ border-color: var(--accent); color: var(--accent); }}
     .btn-primary {{ background: #0284c7; color: #fff; border-color: #0284c7; }}
     .btn-primary:hover {{ background: #0369a1; color: #fff; }}
+    
     table.log-tbl {{
       width: 100%;
       border-collapse: collapse;
@@ -1061,7 +1317,7 @@ def _render_logs_page() -> bytes:
       background: #090e1a;
       color: var(--text-muted);
       text-align: left;
-      padding: 0.6rem 0.75rem;
+      padding: 0.65rem 0.75rem;
       font-weight: 600;
       border-bottom: 1px solid var(--border);
     }}
@@ -1074,10 +1330,14 @@ def _render_logs_page() -> bytes:
     .mono {{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }}
     .bold {{ font-weight: 700; }}
     .text-muted {{ color: var(--text-muted); }}
-    .path-cell {{ max-width: 340px; overflow: hidden; text-overflow: ellipsis; }}
+    .text-cyan {{ color: var(--accent); }}
+    .text-emerald {{ color: var(--success); }}
+    .path-cell {{ max-width: 320px; overflow: hidden; text-overflow: ellipsis; }}
     .path-cell a {{ color: var(--accent); text-decoration: none; }}
     .path-cell a:hover {{ text-decoration: underline; }}
-    .ua-cell {{ max-width: 260px; overflow: hidden; text-overflow: ellipsis; color: #94a3b8; }}
+    .ip-cell a {{ color: #38bdf8; text-decoration: none; font-weight: 600; }}
+    .ip-cell a:hover {{ text-decoration: underline; }}
+    .ua-cell {{ max-width: 240px; overflow: hidden; text-overflow: ellipsis; color: #94a3b8; }}
     pre.log-terminal {{
       background: #050811;
       border: 1px solid var(--border);
@@ -1096,7 +1356,7 @@ def _render_logs_page() -> bytes:
   <div class="hdr">
     <a href="/" class="brand">
       <img src="/assets/img/logo-color.webp" alt="sne.space">
-      <h1>Live Access &amp; API Logs</h1>
+      <h1>Live Traffic &amp; Client IP Explorer</h1>
     </a>
     <div style="display:flex;gap:0.5rem;align-items:center;">
       <label style="display:flex;align-items:center;gap:0.4rem;font-size:0.85rem;cursor:pointer;">
@@ -1115,12 +1375,20 @@ def _render_logs_page() -> bytes:
       <div class="val" id="st-total">{total:,}</div>
     </div>
     <div class="card">
-      <div class="label">API Queries</div>
-      <div class="val" id="st-api" style="color:var(--accent);">{api_count:,}</div>
+      <div class="label">👤 Human Visitors</div>
+      <div class="val text-emerald" id="st-humans">{human_total:,}</div>
     </div>
     <div class="card">
-      <div class="label">Unique Client IPs</div>
-      <div class="val" id="st-unique" style="color:var(--success);">{unique_ips:,}</div>
+      <div class="label">🤖 AI Bots &amp; Scrapers</div>
+      <div class="val" id="st-bots" style="color:var(--purple);">{bot_total:,}</div>
+    </div>
+    <div class="card">
+      <div class="label">⚡ API Queries</div>
+      <div class="val text-cyan" id="st-api">{api_count:,}</div>
+    </div>
+    <div class="card">
+      <div class="label">🌐 Unique Client IPs</div>
+      <div class="val" id="st-unique" style="color:#60a5fa;">{unique_ips:,}</div>
     </div>
     <div class="card">
       <div class="label">Server Uptime</div>
@@ -1128,30 +1396,71 @@ def _render_logs_page() -> bytes:
     </div>
   </div>
 
-  <div class="actions-bar">
-    <input type="text" id="filter-box" class="search-input" placeholder="Filter requests by IP, path, status, UA..." oninput="filterRows()">
-    <div style="font-size:0.85rem;color:var(--text-muted);">
-      Top Active Targets: <span style="color:#fff;" id="top-targets">{html.escape(top_targets)}</span>
+  <div class="my-ip-banner">
+    <div>
+      📍 <strong>Your Client IP:</strong> <code class="mono text-cyan" style="font-size:1.05rem;font-weight:700;">{html.escape(current_ip) if current_ip else 'Detecting...'}</code>
+      <span style="margin-left:0.6rem;color:var(--text-muted);">{html.escape(cur_client_str)}</span>
+    </div>
+    <div style="display:flex;gap:0.5rem;align-items:center;">
+      <button class="btn btn-sm btn-primary" onclick="filterToIP('{html.escape(current_ip)}')">🎯 Show Only My Requests</button>
+      <button class="btn btn-sm" onclick="clearFilter()">Show All Activity</button>
     </div>
   </div>
 
-  <div style="overflow-x:auto;margin-bottom:2rem;border-radius:8px;border:1px solid var(--border);">
+  <div class="tabs-bar">
+    <button class="tab-btn active" id="tab-humans" onclick="switchTab('humans')">👤 Human Visitors <span class="tab-count" id="cnt-humans">{human_total:,}</span></button>
+    <button class="tab-btn" id="tab-all" onclick="switchTab('all')">🌐 All Activity <span class="tab-count" id="cnt-all">{total:,}</span></button>
+    <button class="tab-btn" id="tab-bots" onclick="switchTab('bots')">🤖 AI Agents &amp; Crawlers <span class="tab-count" id="cnt-bots">{bot_total:,}</span></button>
+    <button class="tab-btn" id="tab-ips" onclick="switchTab('ips')">📋 Unique IP Directory <span class="tab-count" id="cnt-ips">{len(ip_summary_list):,}</span></button>
+  </div>
+
+  <div class="actions-bar">
+    <input type="text" id="filter-box" class="search-input" placeholder="Search by IP, endpoint, status, device, or country..." oninput="filterRows()">
+    <div style="font-size:0.85rem;color:var(--text-muted);">
+      Top Queried Supernovae: <span style="color:#fff;" id="top-targets">{html.escape(top_targets)}</span>
+    </div>
+  </div>
+
+  <!-- View 1: Requests Table (used for Humans, All, Bots tabs) -->
+  <div id="view-requests" style="overflow-x:auto;margin-bottom:2rem;border-radius:8px;border:1px solid var(--border);">
     <table class="log-tbl" id="log-table">
       <thead>
         <tr>
           <th>Timestamp (UTC)</th>
           <th>Status</th>
+          <th>Device / Client</th>
+          <th>Client IP &amp; Country</th>
           <th>Method</th>
           <th>Requested Path / Endpoint</th>
           <th>Latency</th>
           <th>Size</th>
-          <th>Client IP</th>
-          <th>Host</th>
           <th>User Agent</th>
         </tr>
       </thead>
       <tbody id="log-body">
-        {table_rows}
+        {table_rows_humans}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- View 2: Unique IP Directory Table -->
+  <div id="view-ips" style="display:none;overflow-x:auto;margin-bottom:2rem;border-radius:8px;border:1px solid var(--border);">
+    <table class="log-tbl" id="ip-table">
+      <thead>
+        <tr>
+          <th>Client IP Address</th>
+          <th>Country</th>
+          <th>Device / User Agent</th>
+          <th>Classification</th>
+          <th>Total Hits</th>
+          <th>First Seen</th>
+          <th>Last Seen</th>
+          <th>Last Path Visited</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="ip-body">
+        {table_rows_ips}
       </tbody>
     </table>
   </div>
@@ -1160,53 +1469,147 @@ def _render_logs_page() -> bytes:
   <pre class="log-terminal" id="raw-log">{html.escape(raw_tail) if raw_tail else "No entries written to access.log yet."}</pre>
 
   <script>
+    window.MY_IP = "{html.escape(current_ip)}";
+    let CURRENT_TAB = 'humans';
+    let CACHED_DATA = null;
+
+    function switchTab(tabId) {{
+      CURRENT_TAB = tabId;
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      const activeBtn = document.getElementById('tab-' + tabId);
+      if (activeBtn) activeBtn.classList.add('active');
+
+      const reqView = document.getElementById('view-requests');
+      const ipView = document.getElementById('view-ips');
+
+      if (tabId === 'ips') {{
+        reqView.style.display = 'none';
+        ipView.style.display = '';
+      }} else {{
+        reqView.style.display = '';
+        ipView.style.display = 'none';
+        renderCurrentTable();
+      }}
+    }}
+
+    function filterToIP(ip) {{
+      document.getElementById('filter-box').value = ip;
+      if (CURRENT_TAB === 'ips') switchTab('all');
+      filterRows();
+    }}
+
+    function clearFilter() {{
+      document.getElementById('filter-box').value = '';
+      filterRows();
+    }}
+
     function filterRows() {{
-      const q = document.getElementById('filter-box').value.toLowerCase();
-      const rows = document.querySelectorAll('#log-body tr');
-      rows.forEach(r => {{
+      const q = document.getElementById('filter-box').value.toLowerCase().trim();
+      const currentBody = CURRENT_TAB === 'ips' ? document.querySelectorAll('#ip-body tr') : document.querySelectorAll('#log-body tr');
+      currentBody.forEach(r => {{
         const txt = r.textContent.toLowerCase();
-        r.style.display = txt.includes(q) ? '' : 'none';
+        r.style.display = (!q || txt.includes(q)) ? '' : 'none';
       }});
     }}
 
-    let refreshTimer = null;
+    function renderCurrentTable() {{
+      if (!CACHED_DATA) return;
+      let list = [];
+      if (CURRENT_TAB === 'humans') {{
+        list = CACHED_DATA.recent_human_requests || [];
+      }} else if (CURRENT_TAB === 'bots') {{
+        list = (CACHED_DATA.recent_requests || []).filter(r => r.is_bot);
+      }} else {{
+        list = CACHED_DATA.recent_requests || [];
+      }}
+
+      const tbody = document.getElementById('log-body');
+      if (!list.length) {{
+        tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:2rem;color:#64748b;">No matching requests in this view.</td></tr>';
+        return;
+      }}
+
+      tbody.innerHTML = list.map(r => {{
+        const c = r.status || 200;
+        let cls = 'badge-success';
+        if (c >= 300 && c < 400) cls = 'badge-info';
+        else if (c >= 400 && c < 500) cls = 'badge-warn';
+        else if (c >= 500) cls = 'badge-error';
+
+        const p = r.path || '-';
+        const link = r.method === 'GET' ? '<a href="' + encodeURI(p) + '" target="_blank">' + escapeHtml(p) + '</a>' : escapeHtml(p);
+        const rip = r.ip || '-';
+        const isMe = (rip === window.MY_IP && window.MY_IP !== '');
+        const meBadge = isMe ? ' <span class="badge badge-me">YOU</span>' : '';
+        const countryStr = r.country ? '[' + escapeHtml(r.country) + '] ' : '';
+        const isBot = r.is_bot;
+        const pillCls = isBot ? 'pill-bot' : 'pill-human';
+        const icon = r.icon || '🌐';
+        const clientName = r.client || 'Client';
+        const ua = escapeHtml(r.user_agent || '-');
+        const rowCls = isMe ? 'row-me' : '';
+
+        return '<tr class="' + rowCls + '" data-ip="' + escapeHtml(rip) + '">' +
+          '<td class="mono text-muted">' + escapeHtml(r.timestamp || '') + '</td>' +
+          '<td><span class="badge ' + cls + '">' + c + '</span></td>' +
+          '<td><span class="client-pill ' + pillCls + '">' + icon + ' ' + escapeHtml(clientName) + '</span></td>' +
+          '<td class="mono ip-cell"><a href="javascript:void(0)" onclick="filterToIP(\'' + escapeHtml(rip) + '\')">' + escapeHtml(rip) + '</a>' + meBadge + ' <span class="text-muted">' + countryStr + '</span></td>' +
+          '<td class="mono bold">' + escapeHtml(r.method || '') + '</td>' +
+          '<td class="mono path-cell">' + link + '</td>' +
+          '<td class="mono">' + (r.duration_ms || 0) + 'ms</td>' +
+          '<td class="mono">' + (r.bytes || 0) + ' B</td>' +
+          '<td class="ua-cell" title="' + ua + '">' + ua + '</td>' +
+        '</tr>';
+      }}).join('');
+
+      filterRows();
+    }}
+
     function pollStats() {{
       if (!document.getElementById('auto-refresh').checked) return;
       fetch('/api/stats')
         .then(res => res.json())
         .then(d => {{
+          CACHED_DATA = d;
           document.getElementById('st-total').textContent = (d.total_requests || 0).toLocaleString();
+          document.getElementById('st-humans').textContent = (d.human_requests || 0).toLocaleString();
+          document.getElementById('st-bots').textContent = (d.bot_requests || 0).toLocaleString();
           document.getElementById('st-api').textContent = (d.api_requests || 0).toLocaleString();
           document.getElementById('st-unique').textContent = (d.unique_visitors_count || 0).toLocaleString();
+
+          document.getElementById('cnt-all').textContent = (d.total_requests || 0).toLocaleString();
+          document.getElementById('cnt-humans').textContent = (d.human_requests || 0).toLocaleString();
+          document.getElementById('cnt-bots').textContent = (d.bot_requests || 0).toLocaleString();
+          if (d.ip_directory) {{
+            document.getElementById('cnt-ips').textContent = d.ip_directory.length.toLocaleString();
+          }}
           
           if (d.top_supernova_targets && d.top_supernova_targets.length) {{
             document.getElementById('top-targets').textContent = d.top_supernova_targets.slice(0, 5).map(t => t.target + ' (' + t.count + ')').join(', ');
           }}
 
-          if (d.recent_requests && d.recent_requests.length) {{
-            const tbody = document.getElementById('log-body');
-            const rows = d.recent_requests.map(r => {{
-              const c = r.status;
-              let cls = 'badge-success';
-              if (c >= 300 && c < 400) cls = 'badge-info';
-              else if (c >= 400 && c < 500) cls = 'badge-warn';
-              else if (c >= 500) cls = 'badge-error';
-              const p = r.path || '-';
-              const link = r.method === 'GET' ? '<a href="' + encodeURI(p) + '" target="_blank">' + escapeHtml(p) + '</a>' : escapeHtml(p);
-              const ua = escapeHtml(r.user_agent || '-');
-              return '<tr>' +
-                '<td class="mono text-muted">' + escapeHtml(r.timestamp || '') + '</td>' +
-                '<td><span class="badge ' + cls + '">' + c + '</span></td>' +
-                '<td class="mono bold">' + escapeHtml(r.method || '') + '</td>' +
-                '<td class="mono path-cell">' + link + '</td>' +
-                '<td class="mono">' + (r.duration_ms || 0) + 'ms</td>' +
-                '<td class="mono">' + (r.bytes || 0) + ' B</td>' +
-                '<td class="mono">' + escapeHtml(r.ip || '') + '</td>' +
-                '<td class="mono text-muted">' + escapeHtml(r.host || '') + '</td>' +
-                '<td class="ua-cell" title="' + ua + '">' + ua + '</td>' +
+          if (CURRENT_TAB !== 'ips') {{
+            renderCurrentTable();
+          }} else if (d.ip_directory && d.ip_directory.length) {{
+            const ipBody = document.getElementById('ip-body');
+            ipBody.innerHTML = d.ip_directory.map(s => {{
+              const rip = s.ip || '-';
+              const isMe = (rip === window.MY_IP && window.MY_IP !== '');
+              const meBadge = isMe ? ' <span class="badge badge-me">YOU</span>' : '';
+              const pillCls = s.is_bot ? 'pill-bot' : 'pill-human';
+              const rowCls = isMe ? 'row-me' : '';
+              return '<tr class="' + rowCls + '">' +
+                '<td class="mono bold ip-cell"><a href="javascript:void(0)" onclick="filterToIP(\'' + escapeHtml(rip) + '\')">' + escapeHtml(rip) + '</a>' + meBadge + '</td>' +
+                '<td>' + escapeHtml(s.country || '—') + '</td>' +
+                '<td><span class="client-pill ' + pillCls + '">' + (s.icon || '🌐') + ' ' + escapeHtml(s.client || 'Client') + '</span></td>' +
+                '<td>' + (s.is_bot ? '🤖 Bot/Crawler' : '👤 Human') + '</td>' +
+                '<td class="mono bold text-cyan">' + (s.count || 0).toLocaleString() + '</td>' +
+                '<td class="mono text-muted">' + escapeHtml(s.first_seen || '') + '</td>' +
+                '<td class="mono text-muted">' + escapeHtml(s.last_seen || '') + '</td>' +
+                '<td class="mono path-cell"><a href="' + escapeHtml(s.last_path || '') + '" target="_blank">' + escapeHtml(s.last_path || '') + '</a></td>' +
+                '<td><button class="btn btn-sm" onclick="filterToIP(\'' + escapeHtml(rip) + '\')">Inspect IP</button></td>' +
               '</tr>';
             }}).join('');
-            tbody.innerHTML = rows;
             filterRows();
           }}
         }})
@@ -1232,6 +1635,45 @@ class Handler(SimpleHTTPRequestHandler):
         # Clean structured logging is emitted in _send and _redirect
         pass
 
+    def _get_request_meta(self) -> dict:
+        t0 = getattr(self, "_req_t0", None)
+        dur_ms = (time.time() - t0) * 1000 if t0 else 0.0
+
+        headers = self.headers
+        raw_ip = (
+            headers.get("CF-Connecting-IP")
+            or headers.get("True-Client-IP")
+            or headers.get("X-Real-IP")
+            or (headers.get("X-Forwarded-For") or "").split(",")[0].strip()
+            or (self.client_address[0] if self.client_address else "127.0.0.1")
+        ).strip()
+
+        country = (headers.get("CF-IPCountry") or headers.get("X-Country-Code") or "").strip().upper()
+        host = headers.get("Host") or "sne.space"
+        ua = headers.get("User-Agent") or "-"
+        referer = headers.get("Referer") or "-"
+        cmd = getattr(self, "command", "GET")
+        req_path = getattr(self, "path", "-")
+        now_str = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+        client_info = _classify_client(ua)
+        clean_path = req_path.split("?")[0]
+        is_api = host.startswith("api.") or clean_path.startswith(("/api", "/sne/", "/catalog", "/cone")) or clean_path.endswith((".json", ".csv"))
+
+        return {
+            "ip": raw_ip,
+            "country": country,
+            "host": host,
+            "ua": ua,
+            "referer": referer,
+            "cmd": cmd,
+            "path": req_path,
+            "clean_path": clean_path,
+            "now_str": now_str,
+            "dur_ms": dur_ms,
+            "client_info": client_info,
+            "is_api": is_api,
+        }
+
     def do_OPTIONS(self):
         self.send_response(200)
         self.send_header("Access-Control-Allow-Origin", "*")
@@ -1252,18 +1694,41 @@ class Handler(SimpleHTTPRequestHandler):
         # Real-time API Telemetry & Stats Dashboard: /api/stats, /api/telemetry
         if path in ("/api/stats", "/api/telemetry"):
             with _API_STATS_LOCK:
+                ip_summary_list = []
+                for ip_key, s in sorted(_API_STATS["ip_stats"].items(), key=lambda item: item[1]["count"], reverse=True)[:50]:
+                    ip_summary_list.append({
+                        "ip": ip_key,
+                        "country": s.get("country", ""),
+                        "client": s.get("client", "Unknown"),
+                        "client_type": s.get("client_type", "Unknown"),
+                        "icon": s.get("icon", "🌐"),
+                        "count": s.get("count", 0),
+                        "is_bot": s.get("is_bot", False),
+                        "first_seen": s.get("first_seen", ""),
+                        "last_seen": s.get("last_seen", ""),
+                        "last_path": s.get("last_path", ""),
+                        "last_status": s.get("last_status", 200),
+                    })
+
                 summary = {
                     "service": "Open Supernova Catalog (sne.space)",
                     "started_at": _API_STATS["started_at"],
                     "uptime_seconds": round(time.time() - _START_TIME, 1),
                     "total_requests": _API_STATS["total_requests"],
+                    "human_requests": _API_STATS["human_requests"],
+                    "bot_requests": _API_STATS["bot_requests"],
                     "api_requests": _API_STATS["api_requests"],
                     "unique_visitors_count": len(_API_STATS["unique_ips"]),
                     "status_distribution": dict(_API_STATS["status_codes"]),
+                    "top_clients": [{"client": k, "count": v} for k, v in _API_STATS["top_clients"].most_common(15)],
                     "top_supernova_targets": [{"target": k, "count": v} for k, v in _API_STATS["top_targets"].most_common(15)],
                     "top_user_agents": [{"user_agent": k, "count": v} for k, v in _API_STATS["top_user_agents"].most_common(15)],
                     "top_endpoints": [{"path": k, "count": v} for k, v in _API_STATS["top_paths"].most_common(15)],
-                    "recent_requests": list(_API_STATS["recent_requests"])[:50]
+                    "top_referrers": [{"referrer": k, "count": v} for k, v in _API_STATS["top_referrers"].most_common(10)],
+                    "top_countries": [{"country": k, "count": v} for k, v in _API_STATS["top_countries"].most_common(10)],
+                    "ip_directory": ip_summary_list,
+                    "recent_human_requests": list(_API_STATS["recent_human_requests"])[:50],
+                    "recent_requests": list(_API_STATS["recent_requests"])[:100],
                 }
             self._send(200, "application/json; charset=utf-8", json.dumps(summary, indent=2).encode("utf-8"), {"Cache-Control": "no-cache"})
             return
@@ -1302,7 +1767,8 @@ class Handler(SimpleHTTPRequestHandler):
                 self._send(200, "text/plain; charset=utf-8", content, {"Cache-Control": "no-cache"})
                 return
 
-            body = _render_logs_page()
+            req_meta = self._get_request_meta()
+            body = _render_logs_page(current_ip=req_meta["ip"], current_client=req_meta["client_info"])
             self._send(200, "text/html; charset=utf-8", body, {"Cache-Control": "no-cache"})
             return
 
@@ -1914,18 +2380,16 @@ class Handler(SimpleHTTPRequestHandler):
             return
 
     def _redirect(self, code: int, location: str):
-        t0 = getattr(self, "_req_t0", None)
-        dur_ms = (time.time() - t0) * 1000 if t0 else 0.0
-        ip = (self.headers.get("X-Forwarded-For") or self.headers.get("X-Real-IP") or (self.client_address[0] if self.client_address else "127.0.0.1")).split(",")[0].strip()
-        host = self.headers.get("Host") or "sne.space"
-        ua = self.headers.get("User-Agent") or "-"
-        cmd = getattr(self, "command", "GET")
-        req_path = getattr(self, "path", "-")
-        now_str = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
-        is_api = host.startswith("api.") or req_path.startswith(("/api", "/sne/", "/catalog", "/cone")) or req_path.endswith((".json", ".csv"))
-        tag = "[API]" if is_api else "[HTTP]"
-        print(f"{tag} {now_str} | {code} | {dur_ms:>6.1f}ms | 0 B | {ip:<15} | {host} | {cmd} {req_path} -> {location} | UA: {ua}", flush=True)
-        _record_api_stat(ip, host, req_path, cmd, code, 0, dur_ms, ua)
+        meta = self._get_request_meta()
+        tag = "[API]" if meta["is_api"] else "[HTTP]"
+        c_icon = meta["client_info"].get("icon", "🌐")
+        c_name = meta["client_info"].get("client", "Client")
+        c_country = f"[{meta['country']}] " if meta["country"] else ""
+        print(f"{tag} {meta['now_str']} | {code} | {meta['dur_ms']:>6.1f}ms | 0 B | {meta['ip']:<15} | {c_country}{c_icon} {c_name} | {meta['host']} | {meta['cmd']} {meta['path']} -> {location}", flush=True)
+        _record_api_stat(
+            meta["ip"], meta["country"], meta["host"], meta["path"], meta["cmd"],
+            code, 0, meta["dur_ms"], meta["ua"], meta["referer"], meta["client_info"]
+        )
         try:
             self.send_response(code)
             self.send_header("Location", location)
@@ -1951,18 +2415,16 @@ class Handler(SimpleHTTPRequestHandler):
             if "text/html" in ctype:
                 headers["Cache-Control"] = "public, max-age=120"
 
-        t0 = getattr(self, "_req_t0", None)
-        dur_ms = (time.time() - t0) * 1000 if t0 else 0.0
-        ip = (self.headers.get("X-Forwarded-For") or self.headers.get("X-Real-IP") or (self.client_address[0] if self.client_address else "127.0.0.1")).split(",")[0].strip()
-        host = self.headers.get("Host") or "sne.space"
-        ua = self.headers.get("User-Agent") or "-"
-        cmd = getattr(self, "command", "GET")
-        req_path = getattr(self, "path", "-")
-        now_str = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
-        is_api = host.startswith("api.") or req_path.startswith(("/api", "/sne/", "/catalog", "/cone")) or req_path.endswith((".json", ".csv"))
-        tag = "[API]" if is_api else "[HTTP]"
-        print(f"{tag} {now_str} | {code} | {dur_ms:>6.1f}ms | {len(body):>7} B | {ip:<15} | {host} | {cmd} {req_path} | UA: {ua}", flush=True)
-        _record_api_stat(ip, host, req_path, cmd, code, len(body), dur_ms, ua)
+        meta = self._get_request_meta()
+        tag = "[API]" if meta["is_api"] else "[HTTP]"
+        c_icon = meta["client_info"].get("icon", "🌐")
+        c_name = meta["client_info"].get("client", "Client")
+        c_country = f"[{meta['country']}] " if meta["country"] else ""
+        print(f"{tag} {meta['now_str']} | {code} | {meta['dur_ms']:>6.1f}ms | {len(body):>7} B | {meta['ip']:<15} | {c_country}{c_icon} {c_name} | {meta['host']} | {meta['cmd']} {meta['path']}", flush=True)
+        _record_api_stat(
+            meta["ip"], meta["country"], meta["host"], meta["path"], meta["cmd"],
+            code, len(body), meta["dur_ms"], meta["ua"], meta["referer"], meta["client_info"]
+        )
 
         try:
             self.send_response(code)
@@ -1977,7 +2439,7 @@ class Handler(SimpleHTTPRequestHandler):
                 '</.well-known/ard.json>; rel="ard"; type="application/json", '
                 '</llms.txt>; rel="describedby"'
             )
-            if "text/html" in ctype or req_path in ("/", "/catalog", "/radar", "/faq") or "application/json" in ctype:
+            if "text/html" in ctype or meta["clean_path"] in ("/", "/catalog", "/radar", "/faq") or "application/json" in ctype:
                 self.send_header("Link", link_header_val)
             for k, v in headers.items():
                 self.send_header(k, v)
