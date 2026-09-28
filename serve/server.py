@@ -848,6 +848,17 @@ class Handler(SimpleHTTPRequestHandler):
                 })
                 return
             cat_file = WWW / "astrocats/astrocats/supernovae/output/catalog.min.json"
+            live = _catalog_for_table()
+            if live is not None:
+                raw_body, gz_body = live
+                accept_encoding = self.headers.get("Accept-Encoding", "")
+                if "gzip" in accept_encoding:
+                    self._send(200, "application/json; charset=utf-8", gz_body, {
+                        "Content-Encoding": "gzip"
+                    })
+                else:
+                    self._send(200, "application/json; charset=utf-8", raw_body)
+                return
             if cat_file.is_file():
                 accept_encoding = self.headers.get("Accept-Encoding", "")
                 cat_gz = WWW / "astrocats/astrocats/supernovae/output/catalog.min.json.gz"
@@ -1099,6 +1110,33 @@ class ReusableThreadingServer(ThreadingHTTPServer):
         super().server_bind()
 
 
+_LIVE_CATALOG_LOCK = threading.Lock()
+_LIVE_CATALOG: tuple[float, bytes, bytes] | None = None
+
+
+def _catalog_for_table() -> tuple[bytes, bytes] | None:
+    """March archive with post-March TNS rows prepended. Cached until that file changes."""
+    global _LIVE_CATALOG
+    base = WWW / "astrocats/astrocats/supernovae/output/catalog.min.json"
+    base_gz = WWW / "astrocats/astrocats/supernovae/output/catalog.min.json.gz"
+    recent = WWW / "assets/recent-catalog.min.json"
+    if not base.is_file() and not base_gz.is_file():
+        return None
+    stamp = recent.stat().st_mtime if recent.is_file() else 0.0
+    with _LIVE_CATALOG_LOCK:
+        if _LIVE_CATALOG and _LIVE_CATALOG[0] == stamp:
+            return _LIVE_CATALOG[1], _LIVE_CATALOG[2]
+        raw = base.read_bytes() if base.is_file() else gzip.decompress(base_gz.read_bytes())
+        raw = raw.lstrip()
+        if recent.is_file() and raw.startswith(b"["):
+            extra = recent.read_text(encoding="utf-8").strip()
+            if extra.startswith("[") and extra.endswith("]") and len(extra) > 2:
+                raw = b"[" + extra[1:-1].encode("utf-8") + b"," + raw[1:]
+        packed = gzip.compress(raw, compresslevel=5)
+        _LIVE_CATALOG = (stamp, raw, packed)
+        return raw, packed
+
+
 def _recent_tns_loop() -> None:
     """Refresh classified supernovae from the public TNS search on a fixed interval."""
     import time
@@ -1112,7 +1150,7 @@ def _recent_tns_loop() -> None:
             print(f"TNS recent pull stored {count} classified supernovae", flush=True)
         except Exception as exc:
             print(f"TNS recent pull failed: {exc}", flush=True)
-        time.sleep(6 * 60 * 60)
+        time.sleep(15 * 60)
 
 
 def main():

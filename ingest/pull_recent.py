@@ -84,12 +84,31 @@ def pull_recent(days: int = 40) -> int:
             "date": row["discoverydate"][:10],
             "type": event[cname].get("claimedtype", [{"value": ""}])[0].get("value", ""),
             "discoverer": (row["reporters"] or "")[:48],
+            "ra": event[cname].get("ra", [{"value": ""}])[0].get("value", ""),
+            "dec": event[cname].get("dec", [{"value": ""}])[0].get("value", ""),
             "sort": row["discoverydate"],
         })
     written.sort(key=lambda r: r["sort"], reverse=True)
     cards = [{k: v for k, v in row.items() if k != "sort"} for row in written[:8]]
     RECENT_PATH.parent.mkdir(parents=True, exist_ok=True)
     RECENT_PATH.write_text(json.dumps(cards, indent=2) + "\n", encoding="utf-8")
+    catalog_rows = []
+    for row in written:
+        day = row["date"].replace("-", "/")
+        catalog_rows.append({
+            "name": row["name"],
+            "alias": [{"value": row["name"]}],
+            "discoverer": [{"value": row["discoverer"]}],
+            "discoverdate": [{"value": day}],
+            "maxdate": [{"value": day}],
+            "maxappmag": [],
+            "ra": [{"value": row.get("ra", "")}],
+            "dec": [{"value": row.get("dec", "")}],
+            "claimedtype": [{"value": row["type"]}],
+            "photolink": "1,0",
+        })
+    catalog_path = RECENT_PATH.parent / "recent-catalog.min.json"
+    catalog_path.write_text(json.dumps(catalog_rows, separators=(",", ":")), encoding="utf-8")
     print(f"Wrote {len(written)} events into {SUPERNOVAE_OUTPUT}", flush=True)
     return len(written)
 
