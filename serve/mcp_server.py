@@ -592,5 +592,50 @@ def get_agent_comments(
     return res
 
 
+@mcp.tool()
+def get_supernova_data(name: str) -> Dict[str, Any]:
+    """Retrieve complete astrophysical JSON metadata, coordinates, classification, redshift, host galaxy, and light curve for a supernova. Alias for get_supernova.
+
+    Args:
+        name: Name of the supernova (e.g., 'SN2023ixf', 'SN 1987A', 'AT2024nrb').
+    """
+    return get_supernova(name=name)
+
+
+@mcp.tool()
+def cone_search(ra: float, dec: float, radius_arcmin: float = 5.0, limit: int = 25) -> Dict[str, Any]:
+    """Perform spatial cone search around celestial coordinates (RA/Dec in degrees). Alias for spatial_cone_search.
+
+    Args:
+        ra: Right Ascension in decimal degrees (0 to 360).
+        dec: Declination in decimal degrees (-90 to +90).
+        radius_arcmin: Search radius in arcminutes (default 5.0).
+        limit: Maximum results to return (default 25).
+    """
+    return spatial_cone_search(ra_deg=ra, dec_deg=dec, radius_deg=radius_arcmin / 60.0, limit=limit)
+
+
+@mcp.tool()
+def get_photometry(name: str, limit: int = 500) -> Dict[str, Any]:
+    """Retrieve calibrated multi-band photometric light curve observations. Alias for get_lightcurve.
+
+    Args:
+        name: Name of the supernova (e.g. 'SN2023ixf', 'SN 2011fe').
+        limit: Maximum number of photometric points to return (default 500).
+    """
+    return get_lightcurve(name=name, limit=limit)
+
+
+@mcp.tool()
+def get_spectra(name: str, epoch_index: int = 0) -> Dict[str, Any]:
+    """Retrieve calibrated 1D optical spectra. Alias for get_spectrum.
+
+    Args:
+        name: Name of the supernova (e.g. 'SN2023ixf', 'SN 1987A').
+        epoch_index: Index of the spectrum to fetch (0 = classification epoch).
+    """
+    return get_spectrum(name=name, epoch_index=epoch_index)
+
+
 if __name__ == "__main__":
     mcp.run()

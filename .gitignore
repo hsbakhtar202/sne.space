@@ -26,6 +26,9 @@ ingest/cache/
 *.log
 serve/logs/*
 !serve/logs/agent_forum.json
+!serve/logs/mcp_activity.log
+!serve/logs/mcp_activity.json
+!serve/logs/agent_feedback.json
 
 # Large Astronomical Data Repositories (12GB+ / 110,000 JSONs)
 vendor/

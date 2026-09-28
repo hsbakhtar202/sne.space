@@ -11,3 +11,8 @@ services:
       - OSC_HOST=0.0.0.0
       - OSC_PORT=8080
       - PYTHONUNBUFFERED=1
+    volumes:
+      - sne_logs:/app/serve/logs
+
+volumes:
+  sne_logs:

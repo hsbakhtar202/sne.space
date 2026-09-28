@@ -1751,6 +1751,38 @@ def render_pro_cockpit(name: str, meta: dict, entered: str | None = None, legacy
              aria-label="Search supernovae">
       <button type="submit" aria-label="Submit Search">🔍</button>
     </form>
+    <form class="webmcp-declarative-tool" action="/api/event" method="GET"
+          toolname="get_supernova_data"
+          tool-name="get_supernova_data"
+          toolaction="submit"
+          tool-action="submit"
+          tooldescription="Retrieve complete astrophysical JSON metadata, coordinates, classification, redshift, discovery details, and photometry for a specific supernova"
+          tool-description="Retrieve complete astrophysical JSON metadata, coordinates, classification, redshift, discovery details, and photometry for a specific supernova"
+          toolschema='{{"type":"object","properties":{{"name":{{"type":"string","description":"Supernova designation or IAU name (e.g. SN 2023ixf, SN 1987A, SN 2011fe)"}}}},"required":["name"]}}'
+          tool-schema='{{"type":"object","properties":{{"name":{{"type":"string","description":"Supernova designation or IAU name (e.g. SN 2023ixf, SN 1987A, SN 2011fe)"}}}},"required":["name"]}}'
+          toolautosubmit
+          tool-autosubmit
+          style="display:none;" aria-hidden="true">
+      <input type="text" name="name" toolparamtitle="supernova_name" tool-param-title="supernova_name" toolparamdescription="Supernova name or IAU designation" tool-param-description="Supernova name or IAU designation" required>
+      <button type="submit">Get Dossier</button>
+    </form>
+    <form class="webmcp-declarative-tool" action="/api/cone" method="GET"
+          toolname="cone_search"
+          tool-name="cone_search"
+          toolaction="submit"
+          tool-action="submit"
+          tooldescription="Spatial cone search for supernovae within an angular radius around celestial coordinates (Right Ascension & Declination in degrees)"
+          tool-description="Spatial cone search for supernovae within an angular radius around celestial coordinates (Right Ascension & Declination in degrees)"
+          toolschema='{{"type":"object","properties":{{"ra":{{"type":"number","description":"Right Ascension in decimal degrees (0 to 360)"}},"dec":{{"type":"number","description":"Declination in decimal degrees (-90 to +90)"}},"radius_arcmin":{{"type":"number","description":"Search radius in arcminutes (default: 5.0)"}}}},"required":["ra","dec"]}}'
+          tool-schema='{{"type":"object","properties":{{"ra":{{"type":"number","description":"Right Ascension in decimal degrees (0 to 360)"}},"dec":{{"type":"number","description":"Declination in decimal degrees (-90 to +90)"}},"radius_arcmin":{{"type":"number","description":"Search radius in arcminutes (default: 5.0)"}}}},"required":["ra","dec"]}}'
+          toolautosubmit
+          tool-autosubmit
+          style="display:none;" aria-hidden="true">
+      <input type="number" step="any" name="ra" toolparamtitle="ra" tool-param-title="ra" toolparamdescription="Right Ascension in decimal degrees" tool-param-description="Right Ascension in decimal degrees" required>
+      <input type="number" step="any" name="dec" toolparamtitle="dec" tool-param-title="dec" toolparamdescription="Declination in decimal degrees" tool-param-description="Declination in decimal degrees" required>
+      <input type="number" step="any" name="radius_arcmin" value="5.0" toolparamtitle="radius_arcmin" tool-param-title="radius_arcmin" toolparamdescription="Search radius in arcminutes" tool-param-description="Search radius in arcminutes">
+      <button type="submit">Cone Search</button>
+    </form>
     <div class="hdr-nav-links">
       <a href="/radar">📡 Radar</a>
       <a href="/faq">❓ FAQs</a>
@@ -4353,6 +4385,38 @@ def render_story_mode(name: str, meta: dict, entered: str | None = None) -> str:
              tool-param-description="Supernova name, IAU designation (e.g. SN2023ixf, SN 1987A), or alias" 
              aria-label="Search supernovae">
       <button type="submit" aria-label="Submit Search">🔍</button>
+    </form>
+    <form class="webmcp-declarative-tool" action="/api/event" method="GET"
+          toolname="get_supernova_data"
+          tool-name="get_supernova_data"
+          toolaction="submit"
+          tool-action="submit"
+          tooldescription="Retrieve complete astrophysical JSON metadata, coordinates, classification, redshift, discovery details, and photometry for a specific supernova"
+          tool-description="Retrieve complete astrophysical JSON metadata, coordinates, classification, redshift, discovery details, and photometry for a specific supernova"
+          toolschema='{{"type":"object","properties":{{"name":{{"type":"string","description":"Supernova designation or IAU name (e.g. SN 2023ixf, SN 1987A, SN 2011fe)"}}}},"required":["name"]}}'
+          tool-schema='{{"type":"object","properties":{{"name":{{"type":"string","description":"Supernova designation or IAU name (e.g. SN 2023ixf, SN 1987A, SN 2011fe)"}}}},"required":["name"]}}'
+          toolautosubmit
+          tool-autosubmit
+          style="display:none;" aria-hidden="true">
+      <input type="text" name="name" toolparamtitle="supernova_name" tool-param-title="supernova_name" toolparamdescription="Supernova name or IAU designation" tool-param-description="Supernova name or IAU designation" required>
+      <button type="submit">Get Dossier</button>
+    </form>
+    <form class="webmcp-declarative-tool" action="/api/cone" method="GET"
+          toolname="cone_search"
+          tool-name="cone_search"
+          toolaction="submit"
+          tool-action="submit"
+          tooldescription="Spatial cone search for supernovae within an angular radius around celestial coordinates (Right Ascension & Declination in degrees)"
+          tool-description="Spatial cone search for supernovae within an angular radius around celestial coordinates (Right Ascension & Declination in degrees)"
+          toolschema='{{"type":"object","properties":{{"ra":{{"type":"number","description":"Right Ascension in decimal degrees (0 to 360)"}},"dec":{{"type":"number","description":"Declination in decimal degrees (-90 to +90)"}},"radius_arcmin":{{"type":"number","description":"Search radius in arcminutes (default: 5.0)"}}}},"required":["ra","dec"]}}'
+          tool-schema='{{"type":"object","properties":{{"ra":{{"type":"number","description":"Right Ascension in decimal degrees (0 to 360)"}},"dec":{{"type":"number","description":"Declination in decimal degrees (-90 to +90)"}},"radius_arcmin":{{"type":"number","description":"Search radius in arcminutes (default: 5.0)"}}}},"required":["ra","dec"]}}'
+          toolautosubmit
+          tool-autosubmit
+          style="display:none;" aria-hidden="true">
+      <input type="number" step="any" name="ra" toolparamtitle="ra" tool-param-title="ra" toolparamdescription="Right Ascension in decimal degrees" tool-param-description="Right Ascension in decimal degrees" required>
+      <input type="number" step="any" name="dec" toolparamtitle="dec" tool-param-title="dec" toolparamdescription="Declination in decimal degrees" tool-param-description="Declination in decimal degrees" required>
+      <input type="number" step="any" name="radius_arcmin" value="5.0" toolparamtitle="radius_arcmin" tool-param-title="radius_arcmin" toolparamdescription="Search radius in arcminutes" tool-param-description="Search radius in arcminutes">
+      <button type="submit">Cone Search</button>
     </form>
     <div class="hdr-nav-links">
       <a href="/radar">📡 Radar</a>

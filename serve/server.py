@@ -1105,6 +1105,38 @@ def _not_found_page(name: str) -> bytes:
              aria-label="Search supernovae" required>
       <button type="submit">Search</button>
     </form>
+    <form class="webmcp-declarative-tool" action="/api/event" method="GET"
+          toolname="get_supernova_data"
+          tool-name="get_supernova_data"
+          toolaction="submit"
+          tool-action="submit"
+          tooldescription="Retrieve complete astrophysical JSON metadata, coordinates, classification, redshift, discovery details, and photometry for a specific supernova"
+          tool-description="Retrieve complete astrophysical JSON metadata, coordinates, classification, redshift, discovery details, and photometry for a specific supernova"
+          toolschema='{{"type":"object","properties":{{"name":{{"type":"string","description":"Supernova designation or IAU name (e.g. SN 2023ixf, SN 1987A, SN 2011fe)"}}}},"required":["name"]}}'
+          tool-schema='{{"type":"object","properties":{{"name":{{"type":"string","description":"Supernova designation or IAU name (e.g. SN 2023ixf, SN 1987A, SN 2011fe)"}}}},"required":["name"]}}'
+          toolautosubmit
+          tool-autosubmit
+          style="display:none;" aria-hidden="true">
+      <input type="text" name="name" toolparamtitle="supernova_name" tool-param-title="supernova_name" toolparamdescription="Supernova name or IAU designation" tool-param-description="Supernova name or IAU designation" required>
+      <button type="submit">Get Dossier</button>
+    </form>
+    <form class="webmcp-declarative-tool" action="/api/cone" method="GET"
+          toolname="cone_search"
+          tool-name="cone_search"
+          toolaction="submit"
+          tool-action="submit"
+          tooldescription="Spatial cone search for supernovae within an angular radius around celestial coordinates (Right Ascension & Declination in degrees)"
+          tool-description="Spatial cone search for supernovae within an angular radius around celestial coordinates (Right Ascension & Declination in degrees)"
+          toolschema='{{"type":"object","properties":{{"ra":{{"type":"number","description":"Right Ascension in decimal degrees (0 to 360)"}},"dec":{{"type":"number","description":"Declination in decimal degrees (-90 to +90)"}},"radius_arcmin":{{"type":"number","description":"Search radius in arcminutes (default: 5.0)"}}}},"required":["ra","dec"]}}'
+          tool-schema='{{"type":"object","properties":{{"ra":{{"type":"number","description":"Right Ascension in decimal degrees (0 to 360)"}},"dec":{{"type":"number","description":"Declination in decimal degrees (-90 to +90)"}},"radius_arcmin":{{"type":"number","description":"Search radius in arcminutes (default: 5.0)"}}}},"required":["ra","dec"]}}'
+          toolautosubmit
+          tool-autosubmit
+          style="display:none;" aria-hidden="true">
+      <input type="number" step="any" name="ra" toolparamtitle="ra" tool-param-title="ra" toolparamdescription="Right Ascension in decimal degrees" tool-param-description="Right Ascension in decimal degrees" required>
+      <input type="number" step="any" name="dec" toolparamtitle="dec" tool-param-title="dec" toolparamdescription="Declination in decimal degrees" tool-param-description="Declination in decimal degrees" required>
+      <input type="number" step="any" name="radius_arcmin" value="5.0" toolparamtitle="radius_arcmin" tool-param-title="radius_arcmin" toolparamdescription="Search radius in arcminutes" tool-param-description="Search radius in arcminutes">
+      <button type="submit">Cone Search</button>
+    </form>
     <div style="font-size:0.8rem;color:#64748b;margin-bottom:0.75rem;text-transform:uppercase;letter-spacing:0.05em;font-weight:600;">Benchmark Supernovae</div>
     <div class="landmarks">
       <a href="/sne/SN2023ixf/">SN 2023ixf</a>
@@ -1282,7 +1314,7 @@ def _execute_mcp_tool_by_name(tool_name: str, args: dict, client_meta: dict) -> 
                 res_items.append(summary)
             res = {"results": res_items, "count": len(res_items), "query": q}
 
-        elif tool_name == "get_supernova":
+        elif tool_name in ("get_supernova", "get_supernova_data", "get_event"):
             name = str(args.get("name", args.get("q", ""))).strip()
             resolved, _ = _resolve_event(name)
             canon_name = resolved or name
@@ -1307,7 +1339,7 @@ def _execute_mcp_tool_by_name(tool_name: str, args: dict, client_meta: dict) -> 
                     "story_url": f"https://sne.space/sne/{canon_name}/story"
                 }
 
-        elif tool_name == "get_lightcurve":
+        elif tool_name in ("get_lightcurve", "get_photometry", "get_supernova_photometry"):
             name = str(args.get("name", args.get("q", ""))).strip()
             resolved, _ = _resolve_event(name)
             canon_name = resolved or name
@@ -1335,7 +1367,48 @@ def _execute_mcp_tool_by_name(tool_name: str, args: dict, client_meta: dict) -> 
                         break
                 res = {"name": canon_name, "points": pts, "total_catalog_points": len(photometry)}
 
-        elif tool_name == "calculate_cosmology":
+        elif tool_name in ("get_spectrum", "get_spectra"):
+            name = str(args.get("name", args.get("q", ""))).strip()
+            epoch_index = int(args.get("epoch_index", 0))
+            resolved, _ = _resolve_event(name)
+            canon_name = resolved or name
+            _, fp = _find_event_file(canon_name)
+            if not fp or not fp.is_file():
+                res = {"error": f"Supernova '{name}' not found."}
+            else:
+                raw = json.loads(fp.read_text(encoding="utf-8", errors="replace"))
+                ev_data = next(iter(raw.values())) if len(raw) == 1 else raw.get(canon_name, {})
+                spectra = ev_data.get("spectra", [])
+                if not spectra:
+                    res = {"name": canon_name, "total_spectra": 0, "message": "No calibrated spectra available for this transient."}
+                elif epoch_index < 0 or epoch_index >= len(spectra):
+                    res = {"error": f"Invalid epoch_index {epoch_index}. Supernova has {len(spectra)} spectra (indices 0 to {len(spectra)-1})."}
+                else:
+                    spec = spectra[epoch_index]
+                    data = spec.get("data", [])
+                    wavelengths = []
+                    fluxes = []
+                    for row in data:
+                        if isinstance(row, list) and len(row) >= 2:
+                            try:
+                                wavelengths.append(float(row[0]))
+                                fluxes.append(float(row[1]))
+                            except (ValueError, TypeError):
+                                continue
+                    res = {
+                        "name": canon_name,
+                        "epoch_index": epoch_index,
+                        "total_spectra": len(spectra),
+                        "time_mjd": spec.get("time"),
+                        "telescope": spec.get("telescope"),
+                        "instrument": spec.get("instrument"),
+                        "source": spec.get("source"),
+                        "num_data_points": len(wavelengths),
+                        "wavelength_angstroms": wavelengths[:1000],
+                        "flux": fluxes[:1000],
+                    }
+
+        elif tool_name in ("calculate_cosmology", "cosmology"):
             z = float(args.get("z", 0))
             if z <= 0:
                 res = {"error": "Redshift z must be > 0"}
@@ -1361,16 +1434,59 @@ def _execute_mcp_tool_by_name(tool_name: str, args: dict, client_meta: dict) -> 
                     "distance_modulus_mu": round(dist_mod, 3),
                 }
 
-        elif tool_name == "spatial_cone_search":
+        elif tool_name in ("spatial_cone_search", "cone_search", "search_by_coordinates"):
             ra = float(args.get("ra_deg", args.get("ra", 0)))
             dec = float(args.get("dec_deg", args.get("dec", 0)))
-            rad = float(args.get("radius_deg", 0.1))
+            if "radius_arcmin" in args:
+                rad = float(args.get("radius_arcmin", 5.0)) / 60.0
+            else:
+                rad = float(args.get("radius_deg", args.get("radius", 0.1)))
             limit = int(args.get("limit", 25))
             if cone_search:
                 hits = cone_search(ra, dec, rad)
                 res = {"results": hits[:limit], "count": len(hits[:limit]), "search": {"ra": ra, "dec": dec, "radius_deg": rad}}
             else:
                 res = {"error": "Cone search engine not loaded"}
+
+        elif tool_name in ("search_by_type", "by_type"):
+            req_type = str(args.get("type", "")).strip().lower()
+            limit = int(args.get("limit", 25))
+            canon_map, _ = _names_maps()
+            results = []
+            if req_type:
+                for c_name in canon_map.keys():
+                    _, fp = _find_event_file(c_name)
+                    if fp and fp.is_file():
+                        try:
+                            raw = json.loads(fp.read_text(encoding="utf-8", errors="replace"))
+                            ev_data = next(iter(raw.values())) if len(raw) == 1 else raw.get(c_name, {})
+                            ct = ev_data.get("claimedtype", [])
+                            if ct:
+                                t_val = ct[0].get("value") if isinstance(ct[0], dict) else str(ct[0])
+                                if req_type in t_val.lower():
+                                    results.append({"name": c_name, "claimed_type": t_val})
+                                    if len(results) >= limit:
+                                        break
+                        except Exception:
+                            pass
+            res = {"results": results, "count": len(results), "type": req_type}
+
+        elif tool_name in ("get_recent_discoveries", "recent"):
+            limit = int(args.get("limit", 25))
+            recent_list = []
+            if scan_catalog_targets:
+                try:
+                    targets = scan_catalog_targets(limit=limit)
+                    for t in targets[:limit]:
+                        recent_list.append({
+                            "name": t.get("name"),
+                            "claimed_type": t.get("claimed_type"),
+                            "max_app_mag": t.get("max_app_mag"),
+                            "discover_date": t.get("discover_date"),
+                        })
+                except Exception:
+                    pass
+            res = {"results": recent_list, "count": len(recent_list)}
         else:
             res = {"error": f"Unknown tool '{tool_name}'"}
     except Exception as e:
@@ -2701,7 +2817,37 @@ class Handler(SimpleHTTPRequestHandler):
             mcp_param = query.get("mcp", [""])[0]
             if mcp_param in ("1", "true", "raw") or path in ("/logs/mcp", "/api/mcp/activity"):
                 mcp_file = Path(__file__).resolve().parent / "logs" / "mcp_activity.log"
-                content = mcp_file.read_bytes() if mcp_file.is_file() else b"No MCP tool calls recorded yet.\n"
+                content = b""
+                if mcp_file.is_file() and mcp_file.stat().st_size > 0:
+                    content = mcp_file.read_bytes()
+                else:
+                    # Hydrate from in-memory or JSON records if file is empty
+                    mcp_json_file = Path(__file__).resolve().parent / "logs" / "mcp_activity.json"
+                    records = []
+                    if mcp_json_file.is_file():
+                        try:
+                            raw_j = json.loads(mcp_json_file.read_text(encoding="utf-8", errors="replace"))
+                            if isinstance(raw_j, list):
+                                records = raw_j
+                        except Exception:
+                            records = []
+                    if not records and get_mcp_telemetry_summary:
+                        try:
+                            records = get_mcp_telemetry_summary().get("recent_calls", [])
+                        except Exception:
+                            records = []
+                    if records:
+                        lines_out = [
+                            f"{r.get('timestamp')}\t{r.get('tool')}\t{r.get('agent')}\t{r.get('status')}\t{r.get('duration_ms', 0)}ms\t{r.get('ip')}\t{r.get('country')}\t{r.get('source', 'json-rpc')}\t{json.dumps(r.get('args', {}), default=str)}\n"
+                            for r in records
+                        ]
+                        content = "".join(lines_out).encode("utf-8")
+                        try:
+                            mcp_file.write_bytes(content)
+                        except Exception:
+                            pass
+                    else:
+                        content = b"No MCP tool calls recorded yet.\n"
                 download_param = query.get("download", [""])[0]
                 headers = {"Cache-Control": "no-cache"}
                 if download_param in ("1", "true"):

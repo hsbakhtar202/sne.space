@@ -32,6 +32,7 @@ LOGS_DIR = SERVE_DIR / "logs"
 FORUM_FILE = LOGS_DIR / "agent_forum.json"
 FEEDBACK_FILE = LOGS_DIR / "agent_feedback.json"
 MCP_LOG_FILE = LOGS_DIR / "mcp_activity.log"
+MCP_JSON_FILE = LOGS_DIR / "mcp_activity.json"
 
 _LOCK = threading.Lock()
 
@@ -40,7 +41,7 @@ _MCP_TELEMETRY = {
     "total_likes": 0,
     "tool_counts": collections.Counter(),
     "agent_counts": collections.Counter(),
-    "recent_calls": collections.deque(maxlen=250),
+    "recent_calls": collections.deque(maxlen=500),
 }
 
 
@@ -49,14 +50,25 @@ def _ensure_logs_dir():
 
 
 def _load_historical_mcp_activity():
-    """Load past MCP activity from mcp_activity.log on startup."""
-    if not MCP_LOG_FILE.is_file():
-        return
-    try:
-        with open(MCP_LOG_FILE, "r", encoding="utf-8", errors="replace") as f:
-            lines = f.readlines()
-        with _LOCK:
-            for line in lines[-250:]:
+    """Load past MCP activity from mcp_activity.json or mcp_activity.log on startup."""
+    _ensure_logs_dir()
+    records = []
+
+    # 1. Try structured JSON persistence first
+    if MCP_JSON_FILE.is_file():
+        try:
+            raw = json.loads(MCP_JSON_FILE.read_text(encoding="utf-8", errors="replace"))
+            if isinstance(raw, list):
+                records = raw
+        except Exception as exc:
+            print(f"[AGENT RELAY] Error loading MCP JSON: {exc}", flush=True)
+
+    # 2. If JSON empty or absent, parse TSV log
+    if not records and MCP_LOG_FILE.is_file():
+        try:
+            with open(MCP_LOG_FILE, "r", encoding="utf-8", errors="replace") as f:
+                lines = f.readlines()
+            for line in lines[-500:]:
                 parts = line.strip().split("\t")
                 if len(parts) >= 8:
                     ts, tool, agent, status, dur, ip, country, src = parts[:8]
@@ -66,10 +78,7 @@ def _load_historical_mcp_activity():
                     except Exception:
                         args = {"raw": args_raw}
                     dur_val = float(dur.replace("ms", "").strip()) if "ms" in dur else 0.0
-                    _MCP_TELEMETRY["total_calls"] += 1
-                    _MCP_TELEMETRY["tool_counts"][tool] += 1
-                    _MCP_TELEMETRY["agent_counts"][agent] += 1
-                    _MCP_TELEMETRY["recent_calls"].appendleft({
+                    records.append({
                         "timestamp": ts,
                         "tool": tool,
                         "agent": agent,
@@ -80,8 +89,37 @@ def _load_historical_mcp_activity():
                         "country": country,
                         "source": src,
                     })
-    except Exception as exc:
-        print(f"[AGENT RELAY] Error reading historical MCP log: {exc}", flush=True)
+        except Exception as exc:
+            print(f"[AGENT RELAY] Error reading historical MCP log: {exc}", flush=True)
+
+    with _LOCK:
+        for rec in records[-500:]:
+            tool = rec.get("tool", "unknown_tool")
+            agent = rec.get("agent", "Unknown-Agent")
+            _MCP_TELEMETRY["total_calls"] += 1
+            _MCP_TELEMETRY["tool_counts"][tool] += 1
+            _MCP_TELEMETRY["agent_counts"][agent] += 1
+            _MCP_TELEMETRY["recent_calls"].appendleft(rec)
+
+    # Synchronize both disk formats so TSV and JSON stay identical across reboots
+    if records:
+        if not MCP_LOG_FILE.is_file() or MCP_LOG_FILE.stat().st_size == 0:
+            try:
+                lines_out = [
+                    f"{r.get('timestamp')}\t{r.get('tool')}\t{r.get('agent')}\t{r.get('status')}\t{r.get('duration_ms', 0)}ms\t{r.get('ip')}\t{r.get('country')}\t{r.get('source', 'json-rpc')}\t{json.dumps(r.get('args', {}), default=str)}\n"
+                    for r in records
+                ]
+                with open(MCP_LOG_FILE, "w", encoding="utf-8") as f:
+                    f.writelines(lines_out)
+                    f.flush()
+            except Exception:
+                pass
+        if not MCP_JSON_FILE.is_file() or MCP_JSON_FILE.stat().st_size == 0:
+            try:
+                MCP_JSON_FILE.write_text(json.dumps(records, indent=2), encoding="utf-8")
+            except Exception:
+                pass
+    return records
 
 
 _load_historical_mcp_activity()
@@ -430,8 +468,25 @@ def record_mcp_invocation(
         log_line = f"{now_ts}\t{clean_tool}\t{clean_agent}\t{status}\t{round(duration_ms, 1)}ms\t{ip}\t{country}\t{source}\t{json.dumps(args, default=str)}\n"
         with open(MCP_LOG_FILE, "a", encoding="utf-8") as f:
             f.write(log_line)
-    except Exception:
-        pass
+            f.flush()
+    except Exception as exc:
+        print(f"[AGENT RELAY] Failed to append to MCP log: {exc}", flush=True)
+
+    try:
+        all_recs = []
+        if MCP_JSON_FILE.is_file():
+            try:
+                raw_json = json.loads(MCP_JSON_FILE.read_text(encoding="utf-8", errors="replace"))
+                if isinstance(raw_json, list):
+                    all_recs = raw_json
+            except Exception:
+                all_recs = []
+        all_recs.append(rec)
+        if len(all_recs) > 500:
+            all_recs = all_recs[-500:]
+        MCP_JSON_FILE.write_text(json.dumps(all_recs, indent=2), encoding="utf-8")
+    except Exception as exc:
+        print(f"[AGENT RELAY] Failed to update MCP JSON: {exc}", flush=True)
 
 
 def post_supernova_comment(
@@ -934,6 +989,22 @@ MCP_TOOLS = [
         "annotations": {"readOnlyHint": True}
     },
     {
+        "name": "get_supernova_data",
+        "title": "Get Supernova Data",
+        "description": "Retrieve complete astrophysical JSON metadata, coordinates, classification, redshift, host galaxy, discovery date, peak magnitude, and bibliography.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "description": "Supernova name or IAU designation (e.g. SN 2023ixf, SN 1987A, SN 2011fe)"
+                }
+            },
+            "required": ["name"]
+        },
+        "annotations": {"readOnlyHint": True}
+    },
+    {
         "name": "get_lightcurve",
         "title": "Get Light Curve",
         "description": "Retrieve calibrated multi-band photometric light curve observations for a supernova.",
@@ -948,6 +1019,33 @@ MCP_TOOLS = [
                     "type": "array",
                     "items": {"type": "string"},
                     "description": "Optional list of passbands to filter by (e.g. ['g', 'r', 'V'])"
+                },
+                "limit": {
+                    "type": "integer",
+                    "description": "Maximum number of photometric points to return (default: 500)",
+                    "default": 500
+                }
+            },
+            "required": ["name"]
+        },
+        "annotations": {"readOnlyHint": True}
+    },
+    {
+        "name": "get_photometry",
+        "title": "Get Photometric Light Curve",
+        "description": "Retrieve calibrated multi-band photometric light curve observations (time, magnitude, error, filter band, telescope/observer) for a supernova.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "description": "Supernova name or IAU designation (e.g. SN 2023ixf, SN 2011fe)"
+                },
+                "format": {
+                    "type": "string",
+                    "description": "Response format ('json' or 'csv', default: 'json')",
+                    "enum": ["json", "csv"],
+                    "default": "json"
                 },
                 "limit": {
                     "type": "integer",
@@ -981,6 +1079,27 @@ MCP_TOOLS = [
         "annotations": {"readOnlyHint": True}
     },
     {
+        "name": "get_spectra",
+        "title": "Get Calibrated Spectra",
+        "description": "Retrieve calibrated 1D optical spectra (wavelength in Angstroms, flux, epoch/phase, instrument) for a supernova.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "description": "Supernova name or IAU designation (e.g. SN 2023ixf, SN 1987A)"
+                },
+                "epoch_index": {
+                    "type": "integer",
+                    "description": "Index of the spectrum to fetch (0 = earliest/classification epoch)",
+                    "default": 0
+                }
+            },
+            "required": ["name"]
+        },
+        "annotations": {"readOnlyHint": True}
+    },
+    {
         "name": "calculate_cosmology",
         "title": "Calculate Cosmology Distance Parameters",
         "description": "Calculate cosmological distance parameters (recession velocity, luminosity distance, lookback time) under Flat Lambda-CDM (H0=70, Omega_M=0.3, Omega_Lambda=0.7).",
@@ -993,6 +1112,36 @@ MCP_TOOLS = [
                 }
             },
             "required": ["z"]
+        },
+        "annotations": {"readOnlyHint": True}
+    },
+    {
+        "name": "cone_search",
+        "title": "Spatial Cone Search",
+        "description": "Spatial cone search for supernovae within an angular radius around celestial coordinates (Right Ascension & Declination in degrees).",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "ra": {
+                    "type": "number",
+                    "description": "Right Ascension in decimal degrees (0 to 360)"
+                },
+                "dec": {
+                    "type": "number",
+                    "description": "Declination in decimal degrees (-90 to +90)"
+                },
+                "radius_arcmin": {
+                    "type": "number",
+                    "description": "Search radius in arcminutes (default: 5.0, max: 60.0)",
+                    "default": 5.0
+                },
+                "limit": {
+                    "type": "integer",
+                    "description": "Maximum results to return (default: 25)",
+                    "default": 25
+                }
+            },
+            "required": ["ra", "dec"]
         },
         "annotations": {"readOnlyHint": True}
     },
@@ -1023,6 +1172,43 @@ MCP_TOOLS = [
                 }
             },
             "required": ["ra_deg", "dec_deg"]
+        },
+        "annotations": {"readOnlyHint": True}
+    },
+    {
+        "name": "search_by_type",
+        "title": "Search by Astrophysical Type",
+        "description": "Find supernovae matching a specific astrophysical classification type (e.g. 'Ia', 'II-P', 'IIn', 'SLSN-I', 'Ia-91T', 'TDE').",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "type": {
+                    "type": "string",
+                    "description": "Astrophysical classification type (e.g. Ia, II-P, IIn, SLSN)"
+                },
+                "limit": {
+                    "type": "integer",
+                    "description": "Maximum results to return (default: 25, max: 100)",
+                    "default": 25
+                }
+            },
+            "required": ["type"]
+        },
+        "annotations": {"readOnlyHint": True}
+    },
+    {
+        "name": "get_recent_discoveries",
+        "title": "Get Recent Discoveries",
+        "description": "Fetch latest discovered supernovae and active transient alerts from the last 30 days, sorted by discovery date.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "limit": {
+                    "type": "integer",
+                    "description": "Maximum number of recent transients to return (default: 25)",
+                    "default": 25
+                }
+            }
         },
         "annotations": {"readOnlyHint": True}
     }

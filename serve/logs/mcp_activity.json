@@ -1,0 +1,131 @@
+[
+  {
+    "timestamp": "2026-09-28 09:56:23 UTC",
+    "tool": "search_supernova_forums",
+    "agent": "TestRunner",
+    "args": {
+      "sort_by": "most_comments",
+      "limit": 3
+    },
+    "duration_ms": 35.2,
+    "status": "success",
+    "ip": "127.0.0.1",
+    "country": "US",
+    "source": "json-rpc"
+  },
+  {
+    "timestamp": "2026-09-28 09:56:23 UTC",
+    "tool": "search_supernova_forums",
+    "agent": "TestRunner",
+    "args": {
+      "sort_by": "most_users",
+      "limit": 3
+    },
+    "duration_ms": 32.1,
+    "status": "success",
+    "ip": "127.0.0.1",
+    "country": "US",
+    "source": "json-rpc"
+  },
+  {
+    "timestamp": "2026-09-28 09:56:23 UTC",
+    "tool": "search_supernova_forums",
+    "agent": "April11OECDScout",
+    "args": {
+      "agent_name": "April11OECDScout",
+      "limit": 3
+    },
+    "duration_ms": 32.3,
+    "status": "success",
+    "ip": "127.0.0.1",
+    "country": "US",
+    "source": "json-rpc"
+  },
+  {
+    "timestamp": "2026-09-28 09:56:23 UTC",
+    "tool": "get_supernova_forum",
+    "agent": "TestRunner",
+    "args": {
+      "target_event": "SN2023IXF",
+      "limit": 3
+    },
+    "duration_ms": 27.9,
+    "status": "success",
+    "ip": "127.0.0.1",
+    "country": "US",
+    "source": "json-rpc"
+  },
+  {
+    "timestamp": "2026-09-28 09:56:40 UTC",
+    "tool": "search_supernova_forums",
+    "agent": "Python Script",
+    "args": {
+      "sort_by": "most_users",
+      "limit": 2
+    },
+    "duration_ms": 39.4,
+    "status": "success",
+    "ip": "127.0.0.1",
+    "country": "",
+    "source": "json-rpc"
+  },
+  {
+    "timestamp": "2026-09-28 21:32:35 UTC",
+    "tool": "search_supernovae",
+    "agent": "AI Agent",
+    "args": {
+      "query": "2023ixf",
+      "limit": 2
+    },
+    "duration_ms": 51.5,
+    "status": "success",
+    "ip": "127.0.0.1",
+    "country": "US",
+    "error": "",
+    "source": "json-rpc"
+  },
+  {
+    "timestamp": "2026-09-28 21:32:35 UTC",
+    "tool": "get_supernova_data",
+    "agent": "AI Agent",
+    "args": {
+      "name": "SN2023ixf"
+    },
+    "duration_ms": 1.9,
+    "status": "success",
+    "ip": "127.0.0.1",
+    "country": "US",
+    "error": "",
+    "source": "json-rpc"
+  },
+  {
+    "timestamp": "2026-09-28 21:32:36 UTC",
+    "tool": "cone_search",
+    "agent": "AI Agent",
+    "args": {
+      "ra": 210.91,
+      "dec": 54.31,
+      "radius_arcmin": 10.0
+    },
+    "duration_ms": 1374.2,
+    "status": "success",
+    "ip": "127.0.0.1",
+    "country": "US",
+    "error": "",
+    "source": "json-rpc"
+  },
+  {
+    "timestamp": "2026-09-28 21:32:36 UTC",
+    "tool": "get_spectrum",
+    "agent": "AI Agent",
+    "args": {
+      "name": "SN2023ixf"
+    },
+    "duration_ms": 1.9,
+    "status": "success",
+    "ip": "127.0.0.1",
+    "country": "US",
+    "error": "",
+    "source": "json-rpc"
+  }
+]
