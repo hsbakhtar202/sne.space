@@ -395,13 +395,52 @@ def _catalog_csv_bytes() -> bytes:
     return data
 
 
-def _photometry_to_csv(photo_list: list[dict]) -> bytes:
-    cols = ["time", "magnitude", "e_magnitude", "band", "telescope", "instrument", "source"]
+def _parse_coord_str(val: Any) -> float | None:
+    if val is None:
+        return None
+    s = str(val).strip()
+    if not s or s == "—":
+        return None
+    try:
+        return float(s)
+    except ValueError:
+        pass
+    parts = s.split(":")
+    if len(parts) == 3:
+        try:
+            sign = -1.0 if s.startswith("-") else 1.0
+            p0 = abs(float(parts[0]))
+            p1 = float(parts[1])
+            p2 = float(parts[2])
+            return sign * (p0 + p1 / 60.0 + p2 / 3600.0)
+        except Exception:
+            return None
+    return None
+
+
+def _parse_ra(val: Any) -> float | None:
+    deg = _parse_coord_str(val)
+    if deg is not None and ":" in str(val) and deg < 24.0:
+        deg *= 15.0
+    return deg
+
+
+def _parse_dec(val: Any) -> float | None:
+    return _parse_coord_str(val)
+
+
+def _photometry_to_csv(photo_list: list[dict], selected_cols: list[str] | None = None, event_name: str | None = None) -> bytes:
+    cols = selected_cols if selected_cols else ["time", "magnitude", "e_magnitude", "band", "telescope", "instrument", "source"]
     out = io.StringIO()
     writer = csv.writer(out)
-    writer.writerow(cols)
-    for p in photo_list:
-        writer.writerow([p.get(c, "") for c in cols])
+    if event_name:
+        writer.writerow(["event"] + cols)
+        for p in photo_list:
+            writer.writerow([event_name] + [p.get(c, "") for c in cols])
+    else:
+        writer.writerow(cols)
+        for p in photo_list:
+            writer.writerow([p.get(c, "") for c in cols])
     return out.getvalue().encode("utf-8")
 
 
@@ -1047,33 +1086,49 @@ class Handler(SimpleHTTPRequestHandler):
             self._send(200, "application/json; charset=utf-8", json.dumps(resp, indent=2).encode("utf-8"))
             return
 
-        # IVOA Simple Cone Search: /api/cone, /cone
-        if path in ("/api/cone", "/cone"):
+        # IVOA Simple Cone Search & Legacy OACAPI Catalog Cone Search: /api/cone, /cone, /catalog?ra=...
+        has_cone_coords = ("ra" in query or "RA" in query) and ("dec" in query or "DEC" in query)
+        is_cone_path = path in ("/api/cone", "/cone") or (has_cone_coords and path in ("/catalog", "/catalog.json", "/catalog.csv", "/catalog/sne", "/catalog/all", "/api/catalog"))
+        if is_cone_path:
             if cone_search is not None:
-                try:
-                    ra_val = float(query.get("RA", query.get("ra", [""]))[0])
-                    dec_val = float(query.get("DEC", query.get("dec", [""]))[0])
-                    if "SR" in query or "sr" in query:
-                        sr_val = float(query.get("SR", query.get("sr", ["0.1"]))[0])
-                    elif "radius_arcmin" in query or "radius" in query:
-                        sr_val = float(query.get("radius_arcmin", query.get("radius", ["6"]))[0]) / 60.0
-                    elif "radius_arcsec" in query:
-                        sr_val = float(query.get("radius_arcsec", ["360"])[0]) / 3600.0
-                    else:
-                        sr_val = 0.1
-                except (ValueError, IndexError):
-                    self._send(400, "application/json; charset=utf-8", json.dumps({"error": "Missing or invalid RA, DEC, or radius parameters. Example: /api/cone?ra=210.77&dec=54.27&radius=5.0"}).encode("utf-8"))
+                ra_raw = query.get("RA", query.get("ra", [""]))[0]
+                dec_raw = query.get("DEC", query.get("dec", [""]))[0]
+                ra_val = _parse_ra(ra_raw)
+                dec_val = _parse_dec(dec_raw)
+                if ra_val is None or dec_val is None:
+                    self._send(400, "application/json; charset=utf-8", json.dumps({"error": f"Invalid RA or DEC coordinates: ra='{ra_raw}', dec='{dec_raw}'"}).encode("utf-8"))
                     return
 
+                if "SR" in query or "sr" in query:
+                    sr_val = float(query.get("SR", query.get("sr", ["0.1"]))[0])
+                elif "radius_arcmin" in query:
+                    sr_val = float(query.get("radius_arcmin")[0]) / 60.0
+                elif "radius_arcsec" in query:
+                    sr_val = float(query.get("radius_arcsec")[0]) / 3600.0
+                elif "radius" in query:
+                    # OACAPI specification: radius parameter is in arcseconds
+                    r_val = float(query.get("radius")[0])
+                    sr_val = r_val / 3600.0 if r_val > 0 else 0.1
+                else:
+                    sr_val = 0.1
+
                 hits = cone_search(ra_val, dec_val, sr_val)
-                req_fmt = query.get("format", ["votable" if path == "/cone" and "format" not in query else "json"])[0].lower()
+                req_fmt = query.get("format", ["votable" if path == "/cone" and "format" not in query else ("csv" if (path.endswith(".csv") or fmt == "csv") else "json")])[0].lower()
                 if req_fmt in ("votable", "xml"):
                     body = format_votable(hits, ra_val, dec_val, sr_val).encode("utf-8")
                     self._send(200, "application/x-votable+xml; charset=utf-8", body)
                     return
+                elif req_fmt in ("csv", "tsv"):
+                    out_c = io.StringIO()
+                    writer = csv.writer(out_c, delimiter=("\t" if req_fmt == "tsv" else ","))
+                    writer.writerow(["name", "type", "ra", "dec", "separation_arcsec", "redshift", "maxappmag", "discoverdate", "host"])
+                    for h in hits:
+                        writer.writerow([h.get("name", ""), h.get("type", ""), h.get("ra", ""), h.get("dec", ""), h.get("separation_arcsec", ""), h.get("redshift", ""), h.get("maxappmag", ""), h.get("discoverdate", ""), h.get("host", "")])
+                    self._send(200, f"text/{req_fmt}; charset=utf-8", out_c.getvalue().encode("utf-8"))
+                    return
                 else:
                     body = json.dumps({
-                        "query": {"ra": ra_val, "dec": dec_val, "sr_deg": sr_val, "radius_arcmin": sr_val * 60.0},
+                        "query": {"ra": ra_val, "dec": dec_val, "sr_deg": sr_val, "radius_arcsec": round(sr_val * 3600.0, 2)},
                         "count": len(hits),
                         "results": hits
                     }, indent=2).encode("utf-8")
@@ -1081,7 +1136,7 @@ class Handler(SimpleHTTPRequestHandler):
                     return
 
         # 1. Global Catalog API endpoints (OACAPI compatible) and catalog.min.json static serve
-        if path in ("/catalog", "/catalog.json", "/catalog.csv", "/api/catalog", "/astrocats/astrocats/supernovae/output/catalog.min.json"):
+        if path in ("/catalog", "/catalog.json", "/catalog.csv", "/catalog/sne", "/catalog/all", "/api/catalog", "/astrocats/astrocats/supernovae/output/catalog.min.json"):
             if fmt in ("csv", "tsv") or path.endswith(".csv"):
                 data = _catalog_csv_bytes()
                 self._send(200, "text/csv; charset=utf-8", data, {
@@ -1116,7 +1171,7 @@ class Handler(SimpleHTTPRequestHandler):
             return
 
         # 2. OACAPI Event Quantity Endpoints: /{event}/{quantity} or /api/{event}/{quantity}
-        # e.g. /SN2023ixf/photometry, /SN2023ixf/spectra, /SN2023ixf/spectra/data
+        # e.g. /SN2023ixf/photometry, /SN2023ixf/spectra, /SN2023ixf/spectra/data, /SN2014J+SN2015F/photometry/magnitude+band
         parts = [p for p in path.strip("/").split("/") if p]
         if parts and parts[0] in ("api", "sne"):
             parts = parts[1:]
@@ -1128,42 +1183,66 @@ class Handler(SimpleHTTPRequestHandler):
         }
 
         if len(parts) >= 2 and parts[1] in known_quantities:
-            raw_event, quantity = parts[0], parts[1]
+            raw_event_str, quantity = parts[0], parts[1]
             sub_attr = parts[2] if len(parts) > 2 else None
-            canon, fp = _find_event_file(raw_event)
-            if fp and fp.is_file():
-                try:
-                    ev_data = json.loads(fp.read_text(encoding="utf-8"))
-                    ev_key = list(ev_data.keys())[0]
-                    ev_obj = ev_data[ev_key]
-                    q_data = ev_obj.get(quantity, [])
+            selected_cols = [c.strip() for c in sub_attr.split("+") if c.strip()] if (sub_attr and sub_attr != "data") else None
 
-                    # Special case: spectra/data CSV
-                    if quantity == "spectra" and sub_attr == "data":
-                        out_lines = ["wavelength,flux"]
-                        for sp in q_data:
-                            for row in sp.get("data", []):
-                                out_lines.append(",".join(map(str, row)))
-                        data_csv = "\n".join(out_lines).encode("utf-8")
-                        self._send(200, "text/csv; charset=utf-8", data_csv)
-                        return
+            raw_events = [e.strip() for e in raw_event_str.split("+") if e.strip()]
+            combined_resp = {}
+            combined_csv_rows = []
 
-                    # Photometry CSV
-                    if quantity == "photometry" and (fmt in ("csv", "tsv") or path.endswith(".csv")):
-                        csv_data = _photometry_to_csv(q_data)
-                        self._send(200, "text/csv; charset=utf-8", csv_data, {
-                            "Content-Disposition": f'inline; filename="{canon}_{quantity}.csv"'
-                        })
-                        return
+            for raw_event in raw_events:
+                canon, fp = _find_event_file(raw_event)
+                if fp and fp.is_file():
+                    try:
+                        ev_data = json.loads(fp.read_text(encoding="utf-8"))
+                        ev_key = list(ev_data.keys())[0]
+                        ev_obj = ev_data[ev_key]
+                        q_data = ev_obj.get(quantity, [])
 
-                    resp = json.dumps({canon: {quantity: q_data}}, indent=2).encode("utf-8")
-                    self._send(200, "application/json; charset=utf-8", resp)
+                        if selected_cols:
+                            q_data = [{k: row[k] for k in selected_cols if k in row} for row in q_data]
+
+                        combined_resp[canon or raw_event] = {quantity: q_data}
+
+                        # Special case: spectra/data CSV
+                        if quantity == "spectra" and sub_attr == "data":
+                            for sp in q_data:
+                                for row in sp.get("data", []):
+                                    combined_csv_rows.append(",".join(map(str, row)))
+
+                    except Exception:
+                        pass
+
+            if combined_resp:
+                # Spectra data CSV
+                if quantity == "spectra" and sub_attr == "data":
+                    out_lines = ["wavelength,flux"] + combined_csv_rows
+                    self._send(200, "text/csv; charset=utf-8", "\n".join(out_lines).encode("utf-8"))
                     return
-                except Exception as e:
-                    self._send(500, "application/json", json.dumps({"error": str(e)}).encode())
+
+                # Photometry CSV
+                if quantity == "photometry" and (fmt in ("csv", "tsv") or path.endswith(".csv")):
+                    out_csv = io.StringIO()
+                    writer = csv.writer(out_csv)
+                    cols = selected_cols if selected_cols else ["time", "magnitude", "e_magnitude", "band", "telescope", "instrument", "source"]
+                    has_multi = len(combined_resp) > 1
+                    header = (["event"] + cols) if has_multi else cols
+                    writer.writerow(header)
+                    for ev_k, ev_v in combined_resp.items():
+                        for row in ev_v.get(quantity, []):
+                            line = ([ev_k] if has_multi else []) + [row.get(c, "") for c in cols]
+                            writer.writerow(line)
+                    fn = f"{raw_event_str}_{quantity}.csv"
+                    self._send(200, "text/csv; charset=utf-8", out_csv.getvalue().encode("utf-8"), {
+                        "Content-Disposition": f'inline; filename="{fn}"'
+                    })
                     return
+
+                self._send(200, "application/json; charset=utf-8", json.dumps(combined_resp, indent=2).encode("utf-8"))
+                return
             else:
-                self._send(404, "application/json", json.dumps({"error": f"event '{raw_event}' not found"}).encode())
+                self._send(404, "application/json", json.dumps({"error": f"event(s) '{raw_event_str}' not found"}).encode())
                 return
 
         # 3. Direct Event JSON download (e.g. /SN2023ixf.json, /sne/SN2023ixf.json, /api/SN2023ixf)
