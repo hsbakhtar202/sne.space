@@ -9,19 +9,27 @@
  * License: GPL2
  */
 
-$tt = explode("\n", file_get_contents(__DIR__ . '/tt.dat'));
-$stem = trim($tt[0]);
-$modu = trim($tt[1]);
-$subd = trim($tt[2]);
-$ghpr = trim($tt[3]);
-$invi = '"' . implode('","', explode(",", trim($tt[4]))) . '"';
-$nowr = '"' . implode('","', explode(",", trim($tt[5]))) . '"';
-$nwnm = '"' . implode('","', explode(",", trim($tt[6]))) . '"';
-$revo = '"' . implode('","', explode(",", trim($tt[7]))) . '"';
-$ocol = trim($tt[8]);
-$plen = trim($tt[9]);
-$shrt = trim($tt[10]);
-$sing = trim($tt[11]);
+$ttFile = __DIR__ . '/tt.dat';
+if (!is_file($ttFile)) {
+	$ttFile = __DIR__ . '/tt.sne.dat';
+}
+$ttRaw = is_file($ttFile) ? file_get_contents($ttFile) : '';
+if (empty($ttRaw)) {
+	$ttRaw = "sne\nsupernovae\nsne\nsne\nalias,maxdate,velocity,maxabsmag,masses,hostra,hostdec,hostoffsetang,hostoffsetdist,references,instruments,ebv,lumdist,altitude,azimuth,airmass,skybrightness,discoverer\nmaxdate,discoverdate\ndownload,spectralink,photolink,radiolink,xraylink\nphotolink,spectralink,radiolink,xraylink\nphotolink\n10,50,250\nSNe\nSupernova";
+}
+$tt = explode("\n", $ttRaw);
+$stem = trim($tt[0] ?? 'sne');
+$modu = trim($tt[1] ?? 'supernovae');
+$subd = trim($tt[2] ?? 'sne');
+$ghpr = trim($tt[3] ?? 'sne');
+$invi = '"' . implode('","', explode(",", trim($tt[4] ?? ''))) . '"';
+$nowr = '"' . implode('","', explode(",", trim($tt[5] ?? ''))) . '"';
+$nwnm = '"' . implode('","', explode(",", trim($tt[6] ?? ''))) . '"';
+$revo = '"' . implode('","', explode(",", trim($tt[7] ?? ''))) . '"';
+$ocol = trim($tt[8] ?? 'photolink');
+$plen = trim($tt[9] ?? '10,50,250');
+$shrt = trim($tt[10] ?? 'SNe');
+$sing = trim($tt[11] ?? 'Supernova');
 $outp = 'astrocats/astrocats/' . $modu . '/output/';
 
 function datatables_functions() {
@@ -1052,6 +1060,73 @@ function transient_catalog($bones = false) {
 	}
 	if (is_file($tpl)) {
 		readfile($tpl);
+	} else {
+?>
+<table id="example" class="display" cellspacing="0" width="100%">
+	<thead>
+		<tr>
+			<th class="check" title=""></th>
+			<th class="name" title="Name (IAU name preferred)">Name</th>
+			<th class="alias" title="Aliases">Aliases</th>
+			<th class="discoverdate" title="Discovery Date (year-month-day)">Disc. Date</th>
+			<th class="maxdate" title="Date of Maximum (year-month-day)">Max Date</th>
+			<th class="maxappmag" title="Maximum apparent AB magnitude"><em>m</em><sub>max</sub></th>
+			<th class="maxabsmag" title="Maximum absolute AB magnitude"><em>M</em><sub>max</sub></th>
+			<th class="host" title="Host Name">Host Name</th>
+			<th class="ra" title="Supernova J2000 Right Ascension (h:m:s)">R.A.</th>
+			<th class="dec" title="Supernova J2000 Declination (d:m:s)">Dec.</th>
+			<th class="hostra" title="Host J2000 Right Ascension (h:m:s)">Host R.A.</th>
+			<th class="hostdec" title="Host J2000 Declination (d:m:s)">Host Dec.</th>
+			<th class="hostoffsetang" title="Host Offset (Arcseconds)">Host Offset (")</th>
+			<th class="hostoffsetdist" title="Host Offset (kpc)">Host Offset (kpc)</th>
+			<th class="instruments" title="List of Instruments and Bands">Instruments/Bands</th>
+			<th class="redshift" title="Redshift"><em>z</em></th>
+			<th class="velocity" title="Heliocentric velocity (km/s)"><em>v</em><sub>&#9737;</sub> (km/s)</th>
+			<th class="lumdist" title="Luminosity distance (Mpc)"><em>d</em><sub>L</sub> (Mpc)</th>
+			<th class="claimedtype" title="Claimed Type">Type</th>
+			<th class="ebv" title="Milky Way Reddening">E(B-V)</th>
+			<th class="photolink" title="Photometry">Phot.</th>
+			<th class="spectralink" title="Spectra">Spec.</th>
+			<th class="radiolink" title="Radio">Radio</th>
+			<th class="xraylink" title="X-rays">X-ray</th>
+			<th class="references" title="Bibcodes of references with most data on event">References</th>
+			<th class="download" title="Download and edit data">Data</th>
+			<th class="responsive" title=""></th>
+		</tr>
+	</thead>
+	<tfoot>
+		<tr>
+			<th class="check" title=""></th>
+			<th class="name" title="Name (IAU name preferred)">Name</th>
+			<th class="alias" title="Aliases">Aliases</th>
+			<th class="discoverdate" title="Discovery Date (year-month-day)">Disc. Date</th>
+			<th class="maxdate" title="Date of Maximum (year-month-day)">Max Date</th>
+			<th class="maxappmag" title="Maximum apparent AB magnitude"><em>m</em><sub>max</sub></th>
+			<th class="maxabsmag" title="Maximum absolute AB magnitude"><em>M</em><sub>max</sub></th>
+			<th class="host" title="Host Name">Host Name</th>
+			<th class="ra" title="Supernova J2000 Right Ascension (h:m:s)">R.A.</th>
+			<th class="dec" title="Supernova J2000 Declination (d:m:s)">Dec.</th>
+			<th class="hostra" title="Host J2000 Right Ascension (h:m:s)">Host R.A.</th>
+			<th class="hostdec" title="Host J2000 Declination (d:m:s)">Host Dec.</th>
+			<th class="hostoffsetang" title="Host Offset (Arcseconds)">Host Offset (")</th>
+			<th class="hostoffsetdist" title="Host Offset (kpc)">Host Offset (kpc)</th>
+			<th class="instruments" title="List of Instruments and Bands">Instruments/Bands</th>
+			<th class="redshift" title="Redshift"><em>z</em></th>
+			<th class="velocity" title="Heliocentric velocity (km/s)"><em>v</em><sub>&#9737;</sub> (km/s)</th>
+			<th class="lumdist" title="Luminosity distance (Mpc)"><em>d</em><sub>L</sub> (Mpc)</th>
+			<th class="claimedtype" title="Claimed Type">Type</th>
+			<th class="ebv" title="Milky Way Reddening">E(B-V)</th>
+			<th class="photolink" title="Photometry">Phot.</th>
+			<th class="spectralink" title="Spectra">Spec.</th>
+			<th class="radiolink" title="Radio">Radio</th>
+			<th class="xraylink" title="X-rays">X-ray</th>
+			<th class="references" title="Bibcodes of references with most data on event">References</th>
+			<th class="download" title="Download and edit data">Data</th>
+			<th class="responsive" title=""></th>
+		</tr>
+	</tfoot>
+</table>
+<?php
 	}
 ?>
 	<script>

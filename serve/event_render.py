@@ -2525,7 +2525,7 @@ def render_pro_cockpit(name: str, meta: dict, entered: str | None = None, legacy
 
     function renderLightCurve() {{
       if (!PHOTO_DATA || PHOTO_DATA.length === 0) {{
-        document.getElementById('plot-lc').innerHTML = '<p style="color:#94a3b8;padding:2rem;text-align:center">No calibrated photometry points available.</p>';
+        document.getElementById('plot-lc').innerHTML = '<div style="color:#94a3b8;padding:2.5rem;text-align:center;line-height:1.6;"><div style="font-size:1.8rem;margin-bottom:0.5rem;">📉</div><div style="font-weight:600;color:#e2e8f0;margin-bottom:0.35rem;font-size:1rem;">Photometric Time-Series Pending Archive Ingestion</div><div style="font-size:0.85rem;color:#64748b;max-width:480px;margin:0 auto;">This transient has cataloged peak brightness but full multi-epoch calibrated light curves have not been downlinked to the open archives yet. Check upstream brokers or literature citations below.</div></div>';
         return;
       }}
       // Group by band

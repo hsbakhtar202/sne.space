@@ -660,6 +660,45 @@ def _not_found_page(name: str) -> bytes:
     return html.encode("utf-8")
 
 
+_CATALOG_LOOKUP_LOCK = threading.Lock()
+_CATALOG_LOOKUP: dict[str, dict] | None = None
+
+
+def _get_catalog_entry(raw_name: str) -> dict | None:
+    """Fast indexed lookup of summary metadata from catalog.min.json for all 110,000+ supernovae."""
+    global _CATALOG_LOOKUP
+    if _CATALOG_LOOKUP is None:
+        with _CATALOG_LOOKUP_LOCK:
+            if _CATALOG_LOOKUP is None:
+                cat_file = WWW / "astrocats/astrocats/supernovae/output/catalog.min.json"
+                cat_gz = WWW / "astrocats/astrocats/supernovae/output/catalog.min.json.gz"
+                lookup = {}
+                raw_data = None
+                try:
+                    if cat_file.is_file():
+                        raw_data = cat_file.read_bytes()
+                    elif cat_gz.is_file():
+                        raw_data = gzip.decompress(cat_gz.read_bytes())
+                    if raw_data:
+                        items = json.loads(raw_data)
+                        if isinstance(items, list):
+                            for item in items:
+                                nm = item.get("name")
+                                if nm:
+                                    lookup[nm.lower()] = item
+                                    lookup[nm.lower().replace(" ", "")] = item
+                                    for a in item.get("alias", []):
+                                        aval = a.get("value") if isinstance(a, dict) else str(a)
+                                        if aval:
+                                            lookup[aval.lower()] = item
+                                            lookup[aval.lower().replace(" ", "")] = item
+                except Exception:
+                    pass
+                _CATALOG_LOOKUP = lookup
+    target = _normalize_event_name(raw_name).lower()
+    return _CATALOG_LOOKUP.get(target) or _CATALOG_LOOKUP.get(target.replace(" ", ""))
+
+
 def _event_page(name: str, entered: str | None = None, is_story: bool = False, fp: Path | None = None) -> tuple[int, bytes]:
     fn = name.replace("/", "_")
     legacy_exists = _html_exists(fn)
@@ -675,7 +714,11 @@ def _event_page(name: str, entered: str | None = None, is_story: bool = False, f
         except Exception:
             meta = {}
     if not meta or not (meta.get("ra") or meta.get("photometry") or meta.get("claimedtype") or meta.get("dec")):
-        return 404, _not_found_page(entered or name)
+        cat_meta = _get_catalog_entry(entered or name)
+        if cat_meta:
+            meta = cat_meta
+        else:
+            return 404, _not_found_page(entered or name)
     if is_story and render_story_mode is not None:
         return 200, render_story_mode(name, meta, entered).encode("utf-8")
     if render_pro_cockpit is not None:
