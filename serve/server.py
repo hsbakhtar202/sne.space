@@ -7,11 +7,13 @@ Dynamic pages (/ and /sne|/event) are rendered via PHP CLI against www/.
 """
 from __future__ import annotations
 
+import base64
 import csv
 import collections
 import datetime
 from functools import lru_cache
 import gzip
+import hashlib
 import html
 import io
 import json
@@ -1964,6 +1966,7 @@ def _render_logs_page(current_ip: str = "", current_client: dict | None = None) 
       <a href="/logs?mcp=1" class="btn" target="_blank">⚡ MCP Tool Log</a>
       <a href="/api/stats" class="btn" target="_blank">📊 JSON Telemetry</a>
       <a href="/" class="btn">🔭 Catalog</a>
+      <button onclick="document.cookie='sne_logs_auth=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;'; window.location.reload();" class="btn" style="border-color:#ef4444;color:#fca5a5;">🔒 Lock</button>
     </div>
   </div>
 
@@ -2592,6 +2595,184 @@ class Handler(SimpleHTTPRequestHandler):
             "is_api": is_api,
         }
 
+    def _check_logs_auth(self, query: dict) -> bool:
+        """Verify authentication for the logs dashboard.
+
+        Supports:
+        1. Query param: ?auth=monster104 or ?password=monster104 or ?key=monster104
+        2. HTTP Cookie: sne_logs_auth=monster104 (or session token)
+        3. HTTP Basic Authorization header: password 'monster104'
+        """
+        # 1. Check query parameters
+        p_param = query.get("auth", query.get("password", query.get("key", [""])))[0].strip()
+        if p_param == "monster104":
+            return True
+
+        # 2. Check Cookie header
+        cookie_header = self.headers.get("Cookie", "")
+        if "sne_logs_auth=monster104" in cookie_header:
+            return True
+
+        # 3. Check HTTP Basic Authorization header
+        auth_header = self.headers.get("Authorization", "")
+        if auth_header.startswith("Basic "):
+            try:
+                raw_b64 = auth_header[6:].strip()
+                decoded = base64.b64decode(raw_b64).decode("utf-8", errors="replace")
+                # format is username:password
+                if ":" in decoded:
+                    _, pwd = decoded.split(":", 1)
+                    if pwd.strip() == "monster104":
+                        return True
+                elif decoded.strip() == "monster104":
+                    return True
+            except Exception:
+                pass
+
+        return False
+
+    def _render_logs_auth_challenge(self, invalid: bool = False) -> bytes:
+        """Render a sleek login gateway challenge for /logs."""
+        err_msg = '<div style="background:rgba(239,68,68,0.15);border:1px solid #ef4444;color:#fca5a5;padding:0.75rem 1rem;border-radius:8px;font-size:0.88rem;margin-bottom:1.25rem;">❌ Incorrect password. Please try again.</div>' if invalid else ''
+        page = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Protected Access — sne.space Logs</title>
+  <link rel="icon" type="image/webp" href="/assets/img/logo-plain.webp">
+  <style>
+    :root {{
+      --bg: #070a12;
+      --card: #0f172a;
+      --border: #1e293b;
+      --accent: #38bdf8;
+      --text: #f1f5f9;
+      --text-muted: #94a3b8;
+    }}
+    * {{ box-sizing: border-box; }}
+    body {{
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg);
+      background-image: radial-gradient(circle at 50% 20%, rgba(56, 189, 248, 0.08), transparent 45%);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      padding: 1.5rem;
+    }}
+    .auth-card {{
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 2.5rem 2rem;
+      width: 100%;
+      max-width: 420px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      text-align: center;
+    }}
+    .auth-icon {{
+      width: 54px;
+      height: 54px;
+      margin: 0 auto 1.25rem;
+      background: rgba(56, 189, 248, 0.1);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.6rem;
+    }}
+    h1 {{
+      font-size: 1.35rem;
+      font-weight: 700;
+      margin: 0 0 0.5rem;
+      color: #fff;
+    }}
+    p {{
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      margin: 0 0 1.5rem;
+      line-height: 1.5;
+    }}
+    .form-group {{
+      margin-bottom: 1.25rem;
+      text-align: left;
+    }}
+    label {{
+      display: block;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      margin-bottom: 0.4rem;
+    }}
+    input[type="password"] {{
+      width: 100%;
+      background: #090d16;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      font-size: 1rem;
+      color: #fff;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }}
+    input[type="password"]:focus {{
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2);
+    }}
+    .btn-submit {{
+      width: 100%;
+      background: #0284c7;
+      color: #fff;
+      border: none;
+      padding: 0.8rem 1.2rem;
+      font-size: 0.95rem;
+      font-weight: 600;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }}
+    .btn-submit:hover {{
+      background: #0369a1;
+    }}
+    .back-link {{
+      display: inline-block;
+      margin-top: 1.5rem;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      text-decoration: none;
+    }}
+    .back-link:hover {{
+      color: #fff;
+    }}
+  </style>
+</head>
+<body>
+  <div class="auth-card">
+    <div class="auth-icon">🔒</div>
+    <h1>Telemetry &amp; Logs Access</h1>
+    <p>This console contains live HTTP access records and server telemetry. Enter the administrative password to unlock.</p>
+    {err_msg}
+    <form method="POST" action="/logs">
+      <div class="form-group">
+        <label for="pwd">Console Password</label>
+        <input type="password" id="pwd" name="password" placeholder="Enter password..." autofocus required>
+      </div>
+      <button type="submit" class="btn-submit">Authenticate</button>
+    </form>
+    <div>
+      <a href="/" class="back-link">← Return to Public Catalog</a>
+    </div>
+  </div>
+</body>
+</html>"""
+        return page.encode("utf-8")
+
     def do_OPTIONS(self):
         self.send_response(200)
         self.send_header("Access-Control-Allow-Origin", "*")
@@ -2608,6 +2789,32 @@ class Handler(SimpleHTTPRequestHandler):
         parsed = urllib.parse.urlparse(self.path)
         path = urllib.parse.unquote(parsed.path)
         meta = self._get_request_meta()
+
+        # Handle password form submission for /logs
+        if path in ("/logs", "/logs/", "/admin/logs"):
+            try:
+                length = int(self.headers.get("Content-Length", 0))
+                body = self.rfile.read(length) if length > 0 else b""
+                form_data = urllib.parse.parse_qs(body.decode("utf-8", errors="replace"))
+                entered_pwd = form_data.get("password", [""])[0].strip()
+            except Exception:
+                entered_pwd = ""
+
+            if entered_pwd == "monster104":
+                # Valid password: set cookie and redirect with 303 See Other
+                self._send(303, "text/html; charset=utf-8", b"", {
+                    "Location": "/logs",
+                    "Set-Cookie": "sne_logs_auth=monster104; Path=/; HttpOnly; SameSite=Lax",
+                    "Cache-Control": "no-store, no-cache, must-revalidate"
+                })
+                return
+            else:
+                challenge_body = self._render_logs_auth_challenge(invalid=True)
+                self._send(401, "text/html; charset=utf-8", challenge_body, {
+                    "WWW-Authenticate": 'Basic realm="sne.space Logs Console"',
+                    "Cache-Control": "no-store, no-cache, must-revalidate"
+                })
+                return
 
         # 1. Direct MCP Agent Feedback & Like: POST /api/mcp/feedback or POST /api/forums/{event}
         if path.startswith("/api/forums/"):
@@ -2759,6 +2966,14 @@ class Handler(SimpleHTTPRequestHandler):
 
         # Real-time API Telemetry & Stats Dashboard: /api/stats, /api/telemetry
         if path in ("/api/stats", "/api/telemetry"):
+            # If the client is asking for full internal telemetry or polling stats, enforce auth if requested from outside logs
+            # or allow if authenticated
+            if not self._check_logs_auth(query):
+                self._send(401, "application/json; charset=utf-8", b'{"error":"Unauthorized. Access requires password."}', {
+                    "WWW-Authenticate": 'Basic realm="sne.space Logs Console"',
+                    "Cache-Control": "no-store, no-cache, must-revalidate"
+                })
+                return
             with _API_STATS_LOCK:
                 ip_summary_list = []
                 for ip_key, s in sorted(_API_STATS["ip_stats"].items(), key=lambda item: item[1]["count"], reverse=True)[:50]:
@@ -2811,6 +3026,16 @@ class Handler(SimpleHTTPRequestHandler):
                 }
             self._send(200, "application/json; charset=utf-8", json.dumps(resp, indent=2).encode("utf-8"), {"Cache-Control": "no-cache"})
             return
+
+        # Check Authentication for Logs console and administrative downloads
+        if path in ("/logs", "/logs/", "/admin/logs", "/logs/mcp", "/api/mcp/activity"):
+            if not self._check_logs_auth(query):
+                challenge_body = self._render_logs_auth_challenge()
+                self._send(401, "text/html; charset=utf-8", challenge_body, {
+                    "WWW-Authenticate": 'Basic realm="sne.space Logs Console"',
+                    "Cache-Control": "no-store, no-cache, must-revalidate"
+                })
+                return
 
         # Real-time Web Log Viewer & Download: /logs, /logs/, /admin/logs, /logs/mcp
         if path in ("/logs", "/logs/", "/admin/logs", "/logs/mcp", "/api/mcp/activity"):

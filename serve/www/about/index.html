@@ -1,38 +1,507 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-P1SCVZ0V7T"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-
-  gtag('config', 'G-P1SCVZ0V7T');
-</script>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>About — Open Supernova Catalog</title>
-<link rel="stylesheet" href="/assets/ia.css">
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-P1SCVZ0V7T"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-P1SCVZ0V7T');
+  </script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>About the Open Supernova Catalog (sne.space)</title>
+  <meta name="description" content="Mission, architecture, observational history, and open data ecosystem of the Open Supernova Catalog (sne.space). Indexing 110,000+ explosive transients.">
+  <link rel="icon" type="image/webp" href="/assets/img/logo-plain.webp">
+  <link rel="stylesheet" href="/assets/ia.css">
+  <link rel="ai-catalog" href="/.well-known/ai-catalog.json" type="application/json">
+  <link rel="ard" href="/.well-known/ard.json" type="application/json">
+  <link rel="webmcp-manifest" href="/.well-known/webmcp" type="application/json">
+  <link rel="mcp-manifest" href="/.well-known/mcp.json" type="application/json">
+  <link rel="describedby" href="/llms.txt" type="text/markdown">
+  <style>
+    :root {
+      --bg-dark: #070a12;
+      --card-bg: #0f172a;
+      --card-border: #1e293b;
+      --accent-cyan: #38bdf8;
+      --accent-emerald: #10b981;
+      --accent-amber: #f59e0b;
+      --accent-purple: #c084fc;
+      --text-main: #f1f5f9;
+      --text-dim: #94a3b8;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg-dark);
+      color: var(--text-main);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      line-height: 1.6;
+    }
+    header.cockpit-hdr {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.85rem 1.75rem;
+      background: rgba(7, 10, 18, 0.95);
+      border-bottom: 1px solid var(--card-border);
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      backdrop-filter: blur(12px);
+    }
+    .brand-link {
+      font-size: 1.25rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      color: #fff;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+    .brand-logo-img {
+      height: 38px;
+      width: auto;
+      vertical-align: middle;
+      filter: drop-shadow(0 0 10px rgba(56, 189, 248, 0.4));
+      transition: transform 0.2s ease, filter 0.2s ease;
+    }
+    .brand-logo-img:hover {
+      transform: scale(1.04);
+      filter: drop-shadow(0 0 16px rgba(56, 189, 248, 0.7));
+    }
+    .brand-badge {
+      font-size: 0.65rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      background: rgba(56, 189, 248, 0.15);
+      color: var(--accent-cyan);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+    .hdr-search-form {
+      display: flex;
+      align-items: center;
+      background: rgba(15, 23, 42, 0.75);
+      border: 1px solid var(--card-border);
+      border-radius: 6px;
+      overflow: hidden;
+      max-width: 340px;
+      flex: 1;
+      margin: 0 1.25rem;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .hdr-search-form:focus-within {
+      border-color: var(--accent-cyan);
+      box-shadow: 0 0 12px rgba(56, 189, 248, 0.25);
+    }
+    .hdr-search-form input {
+      background: transparent;
+      border: none;
+      outline: none;
+      color: #f1f5f9;
+      font-size: 0.85rem;
+      padding: 0.35rem 0.65rem;
+      width: 100%;
+    }
+    .hdr-search-form button {
+      background: transparent;
+      border: none;
+      color: var(--text-dim);
+      padding: 0.35rem 0.6rem;
+      cursor: pointer;
+    }
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 1.25rem;
+    }
+    .nav-links a {
+      color: var(--text-dim);
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 500;
+      transition: color 0.15s ease;
+    }
+    .nav-links a:hover, .nav-links a.active {
+      color: #fff;
+    }
+    .about-hero {
+      text-align: center;
+      padding: 4rem 1.5rem 3rem;
+      background: radial-gradient(circle at 50% 20%, rgba(56, 189, 248, 0.12), transparent 70%);
+      border-bottom: 1px solid var(--card-border);
+    }
+    .about-hero h1 {
+      font-size: 2.5rem;
+      font-weight: 800;
+      margin: 0 0 0.8rem;
+      color: #fff;
+      letter-spacing: -0.03em;
+    }
+    .about-hero p {
+      max-width: 720px;
+      margin: 0 auto 1.75rem;
+      color: var(--text-dim);
+      font-size: 1.15rem;
+      line-height: 1.5;
+    }
+    .hero-stats {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 1.5rem;
+      margin-top: 1.5rem;
+    }
+    .stat-pill {
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid var(--card-border);
+      border-radius: 9999px;
+      padding: 0.5rem 1.25rem;
+      font-size: 0.9rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .stat-pill strong {
+      color: var(--accent-cyan);
+    }
+    .container {
+      max-width: 1040px;
+      margin: 0 auto;
+      padding: 3rem 1.5rem 6rem;
+    }
+    .section-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(310px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 3.5rem;
+    }
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 1.75rem;
+      transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+    .card:hover {
+      border-color: rgba(56, 189, 248, 0.4);
+      transform: translateY(-2px);
+    }
+    .card-icon {
+      font-size: 1.8rem;
+      margin-bottom: 0.75rem;
+    }
+    .card h2, .card h3 {
+      font-size: 1.25rem;
+      margin: 0 0 0.65rem;
+      color: #fff;
+    }
+    .card p {
+      font-size: 0.92rem;
+      color: var(--text-dim);
+      margin: 0 0 1rem;
+      line-height: 1.55;
+    }
+    .citation-box {
+      background: #090d16;
+      border: 1px solid #1e293b;
+      border-radius: 10px;
+      padding: 1.5rem;
+      margin: 2rem 0;
+    }
+    .citation-box pre {
+      margin: 0;
+      color: #a5f3fc;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.84rem;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+    .badge-tag {
+      display: inline-block;
+      font-size: 0.75rem;
+      padding: 0.2rem 0.55rem;
+      border-radius: 4px;
+      font-weight: 600;
+      background: rgba(56, 189, 248, 0.1);
+      color: var(--accent-cyan);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+    }
+    .timeline {
+      position: relative;
+      border-left: 2px solid var(--card-border);
+      padding-left: 1.5rem;
+      margin: 2.5rem 0 3.5rem 1rem;
+    }
+    .timeline-item {
+      position: relative;
+      margin-bottom: 2rem;
+    }
+    .timeline-dot {
+      position: absolute;
+      left: -1.95rem;
+      top: 0.25rem;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--accent-cyan);
+      border: 2px solid var(--bg-dark);
+      box-shadow: 0 0 8px var(--accent-cyan);
+    }
+    .timeline-date {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--accent-cyan);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.25rem;
+    }
+    .timeline-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #fff;
+      margin: 0 0 0.4rem;
+    }
+    .timeline-desc {
+      font-size: 0.9rem;
+      color: var(--text-dim);
+      margin: 0;
+    }
+    a.inline-link {
+      color: var(--accent-cyan);
+      text-decoration: none;
+    }
+    a.inline-link:hover {
+      text-decoration: underline;
+    }
+    footer.about-footer {
+      border-top: 1px solid var(--card-border);
+      padding: 2.5rem 1.5rem;
+      text-align: center;
+      font-size: 0.88rem;
+      color: var(--text-dim);
+    }
+  </style>
 </head>
 <body>
-<header class="site">
-  <a class="brand" href="/" title="sne.space — The Open Supernova Catalog"><img src="/assets/img/logo-plain.webp" alt="sne.space" class="brand-logo-ia"><span>Open Supernova Catalog</span></a>
-  <nav>
-    <a href="/">Catalog</a>
-    <a href="/about/">About</a>
-    <a href="/contribute/">Contribute</a>
-    <a href="/download/">Download</a>
-    <a href="/statistics/">Statistics</a>
-    <a href="/bibliography/">Bibliography</a>
-  </nav>
-</header>
-<main>
-  <h1>About</h1>
-  <p>The Open Supernova Catalog (OSC) collects published photometry, spectra, and metadata for supernovae and related transients into a uniform, citable data model.</p>
-  <p>This site rebuild serves the historical public catalog corpus generated by <a href="https://github.com/astrocatalogs/astrocats">AstroCats</a> and the <a href="https://github.com/astrocatalogs/supernovae">supernovae</a> module. Event pages, the Transient Table, and the Open Astronomy Catalog API occupy their original path grammar.</p>
-  <p>Scientific citation: Guillochon et al. 2017, <em>An Open Catalog for Supernova Data</em> (<a href="https://ui.adsabs.harvard.edu/abs/2017ApJ...835...64G">ADS</a>).</p>
-  <p class="note">Informational copy on this page is rewritten for the Step&nbsp;1 rebuild; it is not a verbatim restoration of archived WordPress prose.</p>
-</main>
+
+  <header class="cockpit-hdr">
+    <div style="display:flex;align-items:center;gap:1rem;">
+      <a href="/" class="brand-link" title="sne.space — The Open Supernova Catalog">
+        <img src="/assets/img/logo-color.webp" alt="sne.space" class="brand-logo-img">
+        <span class="brand-badge">Open Supernova Catalog</span>
+      </a>
+    </div>
+
+    <!-- WebMCP Declarative Search Form -->
+    <form class="hdr-search-form" action="/" method="GET" 
+          toolname="search_supernovae" 
+          tool-name="search_supernovae" 
+          toolaction="submit"
+          tool-action="submit"
+          tooldescription="Search 110,000+ supernovae and transients by IAU designation, name, or survey alias" 
+          tool-description="Search 110,000+ supernovae and transients by IAU designation, name, or survey alias" 
+          toolschema='{"type":"object","properties":{"q":{"type":"string","description":"Supernova designation, IAU name, or survey alias"}},"required":["q"]}' 
+          tool-schema='{"type":"object","properties":{"q":{"type":"string","description":"Supernova designation, IAU name, or survey alias"}},"required":["q"]}' 
+          toolautosubmit 
+          tool-autosubmit 
+          role="search"
+          onsubmit="if(event.agentInvoked){console.log('[WebMCP] Agent submit');} event.preventDefault(); var q=this.q.value.trim(); if(q) window.location.href='/sne/'+encodeURIComponent(q)+'/';">
+      <input type="search" name="q" placeholder="Search 110k+ supernovae (e.g. SN 2023ixf)..." 
+             toolparamtitle="supernova_query" 
+             tool-param-title="supernova_query" 
+             toolparamdescription="Supernova name, IAU designation (e.g. SN2023ixf, SN 1987A), or survey alias" 
+             tool-param-description="Supernova name, IAU designation (e.g. SN2023ixf, SN 1987A), or survey alias" 
+             aria-label="Search supernovae" required>
+      <button type="submit" aria-label="Submit Search">🔍</button>
+    </form>
+
+    <!-- WebMCP Declarative Event Dossier Form -->
+    <form class="webmcp-declarative-tool" action="/api/event" method="GET"
+          toolname="get_supernova_data"
+          tool-name="get_supernova_data"
+          toolaction="submit"
+          tool-action="submit"
+          tooldescription="Retrieve complete astrophysical JSON metadata, coordinates, classification, redshift, discovery details, and photometry for a specific supernova"
+          tool-description="Retrieve complete astrophysical JSON metadata, coordinates, classification, redshift, discovery details, and photometry for a specific supernova"
+          toolschema='{"type":"object","properties":{"name":{"type":"string","description":"Supernova designation or IAU name (e.g. SN 2023ixf, SN 1987A, SN 2011fe)"}},"required":["name"]}'
+          tool-schema='{"type":"object","properties":{"name":{"type":"string","description":"Supernova designation or IAU name (e.g. SN 2023ixf, SN 1987A, SN 2011fe)"}},"required":["name"]}'
+          toolautosubmit
+          tool-autosubmit
+          style="display:none;" aria-hidden="true">
+      <input type="text" name="name" toolparamtitle="supernova_name" tool-param-title="supernova_name" toolparamdescription="Supernova name or IAU designation" tool-param-description="Supernova name or IAU designation" required>
+      <button type="submit">Get Dossier</button>
+    </form>
+
+    <!-- WebMCP Declarative Cone Search Form -->
+    <form class="webmcp-declarative-tool" action="/api/cone" method="GET"
+          toolname="cone_search"
+          tool-name="cone_search"
+          toolaction="submit"
+          tool-action="submit"
+          tooldescription="Spatial cone search for supernovae within an angular radius around celestial coordinates (Right Ascension & Declination in degrees)"
+          tool-description="Spatial cone search for supernovae within an angular radius around celestial coordinates (Right Ascension & Declination in degrees)"
+          toolschema='{"type":"object","properties":{"ra":{"type":"number","description":"Right Ascension in decimal degrees (0 to 360)"},"dec":{"type":"number","description":"Declination in decimal degrees (-90 to +90)"},"radius_arcmin":{"type":"number","description":"Search radius in arcminutes (default: 5.0)"}},"required":["ra","dec"]}'
+          tool-schema='{"type":"object","properties":{"ra":{"type":"number","description":"Right Ascension in decimal degrees (0 to 360)"},"dec":{"type":"number","description":"Declination in decimal degrees (-90 to +90)"},"radius_arcmin":{"type":"number","description":"Search radius in arcminutes (default: 5.0)"}},"required":["ra","dec"]}'
+          toolautosubmit
+          tool-autosubmit
+          style="display:none;" aria-hidden="true">
+      <input type="number" step="any" name="ra" toolparamtitle="ra" tool-param-title="ra" toolparamdescription="Right Ascension in decimal degrees" tool-param-description="Right Ascension in decimal degrees" required>
+      <input type="number" step="any" name="dec" toolparamtitle="dec" tool-param-title="dec" toolparamdescription="Declination in decimal degrees" tool-param-description="Declination in decimal degrees" required>
+      <input type="number" step="any" name="radius_arcmin" value="5.0" toolparamtitle="radius_arcmin" tool-param-title="radius_arcmin" toolparamdescription="Search radius in arcminutes" tool-param-description="Search radius in arcminutes">
+      <button type="submit">Cone Search</button>
+    </form>
+
+    <div class="nav-links">
+      <a href="/">Catalog</a>
+      <a href="/radar">Radar</a>
+      <a href="/faq">FAQs</a>
+      <a href="/api/docs">API &amp; Docs</a>
+      <a href="/about/" class="active">About</a>
+      <a href="/download/">Download</a>
+    </div>
+  </header>
+
+  <div class="about-hero">
+    <h1>The Open Supernova Catalog</h1>
+    <p>A community-curated, open-access astrophysical database archiving optical, ultraviolet, and infrared observations of explosive stellar transients from antiquity through the modern survey era.</p>
+    
+    <div class="hero-stats">
+      <div class="stat-pill">✨ <strong>110,222+</strong> Supernovae &amp; Transients</div>
+      <div class="stat-pill">📈 <strong>673,000+</strong> Photometric Epochs</div>
+      <div class="stat-pill">🌈 <strong>20,900+</strong> Calibrated Spectra</div>
+      <div class="stat-pill">🤖 <strong>MCP &amp; WebMCP</strong> AI Native</div>
+    </div>
+  </div>
+
+  <main class="container">
+
+    <!-- Mission & Overview -->
+    <div style="margin-bottom:3rem;">
+      <h2 style="font-size:1.8rem;color:#fff;margin-bottom:0.75rem;">Mission &amp; Philosophy</h2>
+      <p style="font-size:1.05rem;color:var(--text-dim);line-height:1.7;">
+        Before the creation of the Open Supernova Catalog (OSC), transient astronomy suffered from severe data fragmentation. Light curves, spectra, and metadata were scattered across hundreds of research journals, private institutional websites, survey archives, and IAU circulars.
+      </p>
+      <p style="font-size:1.05rem;color:var(--text-dim);line-height:1.7;">
+        Founded by <strong>James Guillochon, Jerod Parrent, Matt Nicholl, and Edo Berger</strong> at the Harvard-Smithsonian Center for Astrophysics, the Open Supernova Catalog was engineered to unite every published piece of supernova data into a unified, extensible schema. <strong style="color:#fff;">sne.space</strong> delivers zero-token, open-access astrophysics to human researchers and autonomous AI agents alike.
+      </p>
+    </div>
+
+    <!-- Core Architecture Pillars -->
+    <h2 style="font-size:1.8rem;color:#fff;margin-bottom:1.5rem;">Core Architecture</h2>
+    <div class="section-grid">
+      <div class="card">
+        <div class="card-icon">⚡</div>
+        <h3>Unified AstroCats Schema</h3>
+        <p>Every transient is serialized in a rigorous, schema-validated JSON format tracking multi-band photometry, spectroscopy, multiple claimed types, host galaxies, coordinates, and exact provenance citations.</p>
+        <span class="badge-tag">JSON Schema v1.0</span>
+      </div>
+
+      <div class="card">
+        <div class="card-icon">🔭</div>
+        <h3>Automated Alert Ingestion</h3>
+        <p>Automated pipelines cross-correlate alerts from the IAU Transient Name Server (TNS), Zwicky Transient Facility (ZTF), ATLAS, Pan-STARRS, ASAS-SN, Gaia, and WISeREP, resolving naming conflicts and deduplicating events.</p>
+        <span class="badge-tag">Multi-Survey Harvester</span>
+      </div>
+
+      <div class="card">
+        <div class="card-icon">🤖</div>
+        <h3>AI Agent Native (MCP &amp; WebMCP)</h3>
+        <p>First-class integration for autonomous LLMs and research agents. Exposes standard Model Context Protocol (MCP) JSON-RPC 2.0 endpoints, in-browser WebMCP declarative forms, and ARD discovery manifests.</p>
+        <span class="badge-tag">W3C / FastMCP</span>
+      </div>
+    </div>
+
+    <!-- Timeline of the Catalog -->
+    <h2 style="font-size:1.8rem;color:#fff;margin-bottom:1rem;">Historical Milestones</h2>
+    <div class="timeline">
+      <div class="timeline-item">
+        <div class="timeline-dot"></div>
+        <div class="timeline-date">2017</div>
+        <div class="timeline-title">Publication of the Open Supernova Catalog Paper</div>
+        <p class="timeline-desc">Published in <em>The Astrophysical Journal</em> (ApJ 835, 64) establishing the open-data standard for transient astronomy and indexing the first 35,000+ objects.</p>
+      </div>
+
+      <div class="timeline-item">
+        <div class="timeline-dot"></div>
+        <div class="timeline-date">2020 – 2024</div>
+        <div class="timeline-title">Wide-Field Survey Surge</div>
+        <p class="timeline-desc">Catalog expands past 80,000 events powered by high-cadence robotic synoptic sky surveys including ZTF, ATLAS, and Pan-STARRS.</p>
+      </div>
+
+      <div class="timeline-item">
+        <div class="timeline-dot"></div>
+        <div class="timeline-date">2026+</div>
+        <div class="timeline-title">Next-Gen Rebuild &amp; Agentic MCP Ecosystem</div>
+        <p class="timeline-desc">Launch of the modern high-concurrency sne.space architecture: Sub-millisecond IVOA 3D Cartesian cone search, interactive Canvas/WebGL light curve plots, Aladin Lite v3 sky viewers, and dual FastMCP / WebMCP agent tools.</p>
+      </div>
+    </div>
+
+    <!-- Citation & Attribution Box -->
+    <h2 style="font-size:1.8rem;color:#fff;margin-bottom:0.75rem;">Scientific Citation &amp; Attribution</h2>
+    <p style="color:var(--text-dim);font-size:0.95rem;">If you use data or tools from the Open Supernova Catalog in academic publications, thesis dissertations, or astronomical research, please cite the primary literature paper:</p>
+
+    <div class="citation-box">
+      <pre>@ARTICLE{2017ApJ...835...64G,
+   author = {{Guillochon}, James and {Parrent}, Jerod and {Kelley}, Luke Zoltan and 
+             {Margutti}, Raffaella and {Nicholl}, Matt and {Villar}, V. Ashley and 
+             {Artale}, Maria Celeste and {Blanchard}, Peter K. and {Bostroem}, K. Azalee and 
+             {Challis}, Peter and {Chornock}, Ryan and {Czekala}, Ian and 
+             {Fox}, Ori D. and {Garnavich}, Peter M. and {Graham}, Melissa L. and 
+             {Hiramatsu}, Daichi and {Kirshner}, Robert P. and {Milisavljevic}, Dan and 
+             {Rest}, Armin and {Veras}, Dimitri and {Berger}, Edo},
+    title = "{An Open Catalog for Supernova Data}",
+  journal = {\apj},
+ keywords = {catalogs, supernovae: general},
+     year = 2017,
+    month = feb,
+   volume = {835},
+   number = {1},
+      eid = {64},
+    pages = {64},
+      doi = {10.3847/1538-4357/835/1/64},
+   adsurl = {https://ui.adsabs.harvard.edu/abs/2017ApJ...835...64G},
+  adsnote = {Provided by the SAO/NASA Astrophysics Data System}
+}</pre>
+    </div>
+
+    <!-- Links & Open Source Resources -->
+    <h2 style="font-size:1.8rem;color:#fff;margin-bottom:1.5rem;">Ecosystem &amp; Repositories</h2>
+    <div class="section-grid">
+      <div class="card">
+        <h3>GitHub Source Code</h3>
+        <p>Explore the complete source code behind the sne.space server, AstroCats data model, and ingestion harvesters on GitHub.</p>
+        <a href="https://github.com/astrocatalogs/astrocats" target="_blank" rel="noopener" class="inline-link">github.com/astrocatalogs/astrocats →</a>
+      </div>
+
+      <div class="card">
+        <h3>Developer APIs</h3>
+        <p>Read the official API documentation for single-event endpoints, bulk downloads, IVOA cone searches, and MCP client setups.</p>
+        <a href="/api/docs" class="inline-link">Browse API &amp; Docs →</a>
+      </div>
+
+      <div class="card">
+        <h3>Frequently Asked Questions</h3>
+        <p>Detailed explanations regarding cosmological distance derivations, apparent magnitudes, spectral classification, and data formats.</p>
+        <a href="/faq" class="inline-link">Explore FAQs →</a>
+      </div>
+    </div>
+
+  </main>
+
+  <footer class="about-footer">
+    <p>Open Supernova Catalog · Published under open scientific data standards · Powered by <a href="/" class="inline-link">sne.space</a></p>
+  </footer>
+
+  <!-- WebMCP Declarative & Imperative Browser Agent Bridge -->
+  <script src="/assets/webmcp.js"></script>
 </body>
 </html>
