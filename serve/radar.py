@@ -559,6 +559,109 @@ def render_radar_page(obs_key: str = "keck", filter_mode: str = "active") -> str
       </tbody>
     </table>
   </main>
+  <!-- WebMCP In-Browser Agentic Tools -->
+  <script>
+  (function() {
+    function registerWebMCP() {
+      var ctx = (window.document && window.document.modelContext) || 
+                (window.navigator && window.navigator.modelContext) || null;
+      if (!ctx || typeof ctx.registerTool !== 'function') return;
+
+      try {
+        ctx.registerTool({
+          name: "search_supernovae",
+          description: "Search 110,000+ supernovae and transients by IAU designation, name, or survey alias (e.g. SN 2023ixf, SN 1987A, SN 2011fe, AT2024nrb)",
+          inputSchema: {
+            type: "object",
+            properties: {
+              query: {
+                type: "string",
+                description: "Supernova designation, IAU name, or survey alias"
+              }
+            },
+            required: ["query"]
+          },
+          annotations: { readOnlyHint: true },
+          execute: async function(args) {
+            var q = (args && (args.query || args.q)) || "";
+            if (!q) return { error: "Missing required query parameter" };
+            return { status: "success", query: q, url: "/sne/" + encodeURIComponent(q.trim()) + "/" };
+          }
+        });
+
+        ctx.registerTool({
+          name: "get_supernova_data",
+          description: "Fetch complete astrophysical metadata, coordinates, classification, redshift, and discovery details for a specific supernova in JSON format",
+          inputSchema: {
+            type: "object",
+            properties: {
+              name: {
+                type: "string",
+                description: "Supernova name or IAU designation (e.g. SN 2023ixf, SN 1987A, SN 2011fe)"
+              }
+            },
+            required: ["name"]
+          },
+          annotations: { readOnlyHint: true },
+          execute: async function(args) {
+            var name = (args && (args.name || args.q)) || "";
+            if (!name) return { error: "Missing required supernova name" };
+            try {
+              var res = await fetch("/sne/" + encodeURIComponent(name.trim()) + ".json");
+              if (!res.ok) return { error: "Supernova not found", name: name };
+              var data = await res.json();
+              return { status: "success", name: name, data: data };
+            } catch (err) {
+              return { error: String(err) };
+            }
+          }
+        });
+
+        ctx.registerTool({
+          name: "cone_search",
+          description: "Spatial cone search for supernovae within an angular radius around celestial coordinates (Right Ascension & Declination in degrees, J2000)",
+          inputSchema: {
+            type: "object",
+            properties: {
+              ra: {
+                type: "number",
+                description: "Right Ascension in decimal degrees (0 to 360)"
+              },
+              dec: {
+                type: "number",
+                description: "Declination in decimal degrees (-90 to +90)"
+              },
+              radius_arcsec: {
+                type: "number",
+                description: "Search radius in arcseconds (default: 300)"
+              }
+            },
+            required: ["ra", "dec"]
+          },
+          annotations: { readOnlyHint: true },
+          execute: async function(args) {
+            if (!args || typeof args.ra !== 'number' || typeof args.dec !== 'number') {
+              return { error: "Missing required 'ra' and 'dec' coordinate arguments" };
+            }
+            var rad = args.radius_arcsec || 300;
+            try {
+              var res = await fetch("/api/cone?ra=" + encodeURIComponent(args.ra) + "&dec=" + encodeURIComponent(args.dec) + "&radius=" + encodeURIComponent(rad));
+              if (!res.ok) return { error: "Cone search request failed" };
+              return await res.json();
+            } catch (err) {
+              return { error: String(err) };
+            }
+          }
+        });
+      } catch (e) {}
+    }
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', registerWebMCP);
+    } else {
+      registerWebMCP();
+    }
+  })();
+  </script>
 </body>
 </html>"""
     return html

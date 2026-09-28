@@ -812,6 +812,11 @@ class Handler(SimpleHTTPRequestHandler):
             if f_ard.is_file():
                 self._send(200, "application/json; charset=utf-8", f_ard.read_bytes())
                 return
+        if path == "/.well-known/agent-card.json":
+            f_ac = WWW / ".well-known/agent-card.json"
+            if f_ac.is_file():
+                self._send(200, "application/agent-card+json; charset=utf-8", f_ac.read_bytes())
+                return
         if path == "/.well-known/mcp/server-card.json":
             f_sc = WWW / ".well-known/mcp/server-card.json"
             if f_sc.is_file():

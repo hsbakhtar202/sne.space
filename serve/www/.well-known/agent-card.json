@@ -1,0 +1,38 @@
+{
+  "$schema": "https://a2a.dev/schemas/v1.0/agent-card.json",
+  "name": "sne.space WebMCP Browser Agent",
+  "description": "In-browser WebMCP declarative and imperative tools exposing interactive supernova search, multi-band photometry extraction, and spatial coordinate cone search across 110,000+ supernovae.",
+  "version": "1.0.0",
+  "url": "https://sne.space/",
+  "provider": {
+    "organization": "Open Supernova Catalog",
+    "url": "https://sne.space"
+  },
+  "capabilities": {
+    "streaming": false,
+    "pushNotifications": false,
+    "stateTransitionHistory": false
+  },
+  "defaultInputModes": ["application/json"],
+  "defaultOutputModes": ["application/json"],
+  "skills": [
+    {
+      "id": "search_supernovae",
+      "name": "Supernova Search",
+      "description": "Search 110,000+ supernovae and transients by IAU designation, name, or survey alias (e.g. SN 2023ixf, SN 1987A, SN 2011fe, AT2024nrb)",
+      "tags": ["astronomy", "supernova", "search"]
+    },
+    {
+      "id": "get_supernova_data",
+      "name": "Supernova Data Retrieval",
+      "description": "Retrieve complete astrophysical JSON metadata, coordinates, classification, redshift, and discovery details for a specific supernova",
+      "tags": ["astronomy", "metadata", "photometry", "spectra"]
+    },
+    {
+      "id": "cone_search",
+      "name": "Spatial Cone Search",
+      "description": "Spatial cone search for supernovae within an angular radius around J2000 celestial coordinates (Right Ascension & Declination in degrees)",
+      "tags": ["astronomy", "coordinates", "cone-search"]
+    }
+  ]
+}
