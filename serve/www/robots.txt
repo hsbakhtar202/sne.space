@@ -6,7 +6,7 @@ Sitemap: https://sne.space/sitemap.xml
 Sitemap: https://sne.space/sitemap_current.xml
 Sitemap: https://sne.space/sitemap_stories.xml
 
-# AI Agent Catalogs & Manifests
-Agentmap: https://sne.space/.well-known/ai-catalog.json
-Agentmap: https://sne.space/.well-known/ard.json
+# AI Agent Catalogs & Manifests (discovered via Link headers and /.well-known/)
+# https://sne.space/.well-known/ai-catalog.json
+# https://sne.space/.well-known/ard.json
 # https://sne.space/llms.txt
