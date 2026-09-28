@@ -1,0 +1,10 @@
+[
+  {"name": "SN2026ess", "date": "2026-03-01", "type": "Ia", "discoverer": "Jesper Sollerman"},
+  {"name": "SN2026ejy", "date": "2026-02-25", "type": "II", "discoverer": "GOTO / D. O'Neill et al."},
+  {"name": "SN2026ehd", "date": "2026-02-24", "type": "Ia", "discoverer": "GOTO / G. Ramsay et al."},
+  {"name": "SN2026dyr", "date": "2026-02-22", "type": "IIP", "discoverer": "GOTO / D. O'Neill et al."},
+  {"name": "SN2026dwm", "date": "2026-02-21", "type": "IIb", "discoverer": "GOTO / D. O'Neill et al."},
+  {"name": "SN2026ehe", "date": "2026-02-23", "type": "Ia-91T", "discoverer": "Jesper Sollerman"},
+  {"name": "SN2026ebd", "date": "2026-02-21", "type": "Ia", "discoverer": "ATLAS / J. Tonry et al."},
+  {"name": "SN2026efq", "date": "2026-02-23", "type": "Ia", "discoverer": "SNHunt / M. Mazzucato"}
+]

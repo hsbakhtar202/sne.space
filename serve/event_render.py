@@ -524,8 +524,45 @@ def get_transient_lifecycle(
             "story_guidance_html": story_guidance,
             "tel_table_html": tel_table_html,
         }
+    elif days_since <= 1100:
+        badge = f'<span class="type-pill" style="background:#082f49;color:#7dd3fc;border:1px solid #0369a1;">● Recent supernova (+{days_since}d)</span>'
+        cockpit_notice = (
+            f'<div style="margin-bottom:0.75rem;padding:0.5rem 0.75rem;background:rgba(14,165,233,0.12);'
+            f'border-left:3px solid #38bdf8;border-radius:4px;font-size:0.78rem;line-height:1.4;color:#e0f2fe;">'
+            f'<strong>Recent survey supernova:</strong> Discovered {time_str} ({ref_date}, rest-frame +{t_rest:.1f}d). '
+            f'The optical peak has passed. Estimated brightness is now <span style="font-weight:700;color:#7dd3fc;">m &approx; {m_current:.1f}</span> '
+            f'({current_tel_needed}). This is a modern event, not a historical remnant. The sky panel is the host field.'
+            f'</div>'
+        )
+        story_guidance = (
+            f'<div style="background:rgba(14,165,233,0.06);border:1px solid rgba(56,189,248,0.3);border-left:4px solid #38bdf8;padding:1.25rem;border-radius:6px;margin:1rem 0;">'
+            f'<h3 style="margin:0 0 0.5rem 0;color:#e0f2fe;font-size:1.05rem;">Can I see it tonight? <span style="color:#7dd3fc;">The outburst is recent, and the flash has faded.</span></h3>'
+            f'<p style="margin:0 0 0.75rem 0;color:#e2e8f0;line-height:1.6;">'
+            f'This is one of the newer supernovae in the catalog, discovered <strong>{time_str}</strong> ({ref_date}). '
+            f'It is not an ancient explosion. The radioactive tail has dropped the estimated brightness by &Delta;m &approx; {dm:.1f} '
+            f'to about <strong>magnitude {m_current:.1f}</strong>, which is past the window of binoculars and small backyard telescopes.'
+            f'</p>'
+            f'<p style="margin:0;color:#cbd5e1;line-height:1.6;">'
+            f'<strong>What that brightness means:</strong> {current_tel_needed}. Coordinates tonight still point at the {host_target}.'
+            f'</p>'
+            f'{tel_table_html}'
+            f'</div>'
+        )
+        return {
+            "phase": "recent",
+            "days_since": days_since,
+            "t_rest": round(t_rest, 1),
+            "m_peak": m_peak,
+            "m_current": m_current,
+            "time_str": time_str,
+            "ref_date": ref_date,
+            "badge_html": badge,
+            "cockpit_notice": cockpit_notice,
+            "story_guidance_html": story_guidance,
+            "tel_table_html": tel_table_html,
+        }
     elif days_since > 180 or not is_ground_detectable:
-        badge = f'<span class="type-pill" style="background:#1e293b;color:#94a3b8;border:1px solid #334155;">● Extinguished Transient (+{days_since}d)</span>'
+        badge = f'<span class="type-pill" style="background:#1e293b;color:#94a3b8;border:1px solid #334155;">● Archived outburst (+{days_since}d)</span>'
         cockpit_notice = (
             f'<div style="margin-bottom:0.75rem;padding:0.5rem 0.75rem;background:rgba(100,116,139,0.12);'
             f'border-left:3px solid #64748b;border-radius:4px;font-size:0.78rem;line-height:1.4;color:#cbd5e1;">'
@@ -1645,6 +1682,31 @@ def render_pro_cockpit(name: str, meta: dict, entered: str | None = None, legacy
       display: flex;
       justify-content: space-between;
     }}
+    html, body {{ max-width: 100%; overflow-x: hidden; }}
+    .nav-toggle-input {{ position: absolute; opacity: 0; pointer-events: none; }}
+    .nav-toggle {{
+      display: none;
+      margin-left: auto;
+      background: #1e293b;
+      color: #fff;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.4rem 0.75rem;
+      font-weight: 700;
+      cursor: pointer;
+    }}
+    @media (max-width: 860px) {{
+      header.cockpit-hdr {{ padding: 0.65rem 0.85rem; gap: 0.45rem; }}
+      .brand-badge {{ display: none; }}
+      .nav-toggle {{ display: inline-flex; }}
+      .hdr-search-form {{ order: 5; flex: 1 1 100%; max-width: none; margin: 0.4rem 0 0; }}
+      .hdr-nav-links, .view-switcher {{ display: none; flex: 1 1 100%; margin: 0.45rem 0 0; }}
+      .nav-toggle-input:checked ~ .hdr-nav-links,
+      .nav-toggle-input:checked ~ .view-switcher {{ display: flex; }}
+      .main-grid {{ padding: 0.85rem; grid-template-columns: 1fr; }}
+      .hero-meta, .panel, img, canvas, svg, iframe {{ max-width: 100%; }}
+      .hero-title {{ font-size: 1.6rem; overflow-wrap: anywhere; }}
+    }}
   </style>
 </head>
 <body>
@@ -1655,6 +1717,8 @@ def render_pro_cockpit(name: str, meta: dict, entered: str | None = None, legacy
       </a>
       <span class="brand-badge">Open Supernova Catalog</span>
     </div>
+    <input class="nav-toggle-input" type="checkbox" id="cockpit-nav">
+    <label class="nav-toggle" for="cockpit-nav">Menu</label>
     <form class="hdr-search-form" action="/" method="GET" toolname="search_supernovae" tooldescription="Search 110,000+ supernovae by IAU designation, name, or survey alias">
       <input type="text" name="q" placeholder="Search 110,000+ transients..." autocomplete="off" toolparamdescription="Supernova name, IAU designation (e.g. SN2023ixf, SN 1987A), or alias" aria-label="Search supernovae">
       <button type="submit" aria-label="Submit Search">🔍</button>
@@ -4229,6 +4293,28 @@ def render_story_mode(name: str, meta: dict, entered: str | None = None) -> str:
       font-weight: 700;
       text-decoration: none;
     }}
+    html, body {{ max-width: 100%; overflow-x: hidden; }}
+    .nav-toggle-input {{ position: absolute; opacity: 0; pointer-events: none; }}
+    .nav-toggle {{
+      display: none;
+      margin-left: auto;
+      background: #1e293b;
+      color: #fff;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.4rem 0.75rem;
+      font-weight: 700;
+      cursor: pointer;
+    }}
+    @media (max-width: 860px) {{
+      header.cockpit-hdr {{ padding: 0.65rem 0.85rem; gap: 0.45rem; }}
+      .nav-toggle {{ display: inline-flex; }}
+      .hdr-search-form {{ order: 5; flex: 1 1 100%; max-width: none; margin: 0.4rem 0 0; }}
+      .hdr-nav-links, .view-switcher {{ display: none; flex: 1 1 100%; margin: 0.45rem 0 0; }}
+      .nav-toggle-input:checked ~ .hdr-nav-links,
+      .nav-toggle-input:checked ~ .view-switcher {{ display: flex; }}
+      .story-hero, img, canvas, iframe {{ max-width: 100%; }}
+    }}
   </style>
 </head>
 <body>
@@ -4240,6 +4326,8 @@ def render_story_mode(name: str, meta: dict, entered: str | None = None) -> str:
         <img src="/assets/img/logo-color.webp" alt="sne.space" class="brand-logo-img">
       </a>
     </div>
+    <input class="nav-toggle-input" type="checkbox" id="story-nav">
+    <label class="nav-toggle" for="story-nav">Menu</label>
     <form class="hdr-search-form" action="/" method="GET" toolname="search_supernovae" tooldescription="Search 110,000+ supernovae by IAU designation, name, or survey alias">
       <input type="text" name="q" placeholder="Search 110,000+ transients..." autocomplete="off" toolparamdescription="Supernova name, IAU designation (e.g. SN2023ixf, SN 1987A), or alias" aria-label="Search supernovae">
       <button type="submit" aria-label="Submit Search">🔍</button>

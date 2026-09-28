@@ -376,6 +376,56 @@ require __DIR__ . '/wp-content/plugins/transient-table/transient-table.php';
   }
   a { color: var(--accent-cyan); text-decoration: none; }
   a:hover { text-decoration: underline; }
+  html, body { max-width: 100%; overflow-x: hidden; }
+  .nav-toggle-input { position: absolute; opacity: 0; pointer-events: none; }
+  .nav-toggle {
+    display: none;
+    background: #1e293b;
+    color: #fff;
+    border: 1px solid var(--border-bright);
+    border-radius: 6px;
+    padding: 0.4rem 0.75rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .recent-block { margin-bottom: 1.5rem; }
+  .recent-head { margin: 0 0 0.35rem; font-size: 1.15rem; }
+  .recent-note { margin: 0 0 0.85rem; color: var(--text-slate); font-size: 0.88rem; }
+  .recent-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 0.75rem;
+  }
+  .recent-card {
+    display: block;
+    background: var(--surface-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: 10px;
+    padding: 0.9rem 1rem;
+    color: inherit;
+    text-decoration: none;
+  }
+  .recent-card:hover { border-color: rgba(56, 189, 248, 0.55); text-decoration: none; }
+  .recent-name { font-weight: 800; font-size: 1.05rem; }
+  .recent-age { color: #7dd3fc; font-size: 0.78rem; font-weight: 700; }
+  .recent-meta { color: #cbd5e1; font-size: 0.82rem; margin-top: 0.35rem; }
+  @media (max-width: 860px) {
+    header.global-nav { flex-wrap: wrap; padding: 0.7rem 0.9rem; gap: 0.5rem; }
+    .brand-pill { display: none; }
+    .nav-toggle { display: inline-flex; margin-left: auto; }
+    .nav-menu {
+      display: none;
+      width: 100%;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.7rem;
+      padding: 0.35rem 0 0.2rem;
+    }
+    .nav-toggle-input:checked ~ .nav-menu { display: flex; }
+    .catalog-hero, .catalog-table-wrap { padding-left: 0.9rem; padding-right: 0.9rem; }
+    .hero-headline { font-size: 1.7rem; }
+    .catalog-table-wrap, #example_wrapper { max-width: 100%; overflow-x: auto; }
+  }
 </style>
 </head>
 <body>
@@ -386,6 +436,8 @@ require __DIR__ . '/wp-content/plugins/transient-table/transient-table.php';
       </a>
       <span class="brand-pill">Open Supernova Catalog</span>
     </div>
+    <input class="nav-toggle-input" type="checkbox" id="home-nav">
+    <label class="nav-toggle" for="home-nav">Menu</label>
     <nav class="nav-menu">
       <a href="/" class="active">Catalog</a>
       <a href="/radar">Radar</a>
@@ -422,6 +474,31 @@ require __DIR__ . '/wp-content/plugins/transient-table/transient-table.php';
           <div class="telemetry-label">API & Integrations</div>
           <div class="telemetry-val">REST + MCP</div>
           <div class="telemetry-desc">Zero-token API, IVOA cone search & AI tools</div>
+        </div>
+      </div>
+
+      <?php
+        $recentPath = __DIR__ . '/assets/recent-events.json';
+        $recent = is_file($recentPath) ? json_decode((string)file_get_contents($recentPath), true) : [];
+        $today = new DateTimeImmutable('today');
+      ?>
+      <div class="recent-block">
+        <h2 class="recent-head">Newest classified supernovae on file</h2>
+        <p class="recent-note">Ages are counted from today, <?php echo $today->format('F j, Y'); ?>. The TNS snapshot on this server is dated March 4, 2026, so these are the latest events in that file, not discoveries from this week.</p>
+        <div class="recent-grid">
+          <?php if (is_array($recent)) foreach ($recent as $ev):
+            $when = DateTimeImmutable::createFromFormat('!Y-m-d', (string)$ev['date']) ?: $today;
+            $age = $today->diff($when)->days;
+            $nm = htmlspecialchars((string)$ev['name'], ENT_QUOTES);
+            $ty = htmlspecialchars((string)$ev['type'], ENT_QUOTES);
+            $who = htmlspecialchars((string)$ev['discoverer'], ENT_QUOTES);
+          ?>
+          <a class="recent-card" href="/sne/<?php echo rawurlencode((string)$ev['name']); ?>/">
+            <div class="recent-name"><?php echo $nm; ?></div>
+            <div class="recent-age"><?php echo (int)$age; ?> days ago</div>
+            <div class="recent-meta">Type <?php echo $ty; ?> · <?php echo htmlspecialchars((string)$ev['date'], ENT_QUOTES); ?><br><?php echo $who; ?></div>
+          </a>
+          <?php endforeach; ?>
         </div>
       </div>
 
