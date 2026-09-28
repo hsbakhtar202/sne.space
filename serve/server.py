@@ -15,6 +15,7 @@ import gzip
 import html
 import io
 import json
+import math
 import mimetypes
 import os
 import re
@@ -174,20 +175,22 @@ def _classify_client(ua: str) -> dict:
     ua_lower = ua_raw.lower()
     
     # 1. AI Agents & Crawlers
-    if "gptbot" in ua_lower or "chatgpt" in ua_lower or "oai-searchbot" in ua_lower:
+    if "gptbot" in ua_lower or "chatgpt" in ua_lower or "oai-searchbot" in ua_lower or "openai" in ua_lower:
         return {"type": "AI Agent", "client": "OpenAI / GPTBot", "is_bot": True, "icon": "🤖"}
-    if "claudebot" in ua_lower or "claude-web" in ua_lower or "anthropic" in ua_lower:
+    if "claude" in ua_lower or "anthropic" in ua_lower:
         return {"type": "AI Agent", "client": "Anthropic / Claude", "is_bot": True, "icon": "🧠"}
     if "cursor" in ua_lower:
         return {"type": "AI Agent", "client": "Cursor Agent", "is_bot": True, "icon": "⚡"}
     if "deepseek" in ua_lower:
         return {"type": "AI Agent", "client": "DeepSeek AI", "is_bot": True, "icon": "🐋"}
-    if "webmcp" in ua_lower:
+    if "webmcp" in ua_lower or "mcp" in ua_lower:
         return {"type": "AI Agent", "client": "WebMCP Agent", "is_bot": True, "icon": "🤖"}
     if "perplexity" in ua_lower:
         return {"type": "AI Agent", "client": "Perplexity AI", "is_bot": True, "icon": "🔮"}
-    if "google-extended" in ua_lower:
-        return {"type": "AI Agent", "client": "Google-Extended", "is_bot": True, "icon": "🤖"}
+    if "google-extended" in ua_lower or "gemini" in ua_lower:
+        return {"type": "AI Agent", "client": "Google / Gemini", "is_bot": True, "icon": "🤖"}
+    if "agent" in ua_lower or "llm" in ua_lower:
+        return {"type": "AI Agent", "client": "AI Agent", "is_bot": True, "icon": "🤖"}
     if "googlebot" in ua_lower or "googleother" in ua_lower:
         return {"type": "Search Crawler", "client": "Googlebot", "is_bot": True, "icon": "🔍"}
     if "bingbot" in ua_lower:
