@@ -582,16 +582,5 @@ require __DIR__ . '/wp-content/plugins/transient-table/transient-table.php';
 <script src="/wp-content/plugins/transient-table/suncalc.js"></script>
 <?php datatables_functions(); ?>
 <script src="/assets/webmcp.js"></script>
-<script>
-(function() {
-  'use strict';
-  // Fallback inline WebMCP execution in case external script was delayed
-  if (typeof document !== 'undefined' && (!document.modelContext || typeof document.modelContext.getTools !== 'function')) {
-    var s = document.createElement('script');
-    s.src = '/assets/webmcp.js';
-    document.head.appendChild(s);
-  }
-})();
-</script>
 </body>
 </html>
