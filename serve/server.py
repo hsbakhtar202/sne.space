@@ -1064,7 +1064,13 @@ class Handler(SimpleHTTPRequestHandler):
             self._send(200, ctype, data, {"Cache-Control": cache})
             return
 
-        return super().do_GET()
+        self._send(404, "text/plain; charset=utf-8", b"Not found\n")
+
+    def handle_one_request(self):
+        try:
+            super().handle_one_request()
+        except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError):
+            return
 
     def _send(self, code: int, ctype: str, body: bytes, headers: dict | None = None):
         headers = dict(headers or {})
@@ -1083,17 +1089,20 @@ class Handler(SimpleHTTPRequestHandler):
         if "Cache-Control" not in headers:
             if "text/html" in ctype:
                 headers["Cache-Control"] = "public, max-age=120"
-        self.send_response(code)
-        self.send_header("Content-Type", ctype)
-        self.send_header("Content-Length", str(len(body)))
-        self.send_header("Access-Control-Allow-Origin", "*")
-        if "text/html" in ctype:
-            self.send_header("Link", '</.well-known/ai-catalog.json>; rel="ai-catalog", </.well-known/ard.json>; rel="ard", </llms.txt>; rel="describedby"')
-        for k, v in headers.items():
-            self.send_header(k, v)
-        self.end_headers()
-        if self.command != "HEAD":
-            self.wfile.write(body)
+        try:
+            self.send_response(code)
+            self.send_header("Content-Type", ctype)
+            self.send_header("Content-Length", str(len(body)))
+            self.send_header("Access-Control-Allow-Origin", "*")
+            if "text/html" in ctype:
+                self.send_header("Link", '</.well-known/ai-catalog.json>; rel="ai-catalog", </.well-known/ard.json>; rel="ard", </llms.txt>; rel="describedby"')
+            for k, v in headers.items():
+                self.send_header(k, v)
+            self.end_headers()
+            if self.command != "HEAD":
+                self.wfile.write(body)
+        except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError):
+            return
 
 
 class ReusableThreadingServer(ThreadingHTTPServer):
