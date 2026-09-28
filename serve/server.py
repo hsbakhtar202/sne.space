@@ -1724,6 +1724,7 @@ def _render_logs_page(current_ip: str = "", current_client: dict | None = None) 
       </label>
       <a href="/logs?download=1" class="btn btn-primary" download>📥 Download access.log</a>
       <a href="/logs?raw=1" class="btn" target="_blank">📄 Raw Text</a>
+      <a href="/logs?mcp=1" class="btn" target="_blank">⚡ MCP Tool Log</a>
       <a href="/api/stats" class="btn" target="_blank">📊 JSON Telemetry</a>
       <a href="/" class="btn">🔭 Catalog</a>
     </div>
@@ -2574,8 +2575,19 @@ class Handler(SimpleHTTPRequestHandler):
             self._send(200, "application/json; charset=utf-8", json.dumps(resp, indent=2).encode("utf-8"), {"Cache-Control": "no-cache"})
             return
 
-        # Real-time Web Log Viewer & Download: /logs, /logs/, /admin/logs
-        if path in ("/logs", "/logs/", "/admin/logs"):
+        # Real-time Web Log Viewer & Download: /logs, /logs/, /admin/logs, /logs/mcp
+        if path in ("/logs", "/logs/", "/admin/logs", "/logs/mcp", "/api/mcp/activity"):
+            mcp_param = query.get("mcp", [""])[0]
+            if mcp_param in ("1", "true", "raw") or path in ("/logs/mcp", "/api/mcp/activity"):
+                mcp_file = Path(__file__).resolve().parent / "logs" / "mcp_activity.log"
+                content = mcp_file.read_bytes() if mcp_file.is_file() else b"No MCP tool calls recorded yet.\n"
+                download_param = query.get("download", [""])[0]
+                headers = {"Cache-Control": "no-cache"}
+                if download_param in ("1", "true"):
+                    headers["Content-Disposition"] = 'attachment; filename="mcp_activity.log"'
+                self._send(200, "text/plain; charset=utf-8", content, headers)
+                return
+
             raw_param = query.get("raw", [""])[0] or query.get("format", [""])[0]
             download_param = query.get("download", [""])[0]
             if download_param in ("1", "true"):

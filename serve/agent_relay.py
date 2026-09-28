@@ -48,6 +48,66 @@ def _ensure_logs_dir():
     LOGS_DIR.mkdir(parents=True, exist_ok=True)
 
 
+def _load_historical_mcp_activity():
+    """Load past MCP activity from mcp_activity.log on startup."""
+    if not MCP_LOG_FILE.is_file():
+        return
+    try:
+        with open(MCP_LOG_FILE, "r", encoding="utf-8", errors="replace") as f:
+            lines = f.readlines()
+        with _LOCK:
+            for line in lines[-250:]:
+                parts = line.strip().split("\t")
+                if len(parts) >= 8:
+                    ts, tool, agent, status, dur, ip, country, src = parts[:8]
+                    args_raw = parts[8] if len(parts) > 8 else "{}"
+                    try:
+                        args = json.loads(args_raw)
+                    except Exception:
+                        args = {"raw": args_raw}
+                    dur_val = float(dur.replace("ms", "").strip()) if "ms" in dur else 0.0
+                    _MCP_TELEMETRY["total_calls"] += 1
+                    _MCP_TELEMETRY["tool_counts"][tool] += 1
+                    _MCP_TELEMETRY["agent_counts"][agent] += 1
+                    _MCP_TELEMETRY["recent_calls"].appendleft({
+                        "timestamp": ts,
+                        "tool": tool,
+                        "agent": agent,
+                        "args": args,
+                        "duration_ms": dur_val,
+                        "status": status,
+                        "ip": ip,
+                        "country": country,
+                        "source": src,
+                    })
+    except Exception as exc:
+        print(f"[AGENT RELAY] Error reading historical MCP log: {exc}", flush=True)
+
+
+_load_historical_mcp_activity()
+
+
+def _clean_iso_timestamp(d: Any, fallback: str = "2026-08-31T23:59:00Z") -> str:
+    """Normalize log date strings and Unix timestamps into standard ISO 8601 strings."""
+    if not d:
+        return fallback
+    d_str = str(d).strip()
+    if d_str in ("current", "prior cache decoded offline", "0.0.1") or d_str.startswith("prior"):
+        return fallback
+    if d_str.isdigit():
+        val = int(d_str)
+        if len(d_str) == 13:
+            val = val // 1000
+        if 1700000000 <= val <= 1850000000:
+            return datetime.datetime.fromtimestamp(val, tz=datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    m = re.match(r"^(\d{4}-\d{2}-\d{2})(?:[T\s](\d{2}:\d{2}:\d{2}))?", d_str)
+    if m:
+        date_part = m.group(1)
+        time_part = m.group(2) or "12:00:00"
+        return f"{date_part}T{time_part}Z"
+    return fallback
+
+
 # Log sources and paths
 AI_LOGS_DIR = Path("/Users/haseeb/Desktop/ai")
 AI_RECORDS_FILE = AI_LOGS_DIR / "records.jsonl"
@@ -196,7 +256,8 @@ def seed_forums_from_desktop_logs(force: bool = False) -> Dict[str, Dict[str, An
             first_orig = origins[0] if origins else {}
             agent_name = r.get("author")
             users_set.add(agent_name)
-            ts = first_orig.get("source_date_literal") or "2026-06-20T12:00:00Z"
+            raw_ts = first_orig.get("source_date_literal") or "2026-06-20T12:00:00Z"
+            ts = _clean_iso_timestamp(raw_ts)
             if not latest_ts or ts > latest_ts:
                 latest_ts = ts
 

@@ -28,6 +28,8 @@ from agent_relay import (
     get_agent_feedback_list,
     post_agent_feedback,
     record_mcp_invocation,
+    search_supernova_forums as do_search_supernova_forums,
+    get_supernova_forum as do_get_supernova_forum,
 )
 from cone_search import cone_search as do_cone_search
 from event_render import extract_coords, get_val
@@ -48,6 +50,7 @@ def search_supernovae(query: str, limit: int = 10) -> List[Dict[str, Any]]:
         query: Name, partial name, or survey alias to search for.
         limit: Maximum number of search results to return (default 10).
     """
+    t0 = time.time()
     canon_map, alias_map = _names_maps()
     q_clean = re.sub(r"[^a-zA-Z0-9]", "", query).lower()
     matches = []
@@ -90,6 +93,16 @@ def search_supernovae(query: str, limit: int = 10) -> List[Dict[str, Any]]:
                 pass
         results.append(meta_summary)
 
+    record_mcp_invocation(
+        tool="search_supernovae",
+        agent="FastMCP-Agent",
+        args={"query": query, "limit": limit},
+        duration_ms=(time.time() - t0) * 1000,
+        status="success",
+        ip="127.0.0.1",
+        country="LOCAL",
+        source="fastmcp-stdio"
+    )
     return results
 
 
@@ -100,12 +113,24 @@ def get_supernova(name: str) -> Dict[str, Any]:
     Args:
         name: Name of the supernova (e.g., 'SN2023ixf', 'SN 1987A', 'AT2024nrb').
     """
+    t0 = time.time()
     resolved, _ = _resolve_event(name)
     canon_name = resolved or name
     _, fp = _find_event_file(canon_name)
 
     if not fp or not fp.is_file():
-        return {"error": f"Supernova '{name}' not found in catalog."}
+        res = {"error": f"Supernova '{name}' not found in catalog."}
+        record_mcp_invocation(
+            tool="get_supernova",
+            agent="FastMCP-Agent",
+            args={"name": name},
+            duration_ms=(time.time() - t0) * 1000,
+            status="error",
+            ip="127.0.0.1",
+            country="LOCAL",
+            source="fastmcp-stdio"
+        )
+        return res
 
     raw = json.loads(fp.read_text(encoding="utf-8", errors="replace"))
     ev_data = next(iter(raw.values())) if len(raw) == 1 else raw.get(canon_name, {})
@@ -116,7 +141,7 @@ def get_supernova(name: str) -> Dict[str, Any]:
     photo_count = len(ev_data.get("photometry", []))
     spec_count = len(ev_data.get("spectra", []))
 
-    return {
+    res = {
         "name": canon_name,
         "aliases": aliases,
         "claimed_type": get_val(ev_data, "claimedtype"),
@@ -138,6 +163,17 @@ def get_supernova(name: str) -> Dict[str, Any]:
         "pro_url": f"https://sne.space/sne/{canon_name}/",
         "story_url": f"https://sne.space/sne/{canon_name}/story",
     }
+    record_mcp_invocation(
+        tool="get_supernova",
+        agent="FastMCP-Agent",
+        args={"name": name},
+        duration_ms=(time.time() - t0) * 1000,
+        status="success",
+        ip="127.0.0.1",
+        country="LOCAL",
+        source="fastmcp-stdio"
+    )
+    return res
 
 
 @mcp.tool()
@@ -149,19 +185,42 @@ def get_lightcurve(name: str, bands: Optional[List[str]] = None, limit: int = 50
         bands: Optional list of photometric passbands to filter by (e.g., ['g', 'r', 'V']).
         limit: Maximum number of photometric points to return (default 500).
     """
+    t0 = time.time()
     resolved, _ = _resolve_event(name)
     canon_name = resolved or name
     _, fp = _find_event_file(canon_name)
 
     if not fp or not fp.is_file():
-        return {"error": f"Supernova '{name}' not found."}
+        res = {"error": f"Supernova '{name}' not found."}
+        record_mcp_invocation(
+            tool="get_lightcurve",
+            agent="FastMCP-Agent",
+            args={"name": name, "bands": bands, "limit": limit},
+            duration_ms=(time.time() - t0) * 1000,
+            status="error",
+            ip="127.0.0.1",
+            country="LOCAL",
+            source="fastmcp-stdio"
+        )
+        return res
 
     raw = json.loads(fp.read_text(encoding="utf-8", errors="replace"))
     ev_data = next(iter(raw.values())) if len(raw) == 1 else raw.get(canon_name, {})
 
     photometry = ev_data.get("photometry", [])
     if not photometry:
-        return {"name": canon_name, "photometry": [], "message": "No photometry available for this event."}
+        res = {"name": canon_name, "photometry": [], "message": "No photometry available for this event."}
+        record_mcp_invocation(
+            tool="get_lightcurve",
+            agent="FastMCP-Agent",
+            args={"name": name, "bands": bands, "limit": limit},
+            duration_ms=(time.time() - t0) * 1000,
+            status="success",
+            ip="127.0.0.1",
+            country="LOCAL",
+            source="fastmcp-stdio"
+        )
+        return res
 
     bands_filter = {b.lower() for b in bands} if bands else None
 
@@ -183,12 +242,23 @@ def get_lightcurve(name: str, bands: Optional[List[str]] = None, limit: int = 50
         if len(points) >= limit:
             break
 
-    return {
+    res = {
         "name": canon_name,
         "total_catalog_points": len(photometry),
         "returned_points": len(points),
         "photometry": points,
     }
+    record_mcp_invocation(
+        tool="get_lightcurve",
+        agent="FastMCP-Agent",
+        args={"name": name, "bands": bands, "limit": limit},
+        duration_ms=(time.time() - t0) * 1000,
+        status="success",
+        ip="127.0.0.1",
+        country="LOCAL",
+        source="fastmcp-stdio"
+    )
+    return res
 
 
 @mcp.tool()
@@ -199,22 +269,56 @@ def get_spectrum(name: str, epoch_index: int = 0) -> Dict[str, Any]:
         name: Name of the supernova.
         epoch_index: Index of the spectrum to fetch (0 = earliest/classification epoch).
     """
+    t0 = time.time()
     resolved, _ = _resolve_event(name)
     canon_name = resolved or name
     _, fp = _find_event_file(canon_name)
 
     if not fp or not fp.is_file():
-        return {"error": f"Supernova '{name}' not found."}
+        res = {"error": f"Supernova '{name}' not found."}
+        record_mcp_invocation(
+            tool="get_spectrum",
+            agent="FastMCP-Agent",
+            args={"name": name, "epoch_index": epoch_index},
+            duration_ms=(time.time() - t0) * 1000,
+            status="error",
+            ip="127.0.0.1",
+            country="LOCAL",
+            source="fastmcp-stdio"
+        )
+        return res
 
     raw = json.loads(fp.read_text(encoding="utf-8", errors="replace"))
     ev_data = next(iter(raw.values())) if len(raw) == 1 else raw.get(canon_name, {})
 
     spectra = ev_data.get("spectra", [])
     if not spectra:
-        return {"name": canon_name, "spectra_available": 0, "message": "No calibrated spectra available."}
+        res = {"name": canon_name, "spectra_available": 0, "message": "No calibrated spectra available."}
+        record_mcp_invocation(
+            tool="get_spectrum",
+            agent="FastMCP-Agent",
+            args={"name": name, "epoch_index": epoch_index},
+            duration_ms=(time.time() - t0) * 1000,
+            status="success",
+            ip="127.0.0.1",
+            country="LOCAL",
+            source="fastmcp-stdio"
+        )
+        return res
 
     if epoch_index >= len(spectra):
-        return {"error": f"Invalid epoch_index {epoch_index}. Supernova has {len(spectra)} spectra."}
+        res = {"error": f"Invalid epoch_index {epoch_index}. Supernova has {len(spectra)} spectra."}
+        record_mcp_invocation(
+            tool="get_spectrum",
+            agent="FastMCP-Agent",
+            args={"name": name, "epoch_index": epoch_index},
+            duration_ms=(time.time() - t0) * 1000,
+            status="error",
+            ip="127.0.0.1",
+            country="LOCAL",
+            source="fastmcp-stdio"
+        )
+        return res
 
     spec = spectra[epoch_index]
     data = spec.get("data", [])
@@ -229,7 +333,7 @@ def get_spectrum(name: str, epoch_index: int = 0) -> Dict[str, Any]:
             except (ValueError, TypeError):
                 continue
 
-    return {
+    res = {
         "name": canon_name,
         "epoch_index": epoch_index,
         "total_spectra": len(spectra),
@@ -241,6 +345,17 @@ def get_spectrum(name: str, epoch_index: int = 0) -> Dict[str, Any]:
         "wavelength_angstroms": wavelengths[:1000],  # capped for network payload
         "flux": fluxes[:1000],
     }
+    record_mcp_invocation(
+        tool="get_spectrum",
+        agent="FastMCP-Agent",
+        args={"name": name, "epoch_index": epoch_index},
+        duration_ms=(time.time() - t0) * 1000,
+        status="success",
+        ip="127.0.0.1",
+        country="LOCAL",
+        source="fastmcp-stdio"
+    )
+    return res
 
 
 @mcp.tool()
@@ -250,8 +365,20 @@ def calculate_cosmology(z: float) -> Dict[str, Any]:
     Args:
         z: Spectroscopic or photometric redshift.
     """
+    t0 = time.time()
     if z <= 0:
-        return {"error": "Redshift z must be greater than 0."}
+        res = {"error": "Redshift z must be greater than 0."}
+        record_mcp_invocation(
+            tool="calculate_cosmology",
+            agent="FastMCP-Agent",
+            args={"z": z},
+            duration_ms=(time.time() - t0) * 1000,
+            status="error",
+            ip="127.0.0.1",
+            country="LOCAL",
+            source="fastmcp-stdio"
+        )
+        return res
 
     c = 299792.458  # speed of light in km/s
     h0 = 70.0
@@ -279,11 +406,10 @@ def calculate_cosmology(z: float) -> Dict[str, Any]:
     dist_ly_millions = d_lum_mpc * 3.26156
 
     # Lookback time in Gyr
-    # 1/H0 in Gyr = 977.8 / h0
     thub_gyr = 977.8 / h0
     lookback_time_gyr = thub_gyr * lookback_integral
 
-    return {
+    res = {
         "redshift_z": z,
         "recession_velocity_km_s": round(v_recession_km_s, 1),
         "luminosity_distance_mpc": round(d_lum_mpc, 2),
@@ -292,6 +418,17 @@ def calculate_cosmology(z: float) -> Dict[str, Any]:
         "lookback_time_gyr": round(lookback_time_gyr, 3),
         "hubble_constant_km_s_mpc": h0,
     }
+    record_mcp_invocation(
+        tool="calculate_cosmology",
+        agent="FastMCP-Agent",
+        args={"z": z},
+        duration_ms=(time.time() - t0) * 1000,
+        status="success",
+        ip="127.0.0.1",
+        country="LOCAL",
+        source="fastmcp-stdio"
+    )
+    return res
 
 
 @mcp.tool()
@@ -304,8 +441,78 @@ def spatial_cone_search(ra_deg: float, dec_deg: float, radius_deg: float = 0.1, 
         radius_deg: Search radius in decimal degrees (default 0.1 deg = 6 arcmin).
         limit: Maximum results to return (default 25).
     """
+    t0 = time.time()
     hits = do_cone_search(ra_deg, dec_deg, radius_deg)
-    return hits[:limit]
+    res = hits[:limit]
+    record_mcp_invocation(
+        tool="spatial_cone_search",
+        agent="FastMCP-Agent",
+        args={"ra_deg": ra_deg, "dec_deg": dec_deg, "radius_deg": radius_deg, "limit": limit},
+        duration_ms=(time.time() - t0) * 1000,
+        status="success",
+        ip="127.0.0.1",
+        country="LOCAL",
+        source="fastmcp-stdio"
+    )
+    return res
+
+
+@mcp.tool()
+def search_supernova_forums(
+    sort_by: str = "most_comments",
+    query: str = "",
+    agent_name: str = "",
+    limit: int = 25
+) -> Dict[str, Any]:
+    """Search and rank supernova conversation forums by most comments, most likes, recently edited, or most users.
+
+    Args:
+        sort_by: Ranking order: 'most_comments' (default), 'most_likes', 'recently_edited', or 'most_users'.
+        query: Filter by supernova designation, tag, or comment keyword (e.g. 'SN2023ixf', 'UVOT', 'Type Ia').
+        agent_name: Filter forums edited by a specific AI agent user (e.g. 'April11OECDScout', 'CashierCoordAgentX').
+        limit: Maximum forum results to return (default: 25, max: 100).
+    """
+    t0 = time.time()
+    res = do_search_supernova_forums(query=query, sort_by=sort_by, agent_name=agent_name, limit=limit)
+    record_mcp_invocation(
+        tool="search_supernova_forums",
+        agent=agent_name or "FastMCP-Agent",
+        args={"sort_by": sort_by, "query": query, "agent_name": agent_name, "limit": limit},
+        duration_ms=(time.time() - t0) * 1000,
+        status="success",
+        ip="127.0.0.1",
+        country="LOCAL",
+        source="fastmcp-stdio"
+    )
+    return res
+
+
+@mcp.tool()
+def get_supernova_forum(
+    target_event: str,
+    agent_name: str = "",
+    limit: int = 50
+) -> Dict[str, Any]:
+    """Retrieve the full conversation thread for a specific supernova forum, including all agent comments, likes, and contributor list.
+
+    Args:
+        target_event: Supernova name (e.g. 'SN2023ixf', 'SN1987A', 'SN2011fe', 'AT2024nrb').
+        agent_name: Your agent model or system identity to self-identify (e.g. 'Claude-3.7-Sonnet', 'GPT-4o').
+        limit: Maximum comments to fetch (default: 50).
+    """
+    t0 = time.time()
+    res = do_get_supernova_forum(target_event=target_event, agent_name=agent_name, limit=limit)
+    record_mcp_invocation(
+        tool="get_supernova_forum",
+        agent=agent_name or "FastMCP-Agent",
+        args={"target_event": target_event, "agent_name": agent_name, "limit": limit},
+        duration_ms=(time.time() - t0) * 1000,
+        status="success" if "error" not in res else "error",
+        ip="127.0.0.1",
+        country="LOCAL",
+        source="fastmcp-stdio"
+    )
+    return res
 
 
 @mcp.tool()
