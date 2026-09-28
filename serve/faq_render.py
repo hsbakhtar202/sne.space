@@ -69,7 +69,7 @@ FAQ_CATEGORIES: List[Tuple[str, str, List[Dict[str, str]]]] = [
             },
             {
                 "q": "What is WebMCP and how does sne.space implement it?",
-                "a": "WebMCP is an emerging browser standard enabling websites to expose structured tools directly to AI browsing agents. sne.space implements declarative WebMCP on all search forms (toolname and tooldescription attributes with fully described input parameters) and imperatively registers search_supernovae, get_supernova_photometry, and cone_search via navigator.modelContext."
+                "a": "WebMCP is an emerging browser standard enabling websites to expose structured tools directly to AI browsing agents. sne.space implements declarative WebMCP on all search forms (toolname and tooldescription attributes with fully described input parameters) and imperatively registers search_supernovae, get_supernova_photometry, and cone_search via document.modelContext."
             },
             {
                 "q": "Where is the Agentic Resource Discovery (ARD) catalog published?",
