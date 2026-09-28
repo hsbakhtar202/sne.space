@@ -1057,7 +1057,7 @@ def render_pro_cockpit(name: str, meta: dict, entered: str | None = None, legacy
   <meta name="twitter:description" content="Multi-band light curves, calibrated spectra, and deep optical host imaging from sne.space.">
   <meta name="twitter:image" content="https://sne.space/sne/{urllib.parse.quote(name)}/host.jpg">
   <link rel="stylesheet" href="/assets/ia.css">
-  <link rel="ai-catalog" href="/.well-known/ai-catalog.json" type="application/ai-catalog+json">
+  <link rel="ai-catalog" href="/.well-known/ai-catalog.json" type="application/json">
   <link rel="ard" href="/.well-known/ard.json" type="application/json">
   <link rel="stylesheet" href="https://aladin.cds.unistra.fr/AladinLite/api/v3/latest/aladin.css" />
   <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
@@ -1719,8 +1719,22 @@ def render_pro_cockpit(name: str, meta: dict, entered: str | None = None, legacy
     </div>
     <input class="nav-toggle-input" type="checkbox" id="cockpit-nav">
     <label class="nav-toggle" for="cockpit-nav">Menu</label>
-    <form class="hdr-search-form" action="/" method="GET" toolname="search_supernovae" tooldescription="Search 110,000+ supernovae by IAU designation, name, or survey alias">
-      <input type="text" name="q" placeholder="Search 110,000+ transients..." autocomplete="off" toolparamdescription="Supernova name, IAU designation (e.g. SN2023ixf, SN 1987A), or alias" aria-label="Search supernovae">
+    <form class="hdr-search-form" action="/" method="GET" 
+          toolname="search_supernovae" 
+          tool-name="search_supernovae" 
+          tooldescription="Search 110,000+ supernovae and transients by IAU designation, name, or survey alias" 
+          tool-description="Search 110,000+ supernovae and transients by IAU designation, name, or survey alias" 
+          toolschema='{{"type":"object","properties":{{"q":{{"type":"string","description":"Supernova designation, IAU name, or survey alias"}}}},"required":["q"]}}' 
+          tool-schema='{{"type":"object","properties":{{"q":{{"type":"string","description":"Supernova designation, IAU name, or survey alias"}}}},"required":["q"]}}' 
+          toolautosubmit 
+          tool-autosubmit 
+          role="search">
+      <input type="text" name="q" placeholder="Search 110,000+ transients..." autocomplete="off" 
+             toolparamtitle="supernova_query" 
+             tool-param-title="supernova_query" 
+             toolparamdescription="Supernova name, IAU designation (e.g. SN2023ixf, SN 1987A), or alias" 
+             tool-param-description="Supernova name, IAU designation (e.g. SN2023ixf, SN 1987A), or alias" 
+             aria-label="Search supernovae">
       <button type="submit" aria-label="Submit Search">🔍</button>
     </form>
     <div class="hdr-nav-links">
@@ -2958,108 +2972,7 @@ def render_pro_cockpit(name: str, meta: dict, entered: str | None = None, legacy
   </script>
 
   <!-- WebMCP In-Browser Agentic Tools -->
-  <script>
-  (function() {{
-    function registerWebMCP() {{
-      var ctx = (window.document && window.document.modelContext) || 
-                (window.navigator && window.navigator.modelContext) || null;
-      if (!ctx || typeof ctx.registerTool !== 'function') return;
-
-      try {{
-        ctx.registerTool({{
-          name: "search_supernovae",
-          description: "Search 110,000+ supernovae and transients by IAU designation, name, or survey alias (e.g. SN 2023ixf, SN 1987A, SN 2011fe, AT2024nrb)",
-          inputSchema: {{
-            type: "object",
-            properties: {{
-              query: {{
-                type: "string",
-                description: "Supernova designation, IAU name, or survey alias"
-              }}
-            }},
-            required: ["query"]
-          }},
-          annotations: {{ readOnlyHint: true }},
-          execute: async function(args) {{
-            var q = (args && (args.query || args.q)) || "";
-            if (!q) return {{ error: "Missing required query parameter" }};
-            return {{ status: "success", query: q, url: "/sne/" + encodeURIComponent(q.trim()) + "/" }};
-          }}
-        }});
-
-        ctx.registerTool({{
-          name: "get_supernova_data",
-          description: "Fetch complete astrophysical metadata, coordinates, classification, redshift, and discovery details for a specific supernova in JSON format",
-          inputSchema: {{
-            type: "object",
-            properties: {{
-              name: {{
-                type: "string",
-                description: "Supernova name or IAU designation (e.g. SN 2023ixf, SN 1987A, SN 2011fe)"
-              }}
-            }},
-            required: ["name"]
-          }},
-          annotations: {{ readOnlyHint: true }},
-          execute: async function(args) {{
-            var name = (args && (args.name || args.q)) || "";
-            if (!name) return {{ error: "Missing required supernova name" }};
-            try {{
-              var res = await fetch("/sne/" + encodeURIComponent(name.trim()) + ".json");
-              if (!res.ok) return {{ error: "Supernova not found", name: name }};
-              var data = await res.json();
-              return {{ status: "success", name: name, data: data }};
-            }} catch (err) {{
-              return {{ error: String(err) }};
-            }}
-          }}
-        }});
-
-        ctx.registerTool({{
-          name: "cone_search",
-          description: "Spatial cone search for supernovae within an angular radius around celestial coordinates (Right Ascension & Declination in degrees, J2000)",
-          inputSchema: {{
-            type: "object",
-            properties: {{
-              ra: {{
-                type: "number",
-                description: "Right Ascension in decimal degrees (0 to 360)"
-              }},
-              dec: {{
-                type: "number",
-                description: "Declination in decimal degrees (-90 to +90)"
-              }},
-              radius_arcsec: {{
-                type: "number",
-                description: "Search radius in arcseconds (default: 300)"
-              }}
-            }},
-            required: ["ra", "dec"]
-          }},
-          annotations: {{ readOnlyHint: true }},
-          execute: async function(args) {{
-            if (!args || typeof args.ra !== 'number' || typeof args.dec !== 'number') {{
-              return {{ error: "Missing required 'ra' and 'dec' coordinate arguments" }};
-            }}
-            var rad = args.radius_arcsec || 300;
-            try {{
-              var res = await fetch("/api/cone?ra=" + encodeURIComponent(args.ra) + "&dec=" + encodeURIComponent(args.dec) + "&radius=" + encodeURIComponent(rad));
-              if (!res.ok) return {{ error: "Cone search request failed" }};
-              return await res.json();
-            }} catch (err) {{
-              return {{ error: String(err) }};
-            }}
-          }}
-        }});
-      }} catch (e) {{}}
-    }}
-    if (document.readyState === 'loading') {{
-      document.addEventListener('DOMContentLoaded', registerWebMCP);
-    }} else {{
-      registerWebMCP();
-    }}
-  }})();
-  </script>
+  <script src="/assets/webmcp.js"></script>
 </body>
 </html>"""
     return html
@@ -3549,7 +3462,7 @@ def render_story_mode(name: str, meta: dict, entered: str | None = None) -> str:
   <meta name="twitter:description" content="Stellar explosion {dist_ly_str} away. Peak mag {maxappmag}. Backyard telescope viewing guide.">
   <meta name="twitter:image" content="https://sne.space/sne/{urllib.parse.quote(name)}/host.jpg">
   <link rel="stylesheet" href="/assets/ia.css">
-  <link rel="ai-catalog" href="/.well-known/ai-catalog.json" type="application/ai-catalog+json">
+  <link rel="ai-catalog" href="/.well-known/ai-catalog.json" type="application/json">
   <link rel="ard" href="/.well-known/ard.json" type="application/json">
   <link rel="stylesheet" href="https://aladin.cds.unistra.fr/AladinLite/api/v3/latest/aladin.css" />
   <script src="https://aladin.cds.unistra.fr/AladinLite/api/v3/latest/aladin.js"></script>
@@ -4395,8 +4308,22 @@ def render_story_mode(name: str, meta: dict, entered: str | None = None) -> str:
     </div>
     <input class="nav-toggle-input" type="checkbox" id="story-nav">
     <label class="nav-toggle" for="story-nav">Menu</label>
-    <form class="hdr-search-form" action="/" method="GET" toolname="search_supernovae" tooldescription="Search 110,000+ supernovae by IAU designation, name, or survey alias">
-      <input type="text" name="q" placeholder="Search 110,000+ transients..." autocomplete="off" toolparamdescription="Supernova name, IAU designation (e.g. SN2023ixf, SN 1987A), or alias" aria-label="Search supernovae">
+    <form class="hdr-search-form" action="/" method="GET" 
+          toolname="search_supernovae" 
+          tool-name="search_supernovae" 
+          tooldescription="Search 110,000+ supernovae and transients by IAU designation, name, or survey alias" 
+          tool-description="Search 110,000+ supernovae and transients by IAU designation, name, or survey alias" 
+          toolschema='{{"type":"object","properties":{{"q":{{"type":"string","description":"Supernova designation, IAU name, or survey alias"}}}},"required":["q"]}}' 
+          tool-schema='{{"type":"object","properties":{{"q":{{"type":"string","description":"Supernova designation, IAU name, or survey alias"}}}},"required":["q"]}}' 
+          toolautosubmit 
+          tool-autosubmit 
+          role="search">
+      <input type="text" name="q" placeholder="Search 110,000+ transients..." autocomplete="off" 
+             toolparamtitle="supernova_query" 
+             tool-param-title="supernova_query" 
+             toolparamdescription="Supernova name, IAU designation (e.g. SN2023ixf, SN 1987A), or alias" 
+             tool-param-description="Supernova name, IAU designation (e.g. SN2023ixf, SN 1987A), or alias" 
+             aria-label="Search supernovae">
       <button type="submit" aria-label="Submit Search">🔍</button>
     </form>
     <div class="hdr-nav-links">
@@ -5089,108 +5016,7 @@ def render_story_mode(name: str, meta: dict, entered: str | None = None) -> str:
     }};
   </script>
   <!-- WebMCP In-Browser Agentic Tools -->
-  <script>
-  (function() {{
-    function registerWebMCP() {{
-      var ctx = (window.document && window.document.modelContext) || 
-                (window.navigator && window.navigator.modelContext) || null;
-      if (!ctx || typeof ctx.registerTool !== 'function') return;
-
-      try {{
-        ctx.registerTool({{
-          name: "search_supernovae",
-          description: "Search 110,000+ supernovae and transients by IAU designation, name, or survey alias (e.g. SN 2023ixf, SN 1987A, SN 2011fe, AT2024nrb)",
-          inputSchema: {{
-            type: "object",
-            properties: {{
-              query: {{
-                type: "string",
-                description: "Supernova designation, IAU name, or survey alias"
-              }}
-            }},
-            required: ["query"]
-          }},
-          annotations: {{ readOnlyHint: true }},
-          execute: async function(args) {{
-            var q = (args && (args.query || args.q)) || "";
-            if (!q) return {{ error: "Missing required query parameter" }};
-            return {{ status: "success", query: q, url: "/sne/" + encodeURIComponent(q.trim()) + "/" }};
-          }}
-        }});
-
-        ctx.registerTool({{
-          name: "get_supernova_data",
-          description: "Fetch complete astrophysical metadata, coordinates, classification, redshift, and discovery details for a specific supernova in JSON format",
-          inputSchema: {{
-            type: "object",
-            properties: {{
-              name: {{
-                type: "string",
-                description: "Supernova name or IAU designation (e.g. SN 2023ixf, SN 1987A, SN 2011fe)"
-              }}
-            }},
-            required: ["name"]
-          }},
-          annotations: {{ readOnlyHint: true }},
-          execute: async function(args) {{
-            var name = (args && (args.name || args.q)) || "";
-            if (!name) return {{ error: "Missing required supernova name" }};
-            try {{
-              var res = await fetch("/sne/" + encodeURIComponent(name.trim()) + ".json");
-              if (!res.ok) return {{ error: "Supernova not found", name: name }};
-              var data = await res.json();
-              return {{ status: "success", name: name, data: data }};
-            }} catch (err) {{
-              return {{ error: String(err) }};
-            }}
-          }}
-        }});
-
-        ctx.registerTool({{
-          name: "cone_search",
-          description: "Spatial cone search for supernovae within an angular radius around celestial coordinates (Right Ascension & Declination in degrees, J2000)",
-          inputSchema: {{
-            type: "object",
-            properties: {{
-              ra: {{
-                type: "number",
-                description: "Right Ascension in decimal degrees (0 to 360)"
-              }},
-              dec: {{
-                type: "number",
-                description: "Declination in decimal degrees (-90 to +90)"
-              }},
-              radius_arcsec: {{
-                type: "number",
-                description: "Search radius in arcseconds (default: 300)"
-              }}
-            }},
-            required: ["ra", "dec"]
-          }},
-          annotations: {{ readOnlyHint: true }},
-          execute: async function(args) {{
-            if (!args || typeof args.ra !== 'number' || typeof args.dec !== 'number') {{
-              return {{ error: "Missing required 'ra' and 'dec' coordinate arguments" }};
-            }}
-            var rad = args.radius_arcsec || 300;
-            try {{
-              var res = await fetch("/api/cone?ra=" + encodeURIComponent(args.ra) + "&dec=" + encodeURIComponent(args.dec) + "&radius=" + encodeURIComponent(rad));
-              if (!res.ok) return {{ error: "Cone search request failed" }};
-              return await res.json();
-            }} catch (err) {{
-              return {{ error: String(err) }};
-            }}
-          }}
-        }});
-      }} catch (e) {{}}
-    }}
-    if (document.readyState === 'loading') {{
-      document.addEventListener('DOMContentLoaded', registerWebMCP);
-    }} else {{
-      registerWebMCP();
-    }}
-  }})();
-  </script>
+  <script src="/assets/webmcp.js"></script>
   <button id="btn-back-to-top" onclick="window.scrollTo({{top: 0, behavior: 'smooth'}})" aria-label="Back to top" title="Scroll to top">
     ↑ Top
   </button>

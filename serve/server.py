@@ -641,8 +641,23 @@ def _not_found_page(name: str) -> bytes:
     <div style="font-size:2.5rem;margin-bottom:0.75rem;">🔭</div>
     <h1>Transient '{name}' Not Found</h1>
     <p>This supernova or transient designation could not be located in the catalog archives or upstream astronomical brokers (TNS, ALeRCE, WISeREP).</p>
-    <form class="search-box" onsubmit="event.preventDefault(); var q=this.q.value.trim(); if(q) window.location.href='/sne/'+encodeURIComponent(q)+'/';">
-      <input type="search" name="q" placeholder="Search 110,000+ supernovae..." required>
+    <form class="search-box" action="/" method="GET"
+          toolname="search_supernovae" 
+          tool-name="search_supernovae" 
+          tooldescription="Search 110,000+ supernovae and transients by IAU designation, name, or survey alias" 
+          tool-description="Search 110,000+ supernovae and transients by IAU designation, name, or survey alias" 
+          toolschema='{{"type":"object","properties":{{"q":{{"type":"string","description":"Supernova designation, IAU name, or survey alias"}}}},"required":["q"]}}' 
+          tool-schema='{{"type":"object","properties":{{"q":{{"type":"string","description":"Supernova designation, IAU name, or survey alias"}}}},"required":["q"]}}' 
+          toolautosubmit 
+          tool-autosubmit 
+          role="search"
+          onsubmit="event.preventDefault(); var q=this.q.value.trim(); if(q) window.location.href='/sne/'+encodeURIComponent(q)+'/';">
+      <input type="search" name="q" placeholder="Search 110,000+ supernovae..." 
+             toolparamtitle="supernova_query" 
+             tool-param-title="supernova_query" 
+             toolparamdescription="Supernova IAU designation, catalog name, or survey alias" 
+             tool-param-description="Supernova IAU designation, catalog name, or survey alias" 
+             aria-label="Search supernovae" required>
       <button type="submit">Search</button>
     </form>
     <div style="font-size:0.8rem;color:#64748b;margin-bottom:0.75rem;text-transform:uppercase;letter-spacing:0.05em;font-weight:600;">Benchmark Supernovae</div>
@@ -655,6 +670,7 @@ def _not_found_page(name: str) -> bytes:
     </div>
     <div><a class="btn-home" href="/">← Return to Full Catalog</a></div>
   </main>
+  <script src="/assets/webmcp.js"></script>
 </body>
 </html>"""
     return html.encode("utf-8")
@@ -802,25 +818,25 @@ class Handler(SimpleHTTPRequestHandler):
             if f_full.is_file():
                 self._send(200, "text/markdown; charset=utf-8", f_full.read_bytes(), {"Cache-Control": "public, max-age=3600"})
                 return
-        if path == "/.well-known/ai-catalog.json":
+        if path in ("/.well-known/ai-catalog.json", "/.well-known/ai-catalog"):
             f_cat = WWW / ".well-known/ai-catalog.json"
             if f_cat.is_file():
-                self._send(200, "application/ai-catalog+json; charset=utf-8", f_cat.read_bytes())
+                self._send(200, "application/json; charset=utf-8", f_cat.read_bytes(), {"Cache-Control": "public, max-age=3600"})
                 return
-        if path == "/.well-known/ard.json":
+        if path in ("/.well-known/ard.json", "/.well-known/ard"):
             f_ard = WWW / ".well-known/ard.json"
             if f_ard.is_file():
-                self._send(200, "application/json; charset=utf-8", f_ard.read_bytes())
+                self._send(200, "application/json; charset=utf-8", f_ard.read_bytes(), {"Cache-Control": "public, max-age=3600"})
                 return
-        if path == "/.well-known/agent-card.json":
+        if path in ("/.well-known/agent-card.json", "/.well-known/agent-card"):
             f_ac = WWW / ".well-known/agent-card.json"
             if f_ac.is_file():
-                self._send(200, "application/agent-card+json; charset=utf-8", f_ac.read_bytes())
+                self._send(200, "application/json; charset=utf-8", f_ac.read_bytes(), {"Cache-Control": "public, max-age=3600"})
                 return
-        if path == "/.well-known/mcp/server-card.json":
+        if path in ("/.well-known/mcp/server-card.json", "/.well-known/mcp/server-card"):
             f_sc = WWW / ".well-known/mcp/server-card.json"
             if f_sc.is_file():
-                self._send(200, "application/json; charset=utf-8", f_sc.read_bytes())
+                self._send(200, "application/json; charset=utf-8", f_sc.read_bytes(), {"Cache-Control": "public, max-age=3600"})
                 return
 
         # Master Frequently Asked Questions (FAQ) Hub: /faq, /faqs, /faq/
@@ -929,26 +945,135 @@ class Handler(SimpleHTTPRequestHandler):
                 self._send(200, "application/json; charset=utf-8", body)
                 return
 
+        # Supernova Search API: /api/search?q=...
+        if path == "/api/search":
+            q_val = query.get("q", query.get("query", [""]))[0].strip()
+            if not q_val:
+                self._send(400, "application/json; charset=utf-8", json.dumps({"error": "Missing required 'q' parameter"}).encode("utf-8"))
+                return
+
+            results = []
+            canon, entered = _resolve_event(q_val)
+            if canon:
+                entry = _get_catalog_entry(canon) or {}
+                results.append({
+                    "name": canon,
+                    "url": f"/sne/{urllib.parse.quote(canon)}/",
+                    "json_url": f"/sne/{urllib.parse.quote(canon)}.json",
+                    "exact": True,
+                    "claimedtype": entry.get("claimedtype", {}).get("value") if isinstance(entry.get("claimedtype"), dict) else entry.get("claimedtype", "—"),
+                    "ra": entry.get("ra", {}).get("value") if isinstance(entry.get("ra"), dict) else entry.get("ra", "—"),
+                    "dec": entry.get("dec", {}).get("value") if isinstance(entry.get("dec"), dict) else entry.get("dec", "—"),
+                    "discoverdate": entry.get("discoverdate", {}).get("value") if isinstance(entry.get("discoverdate"), dict) else entry.get("discoverdate", "—"),
+                    "maxappmag": entry.get("maxappmag", {}).get("value") if isinstance(entry.get("maxappmag"), dict) else entry.get("maxappmag", "—"),
+                })
+
+            q_clean = q_val.lower().replace(" ", "").replace("-", "")
+            alias_map = _alias_lookup_map()
+            added = {canon} if canon else set()
+            for alias_key, c_name in alias_map.items():
+                if len(results) >= 25:
+                    break
+                if q_clean in alias_key and c_name not in added:
+                    added.add(c_name)
+                    entry = _get_catalog_entry(c_name) or {}
+                    results.append({
+                        "name": c_name,
+                        "url": f"/sne/{urllib.parse.quote(c_name)}/",
+                        "json_url": f"/sne/{urllib.parse.quote(c_name)}.json",
+                        "exact": False,
+                        "claimedtype": entry.get("claimedtype", {}).get("value") if isinstance(entry.get("claimedtype"), dict) else entry.get("claimedtype", "—"),
+                        "ra": entry.get("ra", {}).get("value") if isinstance(entry.get("ra"), dict) else entry.get("ra", "—"),
+                        "dec": entry.get("dec", {}).get("value") if isinstance(entry.get("dec"), dict) else entry.get("dec", "—"),
+                        "discoverdate": entry.get("discoverdate", {}).get("value") if isinstance(entry.get("discoverdate"), dict) else entry.get("discoverdate", "—"),
+                        "maxappmag": entry.get("maxappmag", {}).get("value") if isinstance(entry.get("maxappmag"), dict) else entry.get("maxappmag", "—"),
+                    })
+
+            resp = {
+                "query": q_val,
+                "count": len(results),
+                "results": results
+            }
+            self._send(200, "application/json; charset=utf-8", json.dumps(resp, indent=2).encode("utf-8"))
+            return
+
+        # Recent Supernova Discoveries API: /api/recent, /api/recent-discoveries
+        if path in ("/api/recent", "/api/recent-discoveries"):
+            f_recent = WWW / "assets/recent-events.json"
+            if f_recent.is_file():
+                self._send(200, "application/json; charset=utf-8", f_recent.read_bytes(), {"Cache-Control": "public, max-age=300"})
+                return
+            elif get_radar_targets is not None:
+                targets = get_radar_targets("keck")
+                limit = int(query.get("limit", ["25"])[0])
+                resp = {"count": min(len(targets), limit), "results": targets[:limit]}
+                self._send(200, "application/json; charset=utf-8", json.dumps(resp, indent=2).encode("utf-8"))
+                return
+
+        # Classification Type Filter API: /api/by-type
+        if path == "/api/by-type":
+            target_type = query.get("type", [""])[0].strip().lower()
+            limit = int(query.get("limit", ["25"])[0])
+            _get_catalog_entry("SN2023ixf")  # Ensure _CATALOG_LOOKUP is loaded
+            matches = []
+            seen = set()
+            if _CATALOG_LOOKUP:
+                for name_k, meta in _CATALOG_LOOKUP.items():
+                    if not isinstance(meta, dict):
+                        continue
+                    c_name = meta.get("name")
+                    if not c_name or c_name in seen:
+                        continue
+                    ctype = meta.get("claimedtype", {})
+                    ctype_val = str(ctype.get("value") or "").lower() if isinstance(ctype, dict) else str(ctype or "").lower()
+                    if target_type in ctype_val:
+                        seen.add(c_name)
+                        matches.append({
+                            "name": c_name,
+                            "type": meta.get("claimedtype", {}).get("value") if isinstance(meta.get("claimedtype"), dict) else meta.get("claimedtype", "—"),
+                            "ra": meta.get("ra", {}).get("value") if isinstance(meta.get("ra"), dict) else meta.get("ra", "—"),
+                            "dec": meta.get("dec", {}).get("value") if isinstance(meta.get("dec"), dict) else meta.get("dec", "—"),
+                            "maxappmag": meta.get("maxappmag", {}).get("value") if isinstance(meta.get("maxappmag"), dict) else meta.get("maxappmag", "—"),
+                            "discoverdate": meta.get("discoverdate", {}).get("value") if isinstance(meta.get("discoverdate"), dict) else meta.get("discoverdate", "—"),
+                            "url": f"/sne/{urllib.parse.quote(c_name)}/"
+                        })
+                        if len(matches) >= limit:
+                            break
+            resp = {
+                "type": target_type,
+                "count": len(matches),
+                "results": matches
+            }
+            self._send(200, "application/json; charset=utf-8", json.dumps(resp, indent=2).encode("utf-8"))
+            return
+
         # IVOA Simple Cone Search: /api/cone, /cone
         if path in ("/api/cone", "/cone"):
             if cone_search is not None:
                 try:
                     ra_val = float(query.get("RA", query.get("ra", [""]))[0])
                     dec_val = float(query.get("DEC", query.get("dec", [""]))[0])
-                    sr_val = float(query.get("SR", query.get("sr", ["0.1"]))[0])
+                    if "SR" in query or "sr" in query:
+                        sr_val = float(query.get("SR", query.get("sr", ["0.1"]))[0])
+                    elif "radius_arcmin" in query or "radius" in query:
+                        sr_val = float(query.get("radius_arcmin", query.get("radius", ["6"]))[0]) / 60.0
+                    elif "radius_arcsec" in query:
+                        sr_val = float(query.get("radius_arcsec", ["360"])[0]) / 3600.0
+                    else:
+                        sr_val = 0.1
                 except (ValueError, IndexError):
-                    self._send(400, "text/plain", b"Error: Missing or invalid RA, DEC, or SR parameters. Example: /api/cone?RA=210.77&DEC=54.27&SR=0.2")
+                    self._send(400, "application/json; charset=utf-8", json.dumps({"error": "Missing or invalid RA, DEC, or radius parameters. Example: /api/cone?ra=210.77&dec=54.27&radius=5.0"}).encode("utf-8"))
                     return
 
                 hits = cone_search(ra_val, dec_val, sr_val)
-                req_fmt = query.get("format", ["votable" if "format" not in query else "json"])[0].lower()
+                req_fmt = query.get("format", ["votable" if path == "/cone" and "format" not in query else "json"])[0].lower()
                 if req_fmt in ("votable", "xml"):
                     body = format_votable(hits, ra_val, dec_val, sr_val).encode("utf-8")
                     self._send(200, "application/x-votable+xml; charset=utf-8", body)
                     return
                 else:
                     body = json.dumps({
-                        "query": {"ra": ra_val, "dec": dec_val, "sr_deg": sr_val},
+                        "query": {"ra": ra_val, "dec": dec_val, "sr_deg": sr_val, "radius_arcmin": sr_val * 60.0},
                         "count": len(hits),
                         "results": hits
                     }, indent=2).encode("utf-8")
@@ -1225,7 +1350,7 @@ class Handler(SimpleHTTPRequestHandler):
             self.send_header("Content-Length", str(len(body)))
             self.send_header("Access-Control-Allow-Origin", "*")
             if "text/html" in ctype:
-                self.send_header("Link", '</.well-known/ai-catalog.json>; rel="ai-catalog", </.well-known/ard.json>; rel="ard", </llms.txt>; rel="describedby"')
+                self.send_header("Link", '</.well-known/ai-catalog.json>; rel="ai-catalog"; type="application/json", </.well-known/ard.json>; rel="ard"; type="application/json", </llms.txt>; rel="describedby"')
             for k, v in headers.items():
                 self.send_header(k, v)
             self.end_headers()
