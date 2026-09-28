@@ -15,6 +15,7 @@ import mimetypes
 import os
 import re
 import subprocess
+import sys
 import threading
 import urllib.parse
 import urllib.request
@@ -1098,14 +1099,30 @@ class ReusableThreadingServer(ThreadingHTTPServer):
         super().server_bind()
 
 
+def _recent_tns_loop() -> None:
+    """Refresh classified supernovae from the public TNS search on a fixed interval."""
+    import time
+    project = str(ROOT.parent)
+    if project not in sys.path:
+        sys.path.insert(0, project)
+    while True:
+        try:
+            from ingest.pull_recent import pull_recent
+            count = pull_recent()
+            print(f"TNS recent pull stored {count} classified supernovae", flush=True)
+        except Exception as exc:
+            print(f"TNS recent pull failed: {exc}", flush=True)
+        time.sleep(6 * 60 * 60)
+
+
 def main():
     os.environ["OSC_DOCROOT"] = str(WWW)
     _ensure_catalog_files()
     # Warm names cache & spatial cone index
     _names_maps()
     if init_cone_index is not None:
-        import threading
         threading.Thread(target=init_cone_index, daemon=True).start()
+    threading.Thread(target=_recent_tns_loop, name="tns-recent", daemon=True).start()
     httpd = ReusableThreadingServer((HOST, PORT), Handler)
     print(f"sne.space local server on http://{HOST}:{PORT}/", flush=True)
     httpd.serve_forever()
