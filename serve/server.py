@@ -8,6 +8,8 @@ Dynamic pages (/ and /sne|/event) are rendered via PHP CLI against www/.
 from __future__ import annotations
 
 import csv
+import collections
+import datetime
 from functools import lru_cache
 import gzip
 import io
@@ -18,6 +20,7 @@ import re
 import subprocess
 import sys
 import threading
+import time
 import urllib.parse
 import urllib.request
 mimetypes.add_type("image/webp", ".webp")
@@ -90,6 +93,53 @@ WWW = ROOT / "www"
 PHP = os.environ.get("PHP_BIN", "php")
 HOST = os.environ.get("OSC_HOST", "127.0.0.1")
 PORT = int(os.environ.get("OSC_PORT", "8080"))
+
+_START_TIME = time.time()
+_API_STATS_LOCK = threading.Lock()
+_API_STATS = {
+    "started_at": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC"),
+    "total_requests": 0,
+    "api_requests": 0,
+    "unique_ips": set(),
+    "top_targets": collections.Counter(),
+    "top_user_agents": collections.Counter(),
+    "top_paths": collections.Counter(),
+    "status_codes": collections.Counter(),
+    "recent_requests": collections.deque(maxlen=100),
+}
+
+
+def _record_api_stat(ip: str, host: str, path: str, method: str, code: int, size: int, dur_ms: float, ua: str):
+    with _API_STATS_LOCK:
+        _API_STATS["total_requests"] += 1
+        _API_STATS["unique_ips"].add(ip)
+        _API_STATS["status_codes"][str(code)] += 1
+        clean_path = path.split("?")[0]
+        _API_STATS["top_paths"][clean_path] += 1
+
+        is_api = host.startswith("api.") or clean_path.startswith(("/api", "/cone", "/catalog", "/sne/")) or clean_path.endswith((".json", ".csv"))
+        if is_api:
+            _API_STATS["api_requests"] += 1
+            ua_clean = ua[:60] if ua else "unknown"
+            _API_STATS["top_user_agents"][ua_clean] += 1
+
+            m = re.match(r"^/(?:api/|sne/)?([A-Za-z0-9+_-]+)(?:\.[a-z]+|/[a-z]+)?$", clean_path)
+            if m:
+                target_cand = m.group(1).upper()
+                if target_cand not in ("API", "CATALOG", "CONE", "RADAR", "RECENT", "SEARCH", "BY-TYPE", "DOCS", "FAQS", "SITEMAP", "STATS", "TELEMETRY", "COUNT"):
+                    _API_STATS["top_targets"][target_cand] += 1
+
+        _API_STATS["recent_requests"].appendleft({
+            "timestamp": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC"),
+            "ip": ip,
+            "host": host,
+            "method": method,
+            "path": path,
+            "status": code,
+            "bytes": size,
+            "duration_ms": round(dur_ms, 1),
+            "user_agent": ua[:80] if ua else "-"
+        })
 
 
 def _php_render(script: Path, env: dict | None = None, query: str = "") -> bytes:
@@ -786,9 +836,8 @@ class Handler(SimpleHTTPRequestHandler):
         super().__init__(*args, directory=str(WWW), **kwargs)
 
     def log_message(self, fmt, *args):
-        # Quieter: only log errors / dynamic
-        if args and str(args[1]).startswith(("4", "5")):
-            super().log_message(fmt, *args)
+        # Clean structured logging is emitted in _send and _redirect
+        pass
 
     def do_OPTIONS(self):
         self.send_response(200)
@@ -806,6 +855,37 @@ class Handler(SimpleHTTPRequestHandler):
         path = urllib.parse.unquote(parsed.path)
         query = urllib.parse.parse_qs(parsed.query)
         fmt = query.get("format", [""])[0].lower()
+
+        # Real-time API Telemetry & Stats Dashboard: /api/stats, /api/telemetry
+        if path in ("/api/stats", "/api/telemetry"):
+            with _API_STATS_LOCK:
+                summary = {
+                    "service": "Open Supernova Catalog (sne.space)",
+                    "started_at": _API_STATS["started_at"],
+                    "uptime_seconds": round(time.time() - _START_TIME, 1),
+                    "total_requests": _API_STATS["total_requests"],
+                    "api_requests": _API_STATS["api_requests"],
+                    "unique_visitors_count": len(_API_STATS["unique_ips"]),
+                    "status_distribution": dict(_API_STATS["status_codes"]),
+                    "top_supernova_targets": [{"target": k, "count": v} for k, v in _API_STATS["top_targets"].most_common(15)],
+                    "top_user_agents": [{"user_agent": k, "count": v} for k, v in _API_STATS["top_user_agents"].most_common(15)],
+                    "top_endpoints": [{"path": k, "count": v} for k, v in _API_STATS["top_paths"].most_common(15)],
+                    "recent_requests": list(_API_STATS["recent_requests"])[:50]
+                }
+            self._send(200, "application/json; charset=utf-8", json.dumps(summary, indent=2).encode("utf-8"), {"Cache-Control": "no-cache"})
+            return
+
+        # Legacy OACAPI Badge Counter Endpoint: /api-count.php, /api/count
+        if path in ("/api-count.php", "/api/count"):
+            with _API_STATS_LOCK:
+                resp = {
+                    "count": _API_STATS["total_requests"],
+                    "api_count": _API_STATS["api_requests"],
+                    "unique": len(_API_STATS["unique_ips"]),
+                    "top5": [k for k, _ in _API_STATS["top_targets"].most_common(5)]
+                }
+            self._send(200, "application/json; charset=utf-8", json.dumps(resp, indent=2).encode("utf-8"), {"Cache-Control": "no-cache"})
+            return
 
         if path in ("/", "/index.php", "/index.html"):
             body = _php_render(WWW / "index.php")
@@ -937,9 +1017,7 @@ class Handler(SimpleHTTPRequestHandler):
                     else:
                         dest_url = f"https://www.legacysurvey.org/viewer/cutout.jpg?ra={target_ra:.6f}&dec={target_dec:.6f}&layer=ls-dr10&pixscale=0.262&size={size}"
 
-                self.send_response(302)
-                self.send_header("Location", dest_url)
-                self.end_headers()
+                self._redirect(302, dest_url)
                 return
             else:
                 self._send(400, "text/plain", b"Error: Missing valid coordinates (ra, dec) or recognized event name.")
@@ -1291,9 +1369,7 @@ class Handler(SimpleHTTPRequestHandler):
                             ra_d, dec_d, _, _ = extract_coords(ev_m)
                             if ra_d is not None and dec_d is not None:
                                 tgt = f"https://www.legacysurvey.org/viewer/cutout.jpg?ra={ra_d:.6f}&dec={dec_d:.6f}&layer=ls-dr10&pixscale=0.262&size=500"
-                                self.send_response(302)
-                                self.send_header("Location", tgt)
-                                self.end_headers()
+                                self._redirect(302, tgt)
                                 return
                         except Exception:
                             pass
@@ -1317,9 +1393,7 @@ class Handler(SimpleHTTPRequestHandler):
                                 r_raw = json.loads(p_file.read_text(encoding="utf-8", errors="replace"))
                                 r_meta = next(iter(r_raw.values())) if len(r_raw) == 1 else r_raw.get(resolved, r_raw)
                                 if classify_event_tier(resolved, r_meta) == 3:
-                                    self.send_response(302)
-                                    self.send_header("Location", f"/sne/{urllib.parse.quote(resolved)}/")
-                                    self.end_headers()
+                                    self._redirect(302, f"/sne/{urllib.parse.quote(resolved)}/")
                                     return
                             except Exception:
                                 pass
@@ -1353,9 +1427,7 @@ class Handler(SimpleHTTPRequestHandler):
                     dest = path + "/"
                     if parsed.query:
                         dest += "?" + parsed.query
-                    self.send_response(301)
-                    self.send_header("Location", dest)
-                    self.end_headers()
+                    self._redirect(301, dest)
                     return
                 data = index.read_bytes()
                 self._send(200, "text/html; charset=utf-8", data)
@@ -1365,9 +1437,7 @@ class Handler(SimpleHTTPRequestHandler):
         if "/" not in rel and rel:
             res, ent = _resolve_event(rel)
             if res:
-                self.send_response(302)
-                self.send_header("Location", f"/sne/{rel}" + (f"?{parsed.query}" if parsed.query else ""))
-                self.end_headers()
+                self._redirect(302, f"/sne/{rel}" + (f"?{parsed.query}" if parsed.query else ""))
                 return
 
         static = (WWW / rel).resolve()
@@ -1401,8 +1471,29 @@ class Handler(SimpleHTTPRequestHandler):
             return
 
     def handle_one_request(self):
+        self._req_t0 = time.time()
         try:
             super().handle_one_request()
+        except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError):
+            return
+
+    def _redirect(self, code: int, location: str):
+        t0 = getattr(self, "_req_t0", None)
+        dur_ms = (time.time() - t0) * 1000 if t0 else 0.0
+        ip = (self.headers.get("X-Forwarded-For") or self.headers.get("X-Real-IP") or (self.client_address[0] if self.client_address else "127.0.0.1")).split(",")[0].strip()
+        host = self.headers.get("Host") or "sne.space"
+        ua = self.headers.get("User-Agent") or "-"
+        cmd = getattr(self, "command", "GET")
+        req_path = getattr(self, "path", "-")
+        now_str = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+        is_api = host.startswith("api.") or req_path.startswith(("/api", "/sne/", "/catalog", "/cone")) or req_path.endswith((".json", ".csv"))
+        tag = "[API]" if is_api else "[HTTP]"
+        print(f"{tag} {now_str} | {code} | {dur_ms:>6.1f}ms | 0 B | {ip:<15} | {host} | {cmd} {req_path} -> {location} | UA: {ua}", flush=True)
+        _record_api_stat(ip, host, req_path, cmd, code, 0, dur_ms, ua)
+        try:
+            self.send_response(code)
+            self.send_header("Location", location)
+            self.end_headers()
         except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError):
             return
 
@@ -1423,6 +1514,20 @@ class Handler(SimpleHTTPRequestHandler):
         if "Cache-Control" not in headers:
             if "text/html" in ctype:
                 headers["Cache-Control"] = "public, max-age=120"
+
+        t0 = getattr(self, "_req_t0", None)
+        dur_ms = (time.time() - t0) * 1000 if t0 else 0.0
+        ip = (self.headers.get("X-Forwarded-For") or self.headers.get("X-Real-IP") or (self.client_address[0] if self.client_address else "127.0.0.1")).split(",")[0].strip()
+        host = self.headers.get("Host") or "sne.space"
+        ua = self.headers.get("User-Agent") or "-"
+        cmd = getattr(self, "command", "GET")
+        req_path = getattr(self, "path", "-")
+        now_str = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+        is_api = host.startswith("api.") or req_path.startswith(("/api", "/sne/", "/catalog", "/cone")) or req_path.endswith((".json", ".csv"))
+        tag = "[API]" if is_api else "[HTTP]"
+        print(f"{tag} {now_str} | {code} | {dur_ms:>6.1f}ms | {len(body):>7} B | {ip:<15} | {host} | {cmd} {req_path} | UA: {ua}", flush=True)
+        _record_api_stat(ip, host, req_path, cmd, code, len(body), dur_ms, ua)
+
         try:
             self.send_response(code)
             self.send_header("Content-Type", ctype)

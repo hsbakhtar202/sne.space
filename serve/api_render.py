@@ -391,6 +391,21 @@ curl -s "https://sne.space/api/radar.json?obs=keck&filter=rising" | jq .</code>
 }</code>
       </div>
     </div>
+
+    <!-- SECTION 5: REAL-TIME TELEMETRY & STATS -->
+    <h2 class="section-title">5. Real-Time Telemetry & API Usage Stats</h2>
+
+    <div class="endpoint-card">
+      <div class="endpoint-header">
+        <span class="method-badge method-get">GET</span>
+        <span class="endpoint-url">/api/stats &nbsp;and&nbsp; /api-count.php</span>
+      </div>
+      <p class="endpoint-desc">Live observational telemetry tracking active API throughput, unique callers, top queried supernovae, and user agent distributions. <code>/api-count.php</code> provides drop-in compatibility with the original OACAPI badge counter.</p>
+      <div class="code-block">
+        <code><span class="code-comment"># Example: Inspect live traffic telemetry and top queried supernovae</span><br>
+curl -s https://sne.space/api/stats | jq .</code>
+      </div>
+    </div>
   </main>
   <!-- WebMCP In-Browser Agentic Tools -->
   <script src="/assets/webmcp.js"></script>
