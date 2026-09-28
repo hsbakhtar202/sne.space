@@ -1,0 +1,144 @@
+{
+  "name": "sne.space WebMCP",
+  "version": "1.0.0",
+  "description": "Web Model Context Protocol (WebMCP) and Agentic Resource Discovery manifest for the Open Supernova Catalog (sne.space). Provides structured tools for AI agents over 110,000+ supernovae from 1000 AD to 2026+.",
+  "homepage": "https://sne.space",
+  "documentation": "https://sne.space/api/docs",
+  "tools": [
+    {
+      "name": "search_supernovae",
+      "description": "Search 110,000+ supernovae and transients by IAU designation, name, or survey alias (e.g. SN 2023ixf, SN 1987A, SN 2011fe, AT2024nrb).",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "Supernova designation, IAU name, or survey alias"
+          }
+        },
+        "required": ["query"]
+      },
+      "annotations": {
+        "readOnlyHint": true
+      }
+    },
+    {
+      "name": "get_supernova",
+      "description": "Retrieve complete astrophysical dossier for a supernova, including classification, redshift, coordinates, host galaxy, discovery date, peak magnitude, and bibliography.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Supernova name or IAU designation (e.g. SN 2023ixf, SN 1987A, SN 2011fe)"
+          }
+        },
+        "required": ["name"]
+      },
+      "annotations": {
+        "readOnlyHint": true
+      }
+    },
+    {
+      "name": "search_by_coordinates",
+      "description": "Cone search for supernovae and transients within an angular radius around J2000 celestial coordinates (Right Ascension and Declination in decimal degrees).",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "ra": {
+            "type": "number",
+            "description": "Right Ascension in decimal degrees (0.0 to 360.0)"
+          },
+          "dec": {
+            "type": "number",
+            "description": "Declination in decimal degrees (-90.0 to +90.0)"
+          },
+          "radius_arcmin": {
+            "type": "number",
+            "description": "Search radius in arcminutes (default: 5.0, max: 60.0)"
+          }
+        },
+        "required": ["ra", "dec"]
+      },
+      "annotations": {
+        "readOnlyHint": true
+      }
+    },
+    {
+      "name": "search_by_type",
+      "description": "Find supernovae matching a specific astrophysical classification type (e.g. 'Ia', 'II-P', 'IIn', 'SLSN-I', 'Ia-91T', 'TDE').",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Astrophysical classification type (e.g. Ia, II-P, IIn, SLSN)"
+          },
+          "limit": {
+            "type": "number",
+            "description": "Maximum results to return (default: 25, max: 100)"
+          }
+        },
+        "required": ["type"]
+      },
+      "annotations": {
+        "readOnlyHint": true
+      }
+    },
+    {
+      "name": "get_recent_discoveries",
+      "description": "Fetch latest discovered supernovae and active transient alerts from the last 30 days, sorted by discovery date.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "limit": {
+            "type": "number",
+            "description": "Maximum number of recent transients to return (default: 25)"
+          }
+        }
+      },
+      "annotations": {
+        "readOnlyHint": true
+      }
+    },
+    {
+      "name": "get_photometry",
+      "description": "Retrieve calibrated multi-band photometric light curve observations (time, magnitude, error, filter band, telescope/observer) for a supernova.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Supernova name or IAU designation (e.g. SN 2023ixf, SN 2011fe)"
+          },
+          "format": {
+            "type": "string",
+            "description": "Response format ('json' or 'csv', default: 'json')",
+            "enum": ["json", "csv"]
+          }
+        },
+        "required": ["name"]
+      },
+      "annotations": {
+        "readOnlyHint": true
+      }
+    },
+    {
+      "name": "get_spectra",
+      "description": "Retrieve calibrated 1D optical spectra (wavelength in Angstroms, flux, epoch/phase, instrument) for a supernova.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Supernova name or IAU designation (e.g. SN 2023ixf, SN 1987A)"
+          }
+        },
+        "required": ["name"]
+      },
+      "annotations": {
+        "readOnlyHint": true
+      }
+    }
+  ]
+}

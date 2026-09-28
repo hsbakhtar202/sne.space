@@ -156,6 +156,9 @@ def render_faq_page() -> str:
   <link rel="stylesheet" href="/assets/ia.css">
   <link rel="ai-catalog" href="/.well-known/ai-catalog.json" type="application/json">
   <link rel="ard" href="/.well-known/ard.json" type="application/json">
+  <link rel="webmcp-manifest" href="/.well-known/webmcp" type="application/json">
+  <link rel="mcp-manifest" href="/.well-known/mcp.json" type="application/json">
+  <link rel="describedby" href="/llms.txt" type="text/markdown">
   {faq_jsonld}
   <style>
     :root {{
@@ -354,6 +357,8 @@ def render_faq_page() -> str:
     <form class="hdr-search-form" action="/" method="GET" 
           toolname="search_supernovae" 
           tool-name="search_supernovae" 
+          toolaction="submit"
+          tool-action="submit"
           tooldescription="Search 110,000+ supernovae and transients by IAU designation, name, or survey alias" 
           tool-description="Search 110,000+ supernovae and transients by IAU designation, name, or survey alias" 
           toolschema='{{"type":"object","properties":{{"q":{{"type":"string","description":"Supernova designation, IAU name, or survey alias"}}}},"required":["q"]}}' 

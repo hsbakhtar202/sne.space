@@ -68,6 +68,8 @@ require __DIR__ . '/wp-content/plugins/transient-table/transient-table.php';
 <meta name="description" content="Comprehensive astrophysical archive containing multi-band light curves, calibrated spectra, and metadata for over 110,000 supernovae from 1000 AD to 2026+.">
 <link rel="ai-catalog" href="/.well-known/ai-catalog.json" type="application/json">
 <link rel="ard" href="/.well-known/ard.json" type="application/json">
+<link rel="webmcp-manifest" href="/.well-known/webmcp" type="application/json">
+<link rel="mcp-manifest" href="/.well-known/mcp.json" type="application/json">
 <link rel="describedby" href="/llms.txt" type="text/markdown">
 <link rel="stylesheet" href="https://cdn.datatables.net/1.10.16/css/jquery.dataTables.min.css" media="print" onload="this.media='all'">
 <link rel="stylesheet" href="https://cdn.datatables.net/v/dt/b-1.5.2/b-colvis-1.5.2/b-html5-1.5.2/r-2.2.2/sc-1.5.0/sl-1.2.6/datatables.min.css" media="print" onload="this.media='all'">
@@ -474,6 +476,8 @@ require __DIR__ . '/wp-content/plugins/transient-table/transient-table.php';
     <form class="hdr-search-form" action="/" method="GET" 
           toolname="search_supernovae" 
           tool-name="search_supernovae" 
+          toolaction="submit"
+          tool-action="submit"
           tooldescription="Search 110,000+ supernovae and transients by IAU designation, name, or survey alias" 
           tool-description="Search 110,000+ supernovae and transients by IAU designation, name, or survey alias" 
           toolschema='{"type":"object","properties":{"q":{"type":"string","description":"Supernova designation, IAU name, or survey alias"}},"required":["q"]}'
@@ -481,7 +485,7 @@ require __DIR__ . '/wp-content/plugins/transient-table/transient-table.php';
           toolautosubmit
           tool-autosubmit
           role="search" 
-          onsubmit="event.preventDefault(); var q=this.q.value.trim(); if(q) window.location.href='/sne/'+encodeURIComponent(q)+'/';">
+          onsubmit="if(event.agentInvoked){console.log('[WebMCP] Agent submit');} event.preventDefault(); var q=this.q.value.trim(); if(q) window.location.href='/sne/'+encodeURIComponent(q)+'/';">
       <input type="search" name="q" 
              placeholder="Search 110k+ supernovae (e.g. SN 2023ixf)..." 
              aria-label="Search supernovae" 

@@ -1059,6 +1059,9 @@ def render_pro_cockpit(name: str, meta: dict, entered: str | None = None, legacy
   <link rel="stylesheet" href="/assets/ia.css">
   <link rel="ai-catalog" href="/.well-known/ai-catalog.json" type="application/json">
   <link rel="ard" href="/.well-known/ard.json" type="application/json">
+  <link rel="webmcp-manifest" href="/.well-known/webmcp" type="application/json">
+  <link rel="mcp-manifest" href="/.well-known/mcp.json" type="application/json">
+  <link rel="describedby" href="/llms.txt" type="text/markdown">
   <link rel="stylesheet" href="https://aladin.cds.unistra.fr/AladinLite/api/v3/latest/aladin.css" />
   <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
   <script src="https://aladin.cds.unistra.fr/AladinLite/api/v3/latest/aladin.js"></script>
@@ -1722,6 +1725,8 @@ def render_pro_cockpit(name: str, meta: dict, entered: str | None = None, legacy
     <form class="hdr-search-form" action="/" method="GET" 
           toolname="search_supernovae" 
           tool-name="search_supernovae" 
+          toolaction="submit"
+          tool-action="submit"
           tooldescription="Search 110,000+ supernovae and transients by IAU designation, name, or survey alias" 
           tool-description="Search 110,000+ supernovae and transients by IAU designation, name, or survey alias" 
           toolschema='{{"type":"object","properties":{{"q":{{"type":"string","description":"Supernova designation, IAU name, or survey alias"}}}},"required":["q"]}}' 
@@ -3464,6 +3469,9 @@ def render_story_mode(name: str, meta: dict, entered: str | None = None) -> str:
   <link rel="stylesheet" href="/assets/ia.css">
   <link rel="ai-catalog" href="/.well-known/ai-catalog.json" type="application/json">
   <link rel="ard" href="/.well-known/ard.json" type="application/json">
+  <link rel="webmcp-manifest" href="/.well-known/webmcp" type="application/json">
+  <link rel="mcp-manifest" href="/.well-known/mcp.json" type="application/json">
+  <link rel="describedby" href="/llms.txt" type="text/markdown">
   <link rel="stylesheet" href="https://aladin.cds.unistra.fr/AladinLite/api/v3/latest/aladin.css" />
   <script src="https://aladin.cds.unistra.fr/AladinLite/api/v3/latest/aladin.js"></script>
 {story_article_jsonld}
@@ -4311,6 +4319,8 @@ def render_story_mode(name: str, meta: dict, entered: str | None = None) -> str:
     <form class="hdr-search-form" action="/" method="GET" 
           toolname="search_supernovae" 
           tool-name="search_supernovae" 
+          toolaction="submit"
+          tool-action="submit"
           tooldescription="Search 110,000+ supernovae and transients by IAU designation, name, or survey alias" 
           tool-description="Search 110,000+ supernovae and transients by IAU designation, name, or survey alias" 
           toolschema='{{"type":"object","properties":{{"q":{{"type":"string","description":"Supernova designation, IAU name, or survey alias"}}}},"required":["q"]}}' 

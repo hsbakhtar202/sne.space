@@ -359,6 +359,8 @@ def render_radar_page(obs_key: str = "keck", filter_mode: str = "active") -> str
   <meta name="description" content="Live transient tracking feed for active supernovae, rising light curves, and unclassified targets observable tonight.">
   <link rel="ai-catalog" href="/.well-known/ai-catalog.json" type="application/json">
   <link rel="ard" href="/.well-known/ard.json" type="application/json">
+  <link rel="webmcp-manifest" href="/.well-known/webmcp" type="application/json">
+  <link rel="mcp-manifest" href="/.well-known/mcp.json" type="application/json">
   <link rel="describedby" href="/llms.txt" type="text/markdown">
   <style>
     :root {{
@@ -509,6 +511,8 @@ def render_radar_page(obs_key: str = "keck", filter_mode: str = "active") -> str
     <form class="hdr-search-form" action="/" method="GET" 
           toolname="search_supernovae" 
           tool-name="search_supernovae" 
+          toolaction="submit"
+          tool-action="submit"
           tooldescription="Search 110,000+ supernovae and transients by IAU designation, name, or survey alias" 
           tool-description="Search 110,000+ supernovae and transients by IAU designation, name, or survey alias" 
           toolschema='{{"type":"object","properties":{{"q":{{"type":"string","description":"Supernova designation, IAU name, or survey alias"}}}},"required":["q"]}}' 

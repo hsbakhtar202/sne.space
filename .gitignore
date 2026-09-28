@@ -24,6 +24,7 @@ ENV/
 # Large temporary cache files
 ingest/cache/
 *.log
+serve/logs/
 
 # Large Astronomical Data Repositories (12GB+ / 110,000 JSONs)
 vendor/

@@ -1,3 +1,69 @@
+# OpenAI / ChatGPT
+User-agent: GPTBot
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+# Anthropic / Claude
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Claude-SearchBot
+Allow: /
+
+User-agent: Claude-User
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+# Perplexity
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Perplexity-User
+Allow: /
+
+# Google / Gemini
+User-agent: Google-Extended
+Allow: /
+
+User-agent: GoogleOther
+Allow: /
+
+# Apple
+User-agent: Applebot
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
+
+# Meta / LLaMA
+User-agent: Meta-ExternalAgent
+Allow: /
+
+User-agent: FacebookBot
+Allow: /
+
+# Mistral & Cohere
+User-agent: MistralBot
+Allow: /
+
+User-agent: cohere-ai
+Allow: /
+
+# Amazon & Microsoft
+User-agent: Amazonbot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+# Default for all other crawlers & agents
 User-agent: *
 Allow: /
 
@@ -5,8 +71,12 @@ Allow: /
 Sitemap: https://sne.space/sitemap.xml
 Sitemap: https://sne.space/sitemap_current.xml
 Sitemap: https://sne.space/sitemap_stories.xml
+Sitemap: https://sne.space/sitemap_historical.xml
 
-# AI Agent Catalogs & Manifests (discovered via Link headers and /.well-known/)
-# https://sne.space/.well-known/ai-catalog.json
-# https://sne.space/.well-known/ard.json
-# https://sne.space/llms.txt
+# AI Agent & WebMCP Manifests (Pre-discovery & Link header endpoints)
+# Manifest: https://sne.space/.well-known/webmcp
+# Manifest: https://sne.space/.well-known/mcp.json
+# Manifest: https://sne.space/mcp/manifest.json
+# AI Catalog: https://sne.space/.well-known/ai-catalog.json
+# ARD: https://sne.space/.well-known/ard.json
+# LLMs: https://sne.space/llms.txt

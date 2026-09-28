@@ -12,6 +12,7 @@ import collections
 import datetime
 from functools import lru_cache
 import gzip
+import html
 import io
 import json
 import mimetypes
@@ -109,7 +110,31 @@ _API_STATS = {
 }
 
 
+LOGS_DIR = ROOT / "logs"
+LOG_FILE = LOGS_DIR / "access.log"
+_LOG_LOCK = threading.Lock()
+
+
+def _write_access_log(ip: str, host: str, method: str, path: str, code: int, size: int, dur_ms: float, ua: str):
+    try:
+        LOGS_DIR.mkdir(parents=True, exist_ok=True)
+        with _LOG_LOCK:
+            # 15MB rotation limit
+            if LOG_FILE.is_file() and LOG_FILE.stat().st_size > 15 * 1024 * 1024:
+                old_file = LOGS_DIR / "access.log.1"
+                if old_file.exists():
+                    old_file.unlink(missing_ok=True)
+                LOG_FILE.rename(old_file)
+            now_iso = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
+            line = f'[{now_iso}] {code} {method} "{path}" ({dur_ms:.1f}ms, {size}B) - IP: {ip} - Host: {host} - UA: "{ua}"\n'
+            with open(LOG_FILE, "a", encoding="utf-8") as f:
+                f.write(line)
+    except Exception as e:
+        print(f"[LOG ERROR] {e}", flush=True)
+
+
 def _record_api_stat(ip: str, host: str, path: str, method: str, code: int, size: int, dur_ms: float, ua: str):
+    _write_access_log(ip, host, method, path, code, size, dur_ms, ua)
     with _API_STATS_LOCK:
         _API_STATS["total_requests"] += 1
         _API_STATS["unique_ips"].add(ip)
@@ -704,6 +729,11 @@ def _not_found_page(name: str) -> bytes:
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Transient '{name}' Not Found — sne.space</title>
+  <link rel="ai-catalog" href="/.well-known/ai-catalog.json" type="application/json">
+  <link rel="ard" href="/.well-known/ard.json" type="application/json">
+  <link rel="webmcp-manifest" href="/.well-known/webmcp" type="application/json">
+  <link rel="mcp-manifest" href="/.well-known/mcp.json" type="application/json">
+  <link rel="describedby" href="/llms.txt" type="text/markdown">
   <style>
     :root {{ --bg: #070a12; --card: #0d1424; --border: #1e293b; --accent: #38bdf8; --text: #e2e8f0; }}
     body {{ background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 0; display: flex; flex-direction: column; min-height: 100vh; }}
@@ -733,6 +763,8 @@ def _not_found_page(name: str) -> bytes:
     <form class="search-box" action="/" method="GET"
           toolname="search_supernovae" 
           tool-name="search_supernovae" 
+          toolaction="submit"
+          tool-action="submit"
           tooldescription="Search 110,000+ supernovae and transients by IAU designation, name, or survey alias" 
           tool-description="Search 110,000+ supernovae and transients by IAU designation, name, or survey alias" 
           toolschema='{{"type":"object","properties":{{"q":{{"type":"string","description":"Supernova designation, IAU name, or survey alias"}}}},"required":["q"]}}' 
@@ -831,6 +863,339 @@ def _event_page(name: str, entered: str | None = None, is_story: bool = False, f
     return 200, _fallback_event_page(name, entered)
 
 
+def _render_logs_page() -> bytes:
+    with _API_STATS_LOCK:
+        total = _API_STATS["total_requests"]
+        api_count = _API_STATS["api_requests"]
+        unique_ips = len(_API_STATS["unique_ips"])
+        uptime_sec = int(time.time() - _START_TIME)
+        uptime_str = str(datetime.timedelta(seconds=uptime_sec))
+        top_targets = ", ".join(f"{k} ({v})" for k, v in _API_STATS["top_targets"].most_common(5)) or "None yet"
+        recent = list(_API_STATS["recent_requests"])[:100]
+
+    raw_tail = ""
+    if LOG_FILE.is_file():
+        try:
+            with open(LOG_FILE, "r", encoding="utf-8", errors="replace") as f:
+                lines = f.readlines()
+                raw_tail = "".join(lines[-40:])
+        except Exception:
+            raw_tail = "Unable to read access.log"
+
+    rows = []
+    for r in recent:
+        code = r["status"]
+        if 200 <= code < 300:
+            badge_cls = "badge-success"
+        elif 300 <= code < 400:
+            badge_cls = "badge-info"
+        elif 400 <= code < 500:
+            badge_cls = "badge-warn"
+        else:
+            badge_cls = "badge-error"
+
+        p = r["path"]
+        link = f'<a href="{html.escape(p)}" target="_blank">{html.escape(p)}</a>' if r["method"] == "GET" else html.escape(p)
+        ua = html.escape(r.get("user_agent", "-"))
+        rows.append(f"""
+        <tr>
+          <td class="mono text-muted">{html.escape(r['timestamp'])}</td>
+          <td><span class="badge {badge_cls}">{code}</span></td>
+          <td class="mono bold">{html.escape(r['method'])}</td>
+          <td class="mono path-cell">{link}</td>
+          <td class="mono">{r['duration_ms']}ms</td>
+          <td class="mono">{r['bytes']} B</td>
+          <td class="mono">{html.escape(r['ip'])}</td>
+          <td class="mono text-muted">{html.escape(r['host'])}</td>
+          <td class="ua-cell" title="{ua}">{ua}</td>
+        </tr>
+        """)
+    table_rows = "".join(rows) if rows else '<tr><td colspan="9" style="text-align:center;padding:2rem;color:#64748b;">No requests recorded in memory yet.</td></tr>'
+
+    page = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Live Access &amp; API Logs — sne.space</title>
+  <link rel="icon" href="/favicon.ico">
+  <style>
+    :root {{
+      --bg: #070a12;
+      --card: #0d1424;
+      --border: #1e293b;
+      --accent: #38bdf8;
+      --text: #e2e8f0;
+      --text-muted: #64748b;
+      --success: #22c55e;
+      --warn: #f59e0b;
+      --error: #ef4444;
+      --info: #3b82f6;
+    }}
+    * {{ box-sizing: border-box; }}
+    body {{
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace;
+      padding: 1.5rem;
+      line-height: 1.5;
+    }}
+    .hdr {{
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 1rem;
+      margin-bottom: 1.5rem;
+    }}
+    .brand {{
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      text-decoration: none;
+      color: #fff;
+    }}
+    .brand img {{ height: 32px; }}
+    .brand h1 {{ font-size: 1.35rem; margin: 0; }}
+    .badge {{
+      display: inline-block;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 700;
+    }}
+    .badge-success {{ background: rgba(34, 197, 94, 0.15); color: var(--success); border: 1px solid rgba(34, 197, 94, 0.3); }}
+    .badge-info {{ background: rgba(59, 130, 246, 0.15); color: var(--info); border: 1px solid rgba(59, 130, 246, 0.3); }}
+    .badge-warn {{ background: rgba(245, 158, 11, 0.15); color: var(--warn); border: 1px solid rgba(245, 158, 11, 0.3); }}
+    .badge-error {{ background: rgba(239, 68, 68, 0.15); color: var(--error); border: 1px solid rgba(239, 68, 68, 0.3); }}
+    .stats-grid {{
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }}
+    .card {{
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem;
+    }}
+    .card .label {{ font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 600; letter-spacing: 0.05em; }}
+    .card .val {{ font-size: 1.6rem; font-weight: 700; color: #fff; margin-top: 0.25rem; }}
+    .actions-bar {{
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }}
+    .search-input {{
+      background: var(--card);
+      border: 1px solid var(--border);
+      color: #fff;
+      padding: 0.5rem 0.9rem;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      width: 320px;
+      max-width: 100%;
+    }}
+    .btn {{
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.45rem 0.85rem;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: var(--card);
+      color: var(--text);
+    }}
+    .btn:hover {{ border-color: var(--accent); color: var(--accent); }}
+    .btn-primary {{ background: #0284c7; color: #fff; border-color: #0284c7; }}
+    .btn-primary:hover {{ background: #0369a1; color: #fff; }}
+    table.log-tbl {{
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      font-size: 0.82rem;
+    }}
+    table.log-tbl th {{
+      background: #090e1a;
+      color: var(--text-muted);
+      text-align: left;
+      padding: 0.6rem 0.75rem;
+      font-weight: 600;
+      border-bottom: 1px solid var(--border);
+    }}
+    table.log-tbl td {{
+      padding: 0.55rem 0.75rem;
+      border-bottom: 1px solid rgba(30, 41, 59, 0.6);
+      white-space: nowrap;
+    }}
+    table.log-tbl tr:hover {{ background: rgba(56, 189, 248, 0.04); }}
+    .mono {{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }}
+    .bold {{ font-weight: 700; }}
+    .text-muted {{ color: var(--text-muted); }}
+    .path-cell {{ max-width: 340px; overflow: hidden; text-overflow: ellipsis; }}
+    .path-cell a {{ color: var(--accent); text-decoration: none; }}
+    .path-cell a:hover {{ text-decoration: underline; }}
+    .ua-cell {{ max-width: 260px; overflow: hidden; text-overflow: ellipsis; color: #94a3b8; }}
+    pre.log-terminal {{
+      background: #050811;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem;
+      color: #38bdf8;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.78rem;
+      overflow-x: auto;
+      max-height: 380px;
+      line-height: 1.45;
+    }}
+  </style>
+</head>
+<body>
+  <div class="hdr">
+    <a href="/" class="brand">
+      <img src="/assets/img/logo-color.webp" alt="sne.space">
+      <h1>Live Access &amp; API Logs</h1>
+    </a>
+    <div style="display:flex;gap:0.5rem;align-items:center;">
+      <label style="display:flex;align-items:center;gap:0.4rem;font-size:0.85rem;cursor:pointer;">
+        <input type="checkbox" id="auto-refresh" checked> Auto-refresh (3s)
+      </label>
+      <a href="/logs?download=1" class="btn btn-primary" download>📥 Download access.log</a>
+      <a href="/logs?raw=1" class="btn" target="_blank">📄 Raw Text</a>
+      <a href="/api/stats" class="btn" target="_blank">📊 JSON Telemetry</a>
+      <a href="/" class="btn">🔭 Catalog</a>
+    </div>
+  </div>
+
+  <div class="stats-grid">
+    <div class="card">
+      <div class="label">Total Requests</div>
+      <div class="val" id="st-total">{total:,}</div>
+    </div>
+    <div class="card">
+      <div class="label">API Queries</div>
+      <div class="val" id="st-api" style="color:var(--accent);">{api_count:,}</div>
+    </div>
+    <div class="card">
+      <div class="label">Unique Client IPs</div>
+      <div class="val" id="st-unique" style="color:var(--success);">{unique_ips:,}</div>
+    </div>
+    <div class="card">
+      <div class="label">Server Uptime</div>
+      <div class="val" id="st-uptime">{uptime_str}</div>
+    </div>
+  </div>
+
+  <div class="actions-bar">
+    <input type="text" id="filter-box" class="search-input" placeholder="Filter requests by IP, path, status, UA..." oninput="filterRows()">
+    <div style="font-size:0.85rem;color:var(--text-muted);">
+      Top Active Targets: <span style="color:#fff;" id="top-targets">{html.escape(top_targets)}</span>
+    </div>
+  </div>
+
+  <div style="overflow-x:auto;margin-bottom:2rem;border-radius:8px;border:1px solid var(--border);">
+    <table class="log-tbl" id="log-table">
+      <thead>
+        <tr>
+          <th>Timestamp (UTC)</th>
+          <th>Status</th>
+          <th>Method</th>
+          <th>Requested Path / Endpoint</th>
+          <th>Latency</th>
+          <th>Size</th>
+          <th>Client IP</th>
+          <th>Host</th>
+          <th>User Agent</th>
+        </tr>
+      </thead>
+      <tbody id="log-body">
+        {table_rows}
+      </tbody>
+    </table>
+  </div>
+
+  <h3 style="color:#fff;margin-bottom:0.5rem;">Disk access.log (Tail - Last 40 Entries)</h3>
+  <pre class="log-terminal" id="raw-log">{html.escape(raw_tail) if raw_tail else "No entries written to access.log yet."}</pre>
+
+  <script>
+    function filterRows() {{
+      const q = document.getElementById('filter-box').value.toLowerCase();
+      const rows = document.querySelectorAll('#log-body tr');
+      rows.forEach(r => {{
+        const txt = r.textContent.toLowerCase();
+        r.style.display = txt.includes(q) ? '' : 'none';
+      }});
+    }}
+
+    let refreshTimer = null;
+    function pollStats() {{
+      if (!document.getElementById('auto-refresh').checked) return;
+      fetch('/api/stats')
+        .then(res => res.json())
+        .then(d => {{
+          document.getElementById('st-total').textContent = (d.total_requests || 0).toLocaleString();
+          document.getElementById('st-api').textContent = (d.api_requests || 0).toLocaleString();
+          document.getElementById('st-unique').textContent = (d.unique_visitors_count || 0).toLocaleString();
+          
+          if (d.top_supernova_targets && d.top_supernova_targets.length) {{
+            document.getElementById('top-targets').textContent = d.top_supernova_targets.slice(0, 5).map(t => t.target + ' (' + t.count + ')').join(', ');
+          }}
+
+          if (d.recent_requests && d.recent_requests.length) {{
+            const tbody = document.getElementById('log-body');
+            const rows = d.recent_requests.map(r => {{
+              const c = r.status;
+              let cls = 'badge-success';
+              if (c >= 300 && c < 400) cls = 'badge-info';
+              else if (c >= 400 && c < 500) cls = 'badge-warn';
+              else if (c >= 500) cls = 'badge-error';
+              const p = r.path || '-';
+              const link = r.method === 'GET' ? '<a href="' + encodeURI(p) + '" target="_blank">' + escapeHtml(p) + '</a>' : escapeHtml(p);
+              const ua = escapeHtml(r.user_agent || '-');
+              return '<tr>' +
+                '<td class="mono text-muted">' + escapeHtml(r.timestamp || '') + '</td>' +
+                '<td><span class="badge ' + cls + '">' + c + '</span></td>' +
+                '<td class="mono bold">' + escapeHtml(r.method || '') + '</td>' +
+                '<td class="mono path-cell">' + link + '</td>' +
+                '<td class="mono">' + (r.duration_ms || 0) + 'ms</td>' +
+                '<td class="mono">' + (r.bytes || 0) + ' B</td>' +
+                '<td class="mono">' + escapeHtml(r.ip || '') + '</td>' +
+                '<td class="mono text-muted">' + escapeHtml(r.host || '') + '</td>' +
+                '<td class="ua-cell" title="' + ua + '">' + ua + '</td>' +
+              '</tr>';
+            }}).join('');
+            tbody.innerHTML = rows;
+            filterRows();
+          }}
+        }})
+        .catch(err => console.log('Poll error', err));
+    }}
+
+    function escapeHtml(s) {{
+      return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }}
+
+    setInterval(pollStats, 3000);
+  </script>
+</body>
+</html>"""
+    return page.encode("utf-8")
+
+
 class Handler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=str(WWW), **kwargs)
@@ -885,6 +1250,32 @@ class Handler(SimpleHTTPRequestHandler):
                     "top5": [k for k, _ in _API_STATS["top_targets"].most_common(5)]
                 }
             self._send(200, "application/json; charset=utf-8", json.dumps(resp, indent=2).encode("utf-8"), {"Cache-Control": "no-cache"})
+            return
+
+        # Real-time Web Log Viewer & Download: /logs, /logs/, /admin/logs
+        if path in ("/logs", "/logs/", "/admin/logs"):
+            raw_param = query.get("raw", [""])[0] or query.get("format", [""])[0]
+            download_param = query.get("download", [""])[0]
+            if download_param in ("1", "true"):
+                if LOG_FILE.is_file():
+                    content = LOG_FILE.read_bytes()
+                else:
+                    content = b"No log entries yet.\n"
+                self._send(200, "text/plain; charset=utf-8", content, {
+                    "Content-Disposition": 'attachment; filename="sne-space-access.log"',
+                    "Cache-Control": "no-cache"
+                })
+                return
+            if raw_param in ("1", "true", "raw", "text"):
+                if LOG_FILE.is_file():
+                    content = LOG_FILE.read_bytes()
+                else:
+                    content = b"No log entries yet.\n"
+                self._send(200, "text/plain; charset=utf-8", content, {"Cache-Control": "no-cache"})
+                return
+
+            body = _render_logs_page()
+            self._send(200, "text/html; charset=utf-8", body, {"Cache-Control": "no-cache"})
             return
 
         if path in ("/", "/index.php", "/index.html"):
@@ -956,6 +1347,23 @@ class Handler(SimpleHTTPRequestHandler):
             f_sc = WWW / ".well-known/mcp/server-card.json"
             if f_sc.is_file():
                 self._send(200, "application/json; charset=utf-8", f_sc.read_bytes(), {"Cache-Control": "public, max-age=3600"})
+                return
+        if path in ("/.well-known/webmcp", "/.well-known/webmcp.json"):
+            f_webmcp = WWW / ".well-known/webmcp"
+            if not f_webmcp.is_file():
+                f_webmcp = WWW / ".well-known/webmcp.json"
+            if f_webmcp.is_file():
+                self._send(200, "application/json; charset=utf-8", f_webmcp.read_bytes(), {"Cache-Control": "public, max-age=3600"})
+                return
+        if path in ("/.well-known/mcp.json", "/.well-known/mcp"):
+            f_mcp = WWW / ".well-known/mcp.json"
+            if f_mcp.is_file():
+                self._send(200, "application/json; charset=utf-8", f_mcp.read_bytes(), {"Cache-Control": "public, max-age=3600"})
+                return
+        if path in ("/mcp/manifest.json", "/mcp/manifest"):
+            f_mcp_man = WWW / "mcp/manifest.json"
+            if f_mcp_man.is_file():
+                self._send(200, "application/json; charset=utf-8", f_mcp_man.read_bytes(), {"Cache-Control": "public, max-age=3600"})
                 return
 
         # Master Frequently Asked Questions (FAQ) Hub: /faq, /faqs, /faq/
@@ -1533,8 +1941,16 @@ class Handler(SimpleHTTPRequestHandler):
             self.send_header("Content-Type", ctype)
             self.send_header("Content-Length", str(len(body)))
             self.send_header("Access-Control-Allow-Origin", "*")
-            if "text/html" in ctype:
-                self.send_header("Link", '</.well-known/ai-catalog.json>; rel="ai-catalog"; type="application/json", </.well-known/ard.json>; rel="ard"; type="application/json", </llms.txt>; rel="describedby"')
+            link_header_val = (
+                '</mcp/manifest.json>; rel="mcp-manifest", '
+                '</.well-known/webmcp>; rel="webmcp-manifest", '
+                '</.well-known/mcp.json>; rel="mcp-manifest", '
+                '</.well-known/ai-catalog.json>; rel="ai-catalog"; type="application/json", '
+                '</.well-known/ard.json>; rel="ard"; type="application/json", '
+                '</llms.txt>; rel="describedby"'
+            )
+            if "text/html" in ctype or req_path in ("/", "/catalog", "/radar", "/faq") or "application/json" in ctype:
+                self.send_header("Link", link_header_val)
             for k, v in headers.items():
                 self.send_header(k, v)
             self.end_headers()
