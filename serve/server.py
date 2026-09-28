@@ -351,6 +351,116 @@ def _record_api_stat(ip: str, country: str, host: str, path: str, method: str, c
             _API_STATS["recent_api_requests"].appendleft(req_record)
 
 
+def _load_historical_access_log():
+    """Hydrate in-memory _API_STATS from access.log on startup so restarts preserve metrics."""
+    if not LOG_FILE.is_file():
+        return
+    pattern = re.compile(
+        r'^\[(.*?)\]\s+(\d+)\s+([A-Z]+)\s+\"(.*?)\"\s+\(([\d\.]+)ms,\s*(\d+)B\)\s+-\s+IP:\s+([^\s]+)(?:\s+\((.*?)\))?.*?- Host:\s+([^\s]+)\s+-\s+UA:\s+\"(.*?)\"'
+    )
+    try:
+        with open(LOG_FILE, "r", encoding="utf-8", errors="replace") as f:
+            lines = f.readlines()
+        for line in lines[-500:]:
+            m = pattern.match(line.strip())
+            if not m:
+                continue
+            ts, code_s, method, path, dur_s, size_s, ip, country, host, ua = m.groups()
+            code = int(code_s)
+            dur_ms = float(dur_s)
+            size = int(size_s)
+            country = country or ""
+            client_info = _classify_client(ua)
+
+            with _API_STATS_LOCK:
+                _API_STATS["total_requests"] += 1
+                _API_STATS["unique_ips"].add(ip)
+                _API_STATS["status_codes"][str(code)] += 1
+                clean_path = path.split("?")[0]
+                _API_STATS["top_paths"][clean_path] += 1
+                if country:
+                    _API_STATS["top_countries"][country] += 1
+
+                is_bot = client_info.get("is_bot", False)
+                if is_bot:
+                    _API_STATS["bot_requests"] += 1
+                else:
+                    _API_STATS["human_requests"] += 1
+
+                client_name = client_info.get("client", "Unknown")
+                client_type = client_info.get("type", "Unknown")
+                client_icon = client_info.get("icon", "🌐")
+                _API_STATS["top_clients"][f"{client_icon} {client_name}"] += 1
+
+                if ip not in _API_STATS["ip_stats"]:
+                    _API_STATS["ip_stats"][ip] = {
+                        "ip": ip,
+                        "country": country,
+                        "client": client_name,
+                        "client_type": client_type,
+                        "icon": client_icon,
+                        "count": 0,
+                        "first_seen": ts,
+                        "last_seen": ts,
+                        "last_path": path,
+                        "last_status": code,
+                        "is_bot": is_bot,
+                        "user_agent": ua,
+                    }
+                ip_entry = _API_STATS["ip_stats"][ip]
+                ip_entry["count"] += 1
+                ip_entry["last_seen"] = ts
+                ip_entry["last_path"] = path
+                ip_entry["last_status"] = code
+                if not ip_entry["country"] and country:
+                    ip_entry["country"] = country
+
+                is_api = (
+                    host.startswith("api.")
+                    or clean_path.startswith(("/api", "/cone", "/catalog", "/sne/"))
+                    or clean_path.endswith((".json", ".csv"))
+                )
+                if is_api:
+                    _API_STATS["api_requests"] += 1
+                    ua_clean = ua if ua else "unknown"
+                    _API_STATS["top_user_agents"][ua_clean] += 1
+
+                    tm = re.match(r"^/(?:api/|sne/)?([A-Za-z0-9+_-]+)(?:\.[a-z]+|/[a-z]+)?$", clean_path)
+                    if tm:
+                        target_cand = tm.group(1).upper()
+                        if len(target_cand) >= 3 and not target_cand.startswith(
+                            ("LOGS", "API", "STATS", "WELL-KNOWN", "MANIFEST", "CONE", "CATALOG")
+                        ):
+                            _API_STATS["top_targets"][target_cand] += 1
+
+                req_record = {
+                    "timestamp": ts,
+                    "ip": ip,
+                    "country": country,
+                    "method": method,
+                    "path": path,
+                    "status": code,
+                    "bytes": size,
+                    "duration_ms": round(dur_ms, 1),
+                    "client": client_name,
+                    "client_type": client_type,
+                    "icon": client_icon,
+                    "is_bot": is_bot,
+                    "referer": "",
+                    "user_agent": ua,
+                }
+                _API_STATS["recent_requests"].appendleft(req_record)
+                if not is_bot:
+                    _API_STATS["recent_human_requests"].appendleft(req_record)
+                if is_api:
+                    _API_STATS["recent_api_requests"].appendleft(req_record)
+    except Exception as exc:
+        print(f"[ACCESS LOG] Historical load error: {exc}", flush=True)
+
+
+_load_historical_access_log()
+
+
 def _php_render(script: Path, env: dict | None = None, query: str = "") -> bytes:
     run_env = os.environ.copy()
     run_env["OSC_DOCROOT"] = str(WWW)
