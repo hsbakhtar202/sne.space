@@ -211,14 +211,14 @@ def _classify_client(ua: str) -> dict:
 
     # 3. Human Browsers
     os_name = "Desktop"
-    if "macintosh" in ua_lower or "mac os x" in ua_lower:
-        os_name = "Mac"
-    elif "iphone" in ua_lower:
+    if "iphone" in ua_lower:
         os_name = "iPhone"
     elif "ipad" in ua_lower:
         os_name = "iPad"
     elif "android" in ua_lower:
         os_name = "Android"
+    elif "macintosh" in ua_lower or "mac os x" in ua_lower:
+        os_name = "Mac"
     elif "windows" in ua_lower:
         os_name = "Windows"
     elif "linux" in ua_lower:
@@ -265,12 +265,16 @@ def _write_access_log(ip: str, country: str, host: str, method: str, path: str, 
 
 
 def _record_api_stat(ip: str, country: str, host: str, path: str, method: str, code: int, size: int, dur_ms: float, ua: str, referer: str, client_info: dict):
+    clean_path = path.split("?")[0]
+    # Do not record background dashboard telemetry polling loops into access log or recent requests feed
+    if clean_path in ("/api/stats", "/api/telemetry", "/api/mcp/activity"):
+        return
+
     _write_access_log(ip, country, host, method, path, code, size, dur_ms, ua, referer, client_info)
     with _API_STATS_LOCK:
         _API_STATS["total_requests"] += 1
         _API_STATS["unique_ips"].add(ip)
         _API_STATS["status_codes"][str(code)] += 1
-        clean_path = path.split("?")[0]
         _API_STATS["top_paths"][clean_path] += 1
 
         if country:
@@ -371,6 +375,10 @@ def _load_historical_access_log():
             size = int(size_s)
             country = country or ""
             client_info = _classify_client(ua)
+
+            clean_path = path.split("?")[0]
+            if clean_path in ("/api/stats", "/api/telemetry", "/api/mcp/activity"):
+                continue
 
             with _API_STATS_LOCK:
                 _API_STATS["total_requests"] += 1
