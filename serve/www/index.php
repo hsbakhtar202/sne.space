@@ -66,6 +66,8 @@ require __DIR__ . '/wp-content/plugins/transient-table/transient-table.php';
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Open Supernova Catalog — sne.space</title>
 <meta name="description" content="Comprehensive astrophysical archive containing multi-band light curves, calibrated spectra, and metadata for over 110,000 supernovae from 1000 AD to 2026+.">
+<link rel="ai-catalog" href="/.well-known/ai-catalog.json" type="application/ai-catalog+json">
+<link rel="describedby" href="/llms.txt" type="text/markdown">
 <link rel="stylesheet" href="https://cdn.datatables.net/1.10.16/css/jquery.dataTables.min.css" media="print" onload="this.media='all'">
 <link rel="stylesheet" href="https://cdn.datatables.net/v/dt/b-1.5.2/b-colvis-1.5.2/b-html5-1.5.2/r-2.2.2/sc-1.5.0/sl-1.2.6/datatables.min.css" media="print" onload="this.media='all'">
 <link rel="stylesheet" href="/wp-content/plugins/transient-table/transient-table.sne.css" media="print" onload="this.media='all'">
@@ -409,6 +411,38 @@ require __DIR__ . '/wp-content/plugins/transient-table/transient-table.php';
   .recent-name { font-weight: 800; font-size: 1.05rem; }
   .recent-age { color: #7dd3fc; font-size: 0.78rem; font-weight: 700; }
   .recent-meta { color: #cbd5e1; font-size: 0.82rem; margin-top: 0.35rem; }
+  .hdr-search-form {
+    display: flex;
+    align-items: center;
+    background: rgba(15, 23, 42, 0.75);
+    border: 1px solid var(--border-bright);
+    border-radius: 6px;
+    overflow: hidden;
+    max-width: 340px;
+    flex: 1;
+    margin: 0 1rem;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+  .hdr-search-form:focus-within {
+    border-color: #38bdf8;
+    box-shadow: 0 0 12px rgba(56, 189, 248, 0.25);
+  }
+  .hdr-search-form input {
+    background: transparent;
+    border: none;
+    outline: none;
+    color: #f1f5f9;
+    font-size: 0.85rem;
+    padding: 0.35rem 0.65rem;
+    width: 100%;
+  }
+  .hdr-search-form button {
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+    padding: 0.35rem 0.6rem;
+    cursor: pointer;
+  }
   @media (max-width: 860px) {
     header.global-nav { flex-wrap: wrap; padding: 0.7rem 0.9rem; gap: 0.5rem; }
     .brand-pill { display: none; }
@@ -436,6 +470,10 @@ require __DIR__ . '/wp-content/plugins/transient-table/transient-table.php';
       </a>
       <span class="brand-pill">Open Supernova Catalog</span>
     </div>
+    <form class="hdr-search-form" action="/" method="GET" toolname="search_supernovae" tooldescription="Search 110,000+ supernovae by IAU designation, name, or survey alias" role="search" onsubmit="event.preventDefault(); var q=this.q.value.trim(); if(q) window.location.href='/sne/'+encodeURIComponent(q)+'/';">
+      <input type="search" name="q" placeholder="Search 110k+ supernovae (e.g. SN 2023ixf)..." aria-label="Search supernovae" autocomplete="off" required>
+      <button type="submit" aria-label="Submit search">🔍</button>
+    </form>
     <input class="nav-toggle-input" type="checkbox" id="home-nav">
     <label class="nav-toggle" for="home-nav">Menu</label>
     <nav class="nav-menu">

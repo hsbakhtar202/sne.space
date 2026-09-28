@@ -35,6 +35,20 @@
         "secondary": true,
         "url": "https://www.wiserep.org",
         "alias": "5"
+      },
+      {
+        "name": "Planck 2015",
+        "alias": "6",
+        "bibcode": "2016A&A...594A..13P",
+        "reference": "Planck Collaboration (2016)",
+        "secondary": true
+      },
+      {
+        "name": "Schlafly & Finkbeiner (2011)",
+        "alias": "7",
+        "bibcode": "2011ApJ...737..103S",
+        "reference": "Schlafly & Finkbeiner (2011)",
+        "secondary": true
       }
     ],
     "alias": [
@@ -34853,6 +34867,94 @@
             "4.82477e-15"
           ]
         ]
+      }
+    ],
+    "lumdist": [
+      {
+        "value": "3.54",
+        "derived": true,
+        "u_value": "Mpc",
+        "source": "6"
+      }
+    ],
+    "comovingdist": [
+      {
+        "value": "3.537",
+        "derived": true,
+        "u_value": "Mpc",
+        "source": "6"
+      }
+    ],
+    "velocity": [
+      {
+        "value": "239.7",
+        "derived": true,
+        "u_value": "km/s",
+        "source": "6"
+      }
+    ],
+    "ebv": [
+      {
+        "value": "0.0077",
+        "derived": true,
+        "source": "7",
+        "e_value": "0.0002"
+      }
+    ],
+    "maxappmag": [
+      {
+        "value": "12.02",
+        "derived": true,
+        "source": "4"
+      }
+    ],
+    "maxdate": [
+      {
+        "value": "2023/06/23",
+        "derived": true,
+        "source": "4"
+      }
+    ],
+    "maxband": [
+      {
+        "value": "g",
+        "derived": true,
+        "source": "4"
+      }
+    ],
+    "maxabsmag": [
+      {
+        "value": "-15.73",
+        "derived": true,
+        "source": "4"
+      }
+    ],
+    "maxvisualappmag": [
+      {
+        "value": "12.02",
+        "derived": true,
+        "source": "4"
+      }
+    ],
+    "maxvisualdate": [
+      {
+        "value": "2023/06/23",
+        "derived": true,
+        "source": "4"
+      }
+    ],
+    "maxvisualband": [
+      {
+        "value": "g",
+        "derived": true,
+        "source": "4"
+      }
+    ],
+    "maxvisualabsmag": [
+      {
+        "value": "-15.73",
+        "derived": true,
+        "source": "4"
       }
     ]
   }

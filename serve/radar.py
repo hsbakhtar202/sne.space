@@ -12,7 +12,7 @@ import math
 import os
 import re
 import time
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -29,10 +29,10 @@ SNE_DIRS = [
 
 # Observatory presets
 OBSERVATORIES = {
-    "keck": {"name": "Keck (Mauna Kea, HI)", "lat": 19.826, "lon": -155.474, "tz": -10},
+    "keck": {"name": "Keck Observatory (Mauna Kea, HI)", "lat": 19.826, "lon": -155.474, "tz": -10},
     "paranal": {"name": "VLT (Paranal, Chile)", "lat": -24.627, "lon": -70.404, "tz": -4},
     "palomar": {"name": "Palomar Observatory (CA)", "lat": 33.356, "lon": -116.865, "tz": -7},
-    "lapalma": {"name": "La Palma (ORM, Spain)", "lat": 28.760, "lon": -17.881, "tz": 0},
+    "lapalma": {"name": "Roque de los Muchachos (La Palma)", "lat": 28.760, "lon": -17.881, "tz": 0},
 }
 
 _RADAR_CACHE: list[dict[str, Any]] = []
@@ -43,23 +43,17 @@ def scan_catalog_targets(limit: int = 1500) -> list[dict[str, Any]]:
     """Scan recent supernova catalogs and build lightweight radar records."""
     global _RADAR_CACHE, _LAST_SCAN_TIME
 
-    # Cache for 10 minutes
     now = time.time()
-    if _RADAR_CACHE and (now - _LAST_SCAN_TIME) < 600:
+    if _RADAR_CACHE and (now - _LAST_SCAN_TIME) < 300:
         return _RADAR_CACHE
 
     records = []
-    scanned_count = 0
+    now_mjd = 40587.0 + now / 86400.0
 
     for sne_dir in SNE_DIRS:
         if not sne_dir.is_dir():
             continue
-        # Scan files sorted by name descending (most recent first)
-        files = sorted(sne_dir.glob("*.json"), reverse=True)
-        for f in files:
-            scanned_count += 1
-            if scanned_count > limit:
-                break
+        for f in sne_dir.glob("*.json"):
             try:
                 data = json.loads(f.read_text(encoding="utf-8", errors="replace"))
                 name = next(iter(data.keys()))
@@ -75,9 +69,18 @@ def scan_catalog_targets(limit: int = 1500) -> list[dict[str, Any]]:
                     ctype = first_ct.get("value", "Candidate") if isinstance(first_ct, dict) else str(first_ct)
 
                 disc_date = "—"
+                days_since_disc = 9999
                 if ev.get("discoverdate"):
                     first_dd = ev["discoverdate"][0]
                     disc_date = first_dd.get("value", "—") if isinstance(first_dd, dict) else str(first_dd)
+                    try:
+                        clean_dd = disc_date.replace("/", "-").strip()
+                        parts = clean_dd.split("-")
+                        if len(parts) >= 3:
+                            d_obj = datetime(int(parts[0]), int(parts[1]), int(parts[2]), tzinfo=timezone.utc)
+                            days_since_disc = max(0, int((now - d_obj.timestamp()) / 86400.0))
+                    except Exception:
+                        pass
 
                 # Process photometry
                 photo = ev.get("photometry", [])
@@ -103,16 +106,8 @@ def scan_catalog_targets(limit: int = 1500) -> list[dict[str, Any]]:
                 latest_mag = latest_pt["mag"]
                 latest_mjd = latest_pt["mjd"]
 
-                now_mjd = 2440587.5 + time.time() / 86400.0 - 2400000.5
-                days_since_obs = int(now_mjd - latest_mjd) if latest_mjd else 9999
-                if days_since_obs < 0:
-                    days_since_obs = 0
-
-                lifecycle = "extinguished"
-                if days_since_obs <= 60:
-                    lifecycle = "active"
-                elif days_since_obs <= 180:
-                    lifecycle = "fading"
+                days_since_obs = max(0, int(now_mjd - latest_mjd))
+                effective_age = min(days_since_obs, days_since_disc)
 
                 # Rate of change dm/dt
                 trend = "stable"
@@ -123,12 +118,22 @@ def scan_catalog_targets(limit: int = 1500) -> list[dict[str, Any]]:
                     if 0.1 <= dt <= 60.0:
                         dm = latest_mag - prev_pt["mag"]
                         rate = dm / dt
-                        if rate < -0.02 and days_since_obs <= 60:
+                        if rate < -0.02 and effective_age <= 60:
                             trend = "rising"
-                        elif rate > 0.02 and days_since_obs <= 180:
+                        elif rate > 0.02 and effective_age <= 180:
                             trend = "fading"
 
-                # Check if unclassified
+                if effective_age <= 14:
+                    lifecycle = "active"
+                    if trend == "stable":
+                        trend = "new"
+                elif effective_age <= 60:
+                    lifecycle = "active"
+                elif effective_age <= 180:
+                    lifecycle = "fading"
+                else:
+                    lifecycle = "extinguished"
+
                 is_unclassified = (
                     not ctype or
                     ctype.lower() in ("candidate", "at", "other", "unknown", "") or
@@ -148,7 +153,7 @@ def scan_catalog_targets(limit: int = 1500) -> list[dict[str, Any]]:
                     "band": latest_pt["band"],
                     "trend": trend,
                     "lifecycle": lifecycle,
-                    "days_since_obs": days_since_obs,
+                    "days_since_obs": effective_age,
                     "rate_mag_day": round(rate, 3),
                     "discoverdate": disc_date,
                     "photo_count": len(valid_pts)
@@ -156,9 +161,15 @@ def scan_catalog_targets(limit: int = 1500) -> list[dict[str, Any]]:
             except Exception:
                 continue
 
-    _RADAR_CACHE = records
+    # Sort so active recent discoveries are at the top
+    def _sort_key(t):
+        life_tier = 0 if t["lifecycle"] == "active" else (1 if t["lifecycle"] == "fading" else 2)
+        return (life_tier, t["days_since_obs"], t["latest_mag"])
+
+    records.sort(key=_sort_key)
+    _RADAR_CACHE = records[:limit]
     _LAST_SCAN_TIME = now
-    return records
+    return _RADAR_CACHE
 
 
 def compute_observability_for_targets(
@@ -173,12 +184,16 @@ def compute_observability_for_targets(
 
     now = datetime.now(timezone.utc)
     now_utc_ts = now.timestamp()
-    # 18:00 local time tonight
     obs_local_now = datetime.fromtimestamp(now_utc_ts + tz_offset * 3600, tz=timezone.utc)
-    start_local = obs_local_now.replace(hour=18, minute=0, second=0, microsecond=0)
+
+    # If currently in the morning (local < 12:00), the observing night started yesterday at 18:00
+    if obs_local_now.hour < 12:
+        start_local = (obs_local_now - timedelta(days=1)).replace(hour=18, minute=0, second=0, microsecond=0)
+    else:
+        start_local = obs_local_now.replace(hour=18, minute=0, second=0, microsecond=0)
     start_utc_ts = start_local.timestamp() - tz_offset * 3600
 
-    # Precalculate sidereal time across 25 time steps (every 30 min)
+    # Precalculate sidereal time across 25 time steps (every 30 min from 18:00 to 06:00)
     time_steps = []
     for step in range(25):
         t_ts = start_utc_ts + step * 1800
@@ -233,7 +248,7 @@ def compute_observability_for_targets(
     return enriched
 
 
-def render_radar_page(obs_key: str = "keck", filter_mode: str = "rising") -> str:
+def render_radar_page(obs_key: str = "keck", filter_mode: str = "active") -> str:
     """Render the high-performance Observers Radar dashboard."""
     all_targets = scan_catalog_targets()
     enriched = compute_observability_for_targets(all_targets, obs_key=obs_key)
@@ -244,19 +259,35 @@ def render_radar_page(obs_key: str = "keck", filter_mode: str = "rising") -> str
         for k, v in OBSERVATORIES.items()
     )
 
+    # Counts for tab badges
+    count_active = len([t for t in enriched if t["lifecycle"] == "active" and t["is_observable_tonight"]])
+    count_fresh = len([t for t in enriched if t.get("days_since_obs", 9999) <= 30 and t["is_observable_tonight"]])
+    count_bright = len([t for t in enriched if t["latest_mag"] < 18.5 and t["is_observable_tonight"]])
+    count_unclass = len([t for t in enriched if t["is_unclassified"] and t["is_observable_tonight"]])
+    count_all = len([t for t in enriched if t["is_observable_tonight"]])
+
     # Filter targets
-    if filter_mode == "rising":
-        filtered = [t for t in enriched if t["trend"] == "rising" or (t["is_observable_tonight"] and t["latest_mag"] < 18.0 and t.get("days_since_obs", 9999) <= 90)]
+    if filter_mode in ("active", "rising"):
+        filtered = [t for t in enriched if t["is_observable_tonight"] and t["lifecycle"] == "active"]
         if not filtered:
-            filtered = [t for t in enriched if t["is_observable_tonight"] and t.get("days_since_obs", 9999) <= 180]
+            filtered = [t for t in enriched if t["lifecycle"] == "active"]
         if not filtered:
-            filtered = [t for t in enriched if t["is_observable_tonight"] and t["latest_mag"] < 18.0]
+            filtered = [t for t in enriched if t["is_observable_tonight"] and t.get("days_since_obs", 9999) <= 120]
+        filtered.sort(key=lambda x: (x.get("days_since_obs", 9999), x.get("latest_mag", 99)))
+    elif filter_mode == "discoveries":
+        filtered = [t for t in enriched if t["is_observable_tonight"] and t.get("days_since_obs", 9999) <= 30]
+        if not filtered:
+            filtered = [t for t in enriched if t.get("days_since_obs", 9999) <= 30]
+        filtered.sort(key=lambda x: (x.get("days_since_obs", 9999), x.get("latest_mag", 99)))
+    elif filter_mode == "bright":
+        filtered = [t for t in enriched if t["is_observable_tonight"] and t["latest_mag"] < 18.5]
+        filtered.sort(key=lambda x: x["latest_mag"])
     elif filter_mode == "unclassified":
-        filtered = [t for t in enriched if t["is_unclassified"] and t["latest_mag"] < 19.0]
+        filtered = [t for t in enriched if t["is_unclassified"] and t["is_observable_tonight"]]
+        filtered.sort(key=lambda x: (x.get("days_since_obs", 9999), x.get("latest_mag", 99)))
     else:  # all observable
         filtered = [t for t in enriched if t["is_observable_tonight"]]
-
-    filtered.sort(key=lambda x: (x["latest_mag"]))
+        filtered.sort(key=lambda x: (0 if x["lifecycle"] == "active" else 1, x.get("days_since_obs", 9999), x["latest_mag"]))
 
     # Table rows
     rows_html = []
@@ -264,9 +295,12 @@ def render_radar_page(obs_key: str = "keck", filter_mode: str = "rising") -> str
         t_name = t["name"]
         days = t.get("days_since_obs", 0)
         lifecycle = t.get("lifecycle", "extinguished")
-        trend_badge = ""
+        trend = t.get("trend", "stable")
+
         if lifecycle == "active":
-            if t["trend"] == "rising":
+            if trend == "new":
+                trend_badge = f'<span class="badge badge-green">▲ New Discovery (+{days}d)</span>'
+            elif trend == "rising":
                 trend_badge = f'<span class="badge badge-green">▲ Rising (+{days}d)</span>'
             else:
                 trend_badge = f'<span class="badge badge-green">● Active Outburst (+{days}d)</span>'
@@ -304,7 +338,7 @@ def render_radar_page(obs_key: str = "keck", filter_mode: str = "rising") -> str
           <td style="font-family:monospace;font-size:0.8rem">{t['ra_str']}<br>{t['dec_str']}</td>
           <td>
             <div style="font-weight:700;color:{'#22c55e' if t['observable_hours'] >= 2.0 else '#f59e0b'}">{win_str}</div>
-            <div style="font-size:0.75rem;color:var(--text-muted)">Min X: {airmass_str}</div>
+            <div style="font-size:0.75rem;color:var(--text-muted)">Min Airmass: {airmass_str}</div>
             {target_note}
           </td>
           <td style="text-align:right">
@@ -321,12 +355,13 @@ def render_radar_page(obs_key: str = "keck", filter_mode: str = "rising") -> str
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Observers Radar — Supernovae Rising Tonight | sne.space</title>
-  <meta name="description" content="Real-time astronomical radar for supernovae rising tonight, brightening transients, and bright unclassified targets observable with amateur and research telescopes.">
-  <link rel="stylesheet" href="/assets/ia.css">
+  <title>Observers Radar &amp; Target Feed — sne.space</title>
+  <meta name="description" content="Live transient tracking feed for active supernovae, rising light curves, and unclassified targets observable tonight.">
+  <link rel="ai-catalog" href="/.well-known/ai-catalog.json" type="application/ai-catalog+json">
+  <link rel="describedby" href="/llms.txt" type="text/markdown">
   <style>
     :root {{
-      --bg: #0b0f19;
+      --bg: #070a12;
       --card-bg: #131b2e;
       --border: #232f48;
       --text: #e2e8f0;
@@ -403,13 +438,13 @@ def render_radar_page(obs_key: str = "keck", filter_mode: str = "rising") -> str
       flex-wrap: wrap;
       gap: 1rem;
     }}
-    select.site-select {{
+    .site-select {{
       background: #070a12;
-      color: var(--accent);
+      color: var(--text);
       border: 1px solid var(--border);
-      padding: 0.4rem 0.75rem;
-      border-radius: 6px;
-      font-size: 0.85rem;
+      border-radius: 4px;
+      padding: 0.4rem 0.8rem;
+      font-size: 0.9rem;
     }}
     table.radar-table {{
       width: 100%;
@@ -490,14 +525,15 @@ def render_radar_page(obs_key: str = "keck", filter_mode: str = "rising") -> str
     <div style="margin-bottom:1.25rem;padding:0.75rem 1rem;background:rgba(56,189,248,0.06);border:1px solid rgba(56,189,248,0.25);border-radius:8px;font-size:0.83rem;line-height:1.5;color:#cbd5e1;">
       <strong>🔭 Astronomical Ephemeris vs. Physical Transience:</strong>
       The pointing window shows when celestial coordinates rise above airmass <em>X &lt; 2.0</em> from the chosen observatory tonight.
-      Supernovae are ephemeral transients: targets discovered months or years ago are marked <span class="badge badge-gray" style="font-size:0.7rem">● Extinguished</span> (telescope pointing observes the host galaxy), while <span class="badge badge-green" style="font-size:0.7rem">● Active Outburst</span> marks fresh, physically radiating transients in outburst.
+      Fresh, physically radiating transients in outburst are highlighted with <span class="badge badge-green" style="font-size:0.7rem">● Active Outburst</span> or <span class="badge badge-green" style="font-size:0.7rem">▲ New Discovery</span>, while older targets are marked <span class="badge badge-orange" style="font-size:0.7rem">▼ Late Fading</span> or <span class="badge badge-gray" style="font-size:0.7rem">● Extinguished</span>.
     </div>
 
     <div class="controls-bar">
       <div class="radar-tabs">
-        <a class="radar-tab {'active' if filter_mode == 'rising' else ''}" href="?filter=rising&obs={obs_key}">🌟 Rising Supernovae ({len([t for t in enriched if t['trend'] == 'rising'])})</a>
-        <a class="radar-tab {'active' if filter_mode == 'unclassified' else ''}" href="?filter=unclassified&obs={obs_key}">🎯 Bright Unclassified Targets ({len([t for t in enriched if t['is_unclassified'] and t['latest_mag'] < 19.0])})</a>
-        <a class="radar-tab {'active' if filter_mode == 'all' else ''}" href="?filter=all&obs={obs_key}">🔭 All Observable Tonight ({len([t for t in enriched if t['is_observable_tonight']])})</a>
+        <a class="radar-tab {'active' if filter_mode in ('active', 'rising') else ''}" href="?filter=active&obs={obs_key}">⚡ Active Supernovae ({count_active})</a>
+        <a class="radar-tab {'active' if filter_mode == 'discoveries' else ''}" href="?filter=discoveries&obs={obs_key}">🎯 Fresh Discoveries (&lt;30d) ({count_fresh})</a>
+        <a class="radar-tab {'active' if filter_mode == 'bright' else ''}" href="?filter=bright&obs={obs_key}">🌟 Bright Transients (m&lt;18.5) ({count_bright})</a>
+        <a class="radar-tab {'active' if filter_mode == 'all' else ''}" href="?filter=all&obs={obs_key}">🔭 All Observable Tonight ({count_all})</a>
       </div>
       <div>
         <label style="font-size:0.85rem;color:var(--text-muted);margin-right:0.5rem">Observatory Site:</label>

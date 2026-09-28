@@ -73,7 +73,7 @@ FAQ_CATEGORIES: List[Tuple[str, str, List[Dict[str, str]]]] = [
             },
             {
                 "q": "Where is the Agentic Resource Discovery (ARD) catalog published?",
-                "a": "sne.space publishes ARD v0.91 capability manifests at /.well-known/ai-catalog.json and /.well-known/ard.json, linked via robots.txt Agentmap directives, HTML <link rel='ai-catalog'> tags, and HTTP Link headers."
+                "a": "sne.space publishes official AI Catalog v1.0 and ARD discovery manifests at /.well-known/ai-catalog.json and /.well-known/ard.json, discoverable via HTML <link rel='ai-catalog'> tags and HTTP Link headers."
             }
         ]
     ),

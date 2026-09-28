@@ -8,6 +8,7 @@ Dynamic pages (/ and /sne|/event) are rendered via PHP CLI against www/.
 from __future__ import annotations
 
 import csv
+from functools import lru_cache
 import gzip
 import io
 import json
@@ -211,8 +212,21 @@ def _fetch_remote_event(name: str) -> tuple[str | None, Path | None]:
     clean = _normalize_event_name(name)
     output_dir = WWW / "astrocats/astrocats/supernovae/output"
 
-    match = re.search(r'\b(19\d{2}|20\d{2})\b', clean)
-    year = int(match.group(1)) if match else 2025
+    match = re.search(r'(?<!\d)(19\d{2}|20\d{2})(?!\d)', clean)
+    hist_match = re.search(r'(?<!\d)(?:SN|AT)?(\d{3,4})(?!\d)', clean, re.IGNORECASE) if not match else None
+
+    # Fast sanity check: must resemble a transient designation or catalog entry
+    has_astro_prefix = bool(re.search(r'^(SN|AT|ASASSN|Gaia|ZTF|PS1|CSS|MLS|MASTER|DES|OGLE|IPTF)', clean, re.IGNORECASE))
+    if not (match or hist_match or has_astro_prefix):
+        return None, None
+
+    if match:
+        year = int(match.group(1))
+    elif hist_match and int(hist_match.group(1)) < 1900:
+        year = int(hist_match.group(1))
+    else:
+        year = 2026
+
     if year <= 1989:
         epoch = "sne-pre-1990"
     elif year <= 1999:
@@ -230,42 +244,28 @@ def _fetch_remote_event(name: str) -> tuple[str | None, Path | None]:
     else:
         epoch = "sne-2025-2029"
 
-    dest_dir = output_dir / epoch
-    dest_dir.mkdir(parents=True, exist_ok=True)
-    dest_file = dest_dir / f"{clean}.json"
+    # 1. Targeted check in the specific epoch repo and boneyard
+    repos_to_try = [epoch, "sne-boneyard"]
 
-    # 1. Try raw GitHub from historical archive repos
-    repos_to_try = [
-        epoch,
-        "sne-2020-2024",
-        "sne-2015-2019",
-        "sne-2010-2014",
-        "sne-2005-2009",
-        "sne-2000-2004",
-        "sne-1990-1999",
-        "sne-pre-1990",
-        "sne-boneyard",
-    ]
-    seen = set()
-    repos_ordered = [r for r in repos_to_try if not (r in seen or seen.add(r))]
-
-    for r in repos_ordered:
-        for branch in ("master", "main"):
-            for cand_name in (clean, clean.replace("SN", "AT"), clean.replace("AT", "SN")):
-                url = f"https://raw.githubusercontent.com/astrocatalogs/{r}/{branch}/{cand_name}.json"
-                try:
-                    req = urllib.request.Request(url, headers={"User-Agent": "sne.space/1.0"})
-                    with urllib.request.urlopen(req, timeout=4) as resp:
-                        if resp.status == 200:
-                            data = resp.read()
-                            if data and len(data) > 10:
-                                dest_file.write_bytes(data)
-                                return clean, dest_file
-                except Exception:
-                    pass
+    for r in repos_to_try:
+        for cand_name in (clean, clean.replace("SN", "AT"), clean.replace("AT", "SN")):
+            url = f"https://raw.githubusercontent.com/astrocatalogs/{r}/master/{cand_name}.json"
+            try:
+                req = urllib.request.Request(url, headers={"User-Agent": "sne.space/1.0"})
+                with urllib.request.urlopen(req, timeout=2.5) as resp:
+                    if resp.status == 200:
+                        data = resp.read()
+                        if data and len(data) > 10:
+                            target_dir = output_dir / r
+                            target_dir.mkdir(parents=True, exist_ok=True)
+                            target_file = target_dir / f"{clean}.json"
+                            target_file.write_bytes(data)
+                            return clean, target_file
+            except Exception:
+                pass
 
     # 2. Try live ingest/enrichment from TNS / ALeRCE / WISeREP if modern
-    if enrich_event is not None:
+    if enrich_event is not None and year >= 2018:
         try:
             ok = enrich_event(clean, force=True)
             if ok:
@@ -313,28 +313,35 @@ def _resolve_event(raw: str) -> tuple[str | None, str | None]:
             clean_test = "SN" + clean_test
         return clean_test, oname
 
-    # 3. Levenshtein fallback for typos
-    names, names_by = _names_maps()
-    levs: dict[str, int] = {}
-    for mapping in (names, names_by):
-        for name, aliases in mapping.items():
-            if not isinstance(aliases, list):
-                continue
-            min_lev = 100
-            for alias in aliases:
-                if not isinstance(alias, str):
+    # 3. Levenshtein fallback for typos (with length difference pruning for 60x speedup)
+    target_len = len(eventname)
+    if target_len >= 3:
+        names, names_by = _names_maps()
+        levs: dict[str, int] = {}
+        for mapping in (names, names_by):
+            for name, aliases in mapping.items():
+                if not isinstance(aliases, list):
                     continue
-                try:
-                    lev = _levenshtein(alias, eventname)
-                except Exception:
-                    lev = 100
-                if lev < min_lev:
-                    min_lev = lev
-            levs[name] = min_lev
+                min_lev = 100
+                for alias in aliases:
+                    if not isinstance(alias, str):
+                        continue
+                    if abs(len(alias) - target_len) >= 3:
+                        continue
+                    try:
+                        lev = _levenshtein(alias, eventname)
+                    except Exception:
+                        lev = 100
+                    if lev < min_lev:
+                        min_lev = lev
+                        if lev <= 1:
+                            return name, oname
+                if min_lev < 3:
+                    levs[name] = min_lev
 
-    if levs and min(levs.values()) < 4:
-        lev_name = min(levs, key=levs.get)
-        return lev_name, oname
+        if levs and min(levs.values()) < 3:
+            lev_name = min(levs, key=levs.get)
+            return lev_name, oname
     return None, None
 
 
@@ -601,10 +608,62 @@ def _fallback_event_page(name: str, entered: str | None = None) -> bytes:
     return html.encode()
 
 
-def _event_page(name: str, entered: str | None = None, is_story: bool = False) -> bytes:
+def _not_found_page(name: str) -> bytes:
+    html = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Transient '{name}' Not Found — sne.space</title>
+  <style>
+    :root {{ --bg: #070a12; --card: #0d1424; --border: #1e293b; --accent: #38bdf8; --text: #e2e8f0; }}
+    body {{ background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 0; display: flex; flex-direction: column; min-height: 100vh; }}
+    .site {{ background: #070a12; border-bottom: 1px solid var(--border); padding: 0.75rem 1.5rem; display: flex; align-items: center; justify-content: space-between; }}
+    .brand-logo-ia {{ height: 32px; width: auto; vertical-align: middle; }}
+    .site nav a {{ color: var(--accent); margin-left: 1rem; text-decoration: none; font-weight: 500; }}
+    main.nf-wrap {{ max-width: 680px; margin: 4rem auto; padding: 2.5rem; background: var(--card); border: 1px solid var(--border); border-radius: 12px; text-align: center; box-shadow: 0 8px 32px rgba(0,0,0,0.4); }}
+    h1 {{ color: #fff; margin-top: 0; font-size: 1.8rem; }}
+    p {{ color: #94a3b8; line-height: 1.6; font-size: 1rem; margin-bottom: 1.5rem; }}
+    .search-box {{ display: flex; gap: 0.5rem; margin-bottom: 2rem; }}
+    .search-box input {{ flex: 1; background: #070a12; border: 1px solid var(--border); color: #fff; border-radius: 6px; padding: 0.6rem 0.9rem; font-size: 0.95rem; }}
+    .search-box button {{ background: #0284c7; color: #fff; border: none; border-radius: 6px; padding: 0.6rem 1.2rem; font-weight: 600; cursor: pointer; }}
+    .landmarks {{ display: flex; flex-wrap: wrap; gap: 0.5rem; justify-content: center; }}
+    .landmarks a {{ padding: 0.35rem 0.75rem; background: rgba(56,189,248,0.1); border: 1px solid rgba(56,189,248,0.25); color: var(--accent); border-radius: 4px; text-decoration: none; font-size: 0.85rem; font-weight: 500; }}
+    .btn-home {{ display: inline-block; margin-top: 1.5rem; color: #94a3b8; text-decoration: none; font-size: 0.9rem; }}
+  </style>
+</head>
+<body>
+  <header class="site">
+    <a href="/" title="sne.space — The Open Supernova Catalog"><img src="/assets/img/logo-color.webp" alt="sne.space" class="brand-logo-ia"></a>
+    <nav><a href="/">Catalog</a><a href="/radar">Radar</a><a href="/faq">FAQs</a><a href="/api/docs">API</a></nav>
+  </header>
+  <main class="nf-wrap">
+    <div style="font-size:2.5rem;margin-bottom:0.75rem;">🔭</div>
+    <h1>Transient '{name}' Not Found</h1>
+    <p>This supernova or transient designation could not be located in the catalog archives or upstream astronomical brokers (TNS, ALeRCE, WISeREP).</p>
+    <form class="search-box" onsubmit="event.preventDefault(); var q=this.q.value.trim(); if(q) window.location.href='/sne/'+encodeURIComponent(q)+'/';">
+      <input type="search" name="q" placeholder="Search 110,000+ supernovae..." required>
+      <button type="submit">Search</button>
+    </form>
+    <div style="font-size:0.8rem;color:#64748b;margin-bottom:0.75rem;text-transform:uppercase;letter-spacing:0.05em;font-weight:600;">Benchmark Supernovae</div>
+    <div class="landmarks">
+      <a href="/sne/SN2023ixf/">SN 2023ixf</a>
+      <a href="/sne/SN1987A/">SN 1987A</a>
+      <a href="/sne/SN2011fe/">SN 2011fe</a>
+      <a href="/sne/SN2014J/">SN 2014J</a>
+      <a href="/sne/SN2024nrb/">SN 2024nrb</a>
+    </div>
+    <div><a class="btn-home" href="/">← Return to Full Catalog</a></div>
+  </main>
+</body>
+</html>"""
+    return html.encode("utf-8")
+
+
+def _event_page(name: str, entered: str | None = None, is_story: bool = False, fp: Path | None = None) -> tuple[int, bytes]:
     fn = name.replace("/", "_")
     legacy_exists = _html_exists(fn)
-    path = _find_event_json(name)
+    path = fp or _find_event_json(name)
     meta = {}
     if path and path.is_file():
         try:
@@ -615,14 +674,13 @@ def _event_page(name: str, entered: str | None = None, is_story: bool = False) -
                 meta = raw.get(name) or raw
         except Exception:
             meta = {}
-    else:
-        # If no JSON exists on disk or remotely, build fallback metadata from name
-        meta = {"name": [{"value": name}]}
+    if not meta or not (meta.get("ra") or meta.get("photometry") or meta.get("claimedtype") or meta.get("dec")):
+        return 404, _not_found_page(entered or name)
     if is_story and render_story_mode is not None:
-        return render_story_mode(name, meta, entered).encode("utf-8")
+        return 200, render_story_mode(name, meta, entered).encode("utf-8")
     if render_pro_cockpit is not None:
-        return render_pro_cockpit(name, meta, entered, legacy_html_exists=legacy_exists).encode("utf-8")
-    return _fallback_event_page(name, entered)
+        return 200, render_pro_cockpit(name, meta, entered, legacy_html_exists=legacy_exists).encode("utf-8")
+    return 200, _fallback_event_page(name, entered)
 
 
 class Handler(SimpleHTTPRequestHandler):
@@ -690,6 +748,16 @@ class Handler(SimpleHTTPRequestHandler):
             r_file = WWW / "robots.txt"
             if r_file.is_file():
                 self._send(200, "text/plain; charset=utf-8", r_file.read_bytes())
+                return
+        if path == "/llms.txt":
+            f_llms = WWW / "llms.txt"
+            if f_llms.is_file():
+                self._send(200, "text/markdown; charset=utf-8", f_llms.read_bytes(), {"Cache-Control": "public, max-age=3600"})
+                return
+        if path == "/llms-full.txt":
+            f_full = WWW / "llms-full.txt"
+            if f_full.is_file():
+                self._send(200, "text/markdown; charset=utf-8", f_full.read_bytes(), {"Cache-Control": "public, max-age=3600"})
                 return
         if path == "/.well-known/ai-catalog.json":
             f_cat = WWW / ".well-known/ai-catalog.json"
@@ -1003,11 +1071,13 @@ class Handler(SimpleHTTPRequestHandler):
                                     return
                             except Exception:
                                 pass
-                    self._send(200, "text/html; charset=utf-8", _event_page(resolved, entered, is_story=is_story))
+                    code, body = _event_page(resolved, entered, is_story=is_story, fp=fp)
+                    self._send(code, "text/html; charset=utf-8", body)
                 else:
                     # Permissive fallback: render pro cockpit or story page directly for the requested event name
                     fallback_name = _normalize_event_name(raw)
-                    self._send(200, "text/html; charset=utf-8", _event_page(fallback_name, is_story=is_story))
+                    code, body = _event_page(fallback_name, is_story=is_story, fp=fp)
+                    self._send(code, "text/html; charset=utf-8", body)
                 return
 
         # 5. Gzip HTML when .html empty/missing
@@ -1066,6 +1136,18 @@ class Handler(SimpleHTTPRequestHandler):
 
         self._send(404, "text/plain; charset=utf-8", b"Not found\n")
 
+    def handle(self):
+        try:
+            super().handle()
+        except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError):
+            return
+
+    def finish(self):
+        try:
+            super().finish()
+        except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError):
+            return
+
     def handle_one_request(self):
         try:
             super().handle_one_request()
@@ -1107,6 +1189,7 @@ class Handler(SimpleHTTPRequestHandler):
 
 class ReusableThreadingServer(ThreadingHTTPServer):
     allow_reuse_address = True
+    daemon_threads = True
 
     def server_bind(self):
         import socket
@@ -1117,6 +1200,12 @@ class ReusableThreadingServer(ThreadingHTTPServer):
             except Exception:
                 pass
         super().server_bind()
+
+    def handle_error(self, request, client_address):
+        exc_type, _, _ = sys.exc_info()
+        if exc_type in (BrokenPipeError, ConnectionResetError, ConnectionAbortedError):
+            return
+        super().handle_error(request, client_address)
 
 
 _LIVE_CATALOG_LOCK = threading.Lock()
