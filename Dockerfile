@@ -10,9 +10,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /app
 
-# Install Python requirements
-COPY requirements.txt* ./
-RUN if [ -f requirements.txt ]; then pip install --no-cache-dir -r requirements.txt; fi
+# The site server is standard-library Python plus php-cli.
+# requirements-mcp.txt is for the optional MCP process and is not installed here,
+# so a build does not depend on PyPI.
 
 # Copy application files
 COPY . /app

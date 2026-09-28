@@ -1,2 +1,2 @@
-mcp>=1.0.0
-requests>=2.28.0
+# The public sne.space server (serve/server.py) uses the Python standard library.
+# Optional MCP tooling is listed in requirements-mcp.txt and is not installed in the web image.
