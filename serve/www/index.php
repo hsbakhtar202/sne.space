@@ -484,7 +484,7 @@ require __DIR__ . '/wp-content/plugins/transient-table/transient-table.php';
       ?>
       <div class="recent-block">
         <h2 class="recent-head">Newest classified supernovae on file</h2>
-        <p class="recent-note">Ages are counted from today, <?php echo $today->format('F j, Y'); ?>. The TNS snapshot on this server is dated March 4, 2026, so these are the latest events in that file, not discoveries from this week.</p>
+        <p class="recent-note">Ages are counted from today, <?php echo $today->format('F j, Y'); ?>, using each event's discovery date from the Transient Name Server.</p>
         <div class="recent-grid">
           <?php if (is_array($recent)) foreach ($recent as $ev):
             $when = DateTimeImmutable::createFromFormat('!Y-m-d', (string)$ev['date']) ?: $today;

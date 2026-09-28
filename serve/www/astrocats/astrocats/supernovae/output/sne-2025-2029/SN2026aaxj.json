@@ -1,0 +1,98 @@
+{
+  "SN2026aaxj": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "SN2026aaxj",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/2026aaxj",
+        "alias": "1"
+      },
+      {
+        "name": "2026TNSTR3619....1O",
+        "bibcode": "2026TNSTR3619....1O",
+        "reference": "GOTO_bot",
+        "alias": "2"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "3"
+      }
+    ],
+    "alias": [
+      {
+        "value": "2026aaxj",
+        "source": "1"
+      },
+      {
+        "value": "GOTO26jcn",
+        "source": "1"
+      },
+      {
+        "value": "AT2026aaxj",
+        "source": "1"
+      },
+      {
+        "value": "SN2026aaxj",
+        "source": "1"
+      },
+      {
+        "value": "SN 2026aaxj",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "21:01:01.181",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "-13:41:08.56",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "claimedtype": [
+      {
+        "value": "Ia",
+        "source": "1"
+      }
+    ],
+    "redshift": [
+      {
+        "value": "0.099",
+        "kind": "spectroscopic",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "GOTO_bot",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2026/09/08",
+        "source": "1"
+      }
+    ],
+    "photometry": [
+      {
+        "time": "61291.43510",
+        "magnitude": "19.99",
+        "band": "L-GOTO",
+        "u_time": "MJD",
+        "source": "2",
+        "telescope": "GOTO, ATLAS, Pan-STARRS"
+      }
+    ]
+  }
+}

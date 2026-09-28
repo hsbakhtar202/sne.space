@@ -1,0 +1,98 @@
+{
+  "SN2026abzf": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "SN2026abzf",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/2026abzf",
+        "alias": "1"
+      },
+      {
+        "name": "2026TNSTR3781....1S",
+        "bibcode": "2026TNSTR3781....1S",
+        "reference": "Fritz",
+        "alias": "2"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "3"
+      }
+    ],
+    "alias": [
+      {
+        "value": "2026abzf",
+        "source": "1"
+      },
+      {
+        "value": "AT2026abzf",
+        "source": "1"
+      },
+      {
+        "value": "SN2026abzf",
+        "source": "1"
+      },
+      {
+        "value": "SN 2026abzf",
+        "source": "1"
+      },
+      {
+        "value": "ZTF26abvsfwf",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "18:11:22.123",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "+70:25:09.27",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "claimedtype": [
+      {
+        "value": "Ia",
+        "source": "1"
+      }
+    ],
+    "redshift": [
+      {
+        "value": "0.048",
+        "kind": "spectroscopic",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "Fritz",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2026/09/18",
+        "source": "1"
+      }
+    ],
+    "photometry": [
+      {
+        "time": "61301.19777",
+        "magnitude": "19.48",
+        "band": "r-ZTF",
+        "u_time": "MJD",
+        "source": "2",
+        "telescope": "ZTF, ATLAS"
+      }
+    ]
+  }
+}

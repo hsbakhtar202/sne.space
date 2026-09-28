@@ -1,0 +1,98 @@
+{
+  "SN2026zwj": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "SN2026zwj",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/2026zwj",
+        "alias": "1"
+      },
+      {
+        "name": "2026TNSTR3465....1Z",
+        "bibcode": "2026TNSTR3465....1Z",
+        "reference": "XOSS_Bot0",
+        "alias": "2"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "3"
+      }
+    ],
+    "alias": [
+      {
+        "value": "PSP26Q",
+        "source": "1"
+      },
+      {
+        "value": "2026zwj",
+        "source": "1"
+      },
+      {
+        "value": "AT2026zwj",
+        "source": "1"
+      },
+      {
+        "value": "SN2026zwj",
+        "source": "1"
+      },
+      {
+        "value": "SN 2026zwj",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "02:09:26.805",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "+37:15:40.67",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "claimedtype": [
+      {
+        "value": "IIP",
+        "source": "1"
+      }
+    ],
+    "redshift": [
+      {
+        "value": "0.0153",
+        "kind": "spectroscopic",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "XOSS_Bot0",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2026/08/24",
+        "source": "1"
+      }
+    ],
+    "photometry": [
+      {
+        "time": "61276.91504",
+        "magnitude": "17.62",
+        "band": "Clear-",
+        "u_time": "MJD",
+        "source": "2",
+        "telescope": "XOSS, ATLAS, STSP, Pan-STARRS, ZTF, GOTO"
+      }
+    ]
+  }
+}

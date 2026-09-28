@@ -1,0 +1,98 @@
+{
+  "SN2026aaft": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "SN2026aaft",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/2026aaft",
+        "alias": "1"
+      },
+      {
+        "name": "2026TNSTR3532....1S",
+        "bibcode": "2026TNSTR3532....1S",
+        "reference": "Fritz",
+        "alias": "2"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "3"
+      }
+    ],
+    "alias": [
+      {
+        "value": "2026aaft",
+        "source": "1"
+      },
+      {
+        "value": "AT2026aaft",
+        "source": "1"
+      },
+      {
+        "value": "SN2026aaft",
+        "source": "1"
+      },
+      {
+        "value": "SN 2026aaft",
+        "source": "1"
+      },
+      {
+        "value": "ZTF26abrqjrn",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "00:19:11.863",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "-13:12:40.35",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "claimedtype": [
+      {
+        "value": "Ia",
+        "source": "1"
+      }
+    ],
+    "redshift": [
+      {
+        "value": "0.0548",
+        "kind": "spectroscopic",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "Fritz",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2026/09/01",
+        "source": "1"
+      }
+    ],
+    "photometry": [
+      {
+        "time": "61284.38639",
+        "magnitude": "19.56",
+        "band": "r-ZTF",
+        "u_time": "MJD",
+        "source": "2",
+        "telescope": "ZTF, GOTO, Fink, LAST, ATLAS, Pan-STARRS"
+      }
+    ]
+  }
+}

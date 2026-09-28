@@ -524,7 +524,7 @@ def get_transient_lifecycle(
             "story_guidance_html": story_guidance,
             "tel_table_html": tel_table_html,
         }
-    elif days_since <= 1100:
+    elif 180 < days_since <= 1100:
         badge = f'<span class="type-pill" style="background:#082f49;color:#7dd3fc;border:1px solid #0369a1;">● Recent supernova (+{days_since}d)</span>'
         cockpit_notice = (
             f'<div style="margin-bottom:0.75rem;padding:0.5rem 0.75rem;background:rgba(14,165,233,0.12);'

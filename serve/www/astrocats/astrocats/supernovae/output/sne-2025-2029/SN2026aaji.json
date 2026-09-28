@@ -1,0 +1,98 @@
+{
+  "SN2026aaji": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "SN2026aaji",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/2026aaji",
+        "alias": "1"
+      },
+      {
+        "name": "2026TNSTR3554....1T",
+        "bibcode": "2026TNSTR3554....1T",
+        "reference": "ATLAS_Bot1",
+        "alias": "2"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "3"
+      }
+    ],
+    "alias": [
+      {
+        "value": "2026aaji",
+        "source": "1"
+      },
+      {
+        "value": "AT2026aaji",
+        "source": "1"
+      },
+      {
+        "value": "ATLAS26kss",
+        "source": "1"
+      },
+      {
+        "value": "SN2026aaji",
+        "source": "1"
+      },
+      {
+        "value": "SN 2026aaji",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "17:54:16.985",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "+29:02:32.78",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "claimedtype": [
+      {
+        "value": "II",
+        "source": "1"
+      }
+    ],
+    "redshift": [
+      {
+        "value": "0.024884",
+        "kind": "spectroscopic",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "ATLAS_Bot1",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2026/09/02",
+        "source": "1"
+      }
+    ],
+    "photometry": [
+      {
+        "time": "61285.91928",
+        "magnitude": "19.03",
+        "band": "wide-ATLAS",
+        "u_time": "MJD",
+        "source": "2",
+        "telescope": "ATLAS, GOTO, ZTF, Pan-STARRS"
+      }
+    ]
+  }
+}

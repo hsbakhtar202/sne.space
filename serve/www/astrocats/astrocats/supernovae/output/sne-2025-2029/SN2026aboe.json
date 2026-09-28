@@ -1,0 +1,98 @@
+{
+  "SN2026aboe": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "SN2026aboe",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/2026aboe",
+        "alias": "1"
+      },
+      {
+        "name": "2026TNSTR3708....1J",
+        "bibcode": "2026TNSTR3708....1J",
+        "reference": "YSE_Bot1",
+        "alias": "2"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "3"
+      }
+    ],
+    "alias": [
+      {
+        "value": "PS26hph",
+        "source": "1"
+      },
+      {
+        "value": "2026aboe",
+        "source": "1"
+      },
+      {
+        "value": "AT2026aboe",
+        "source": "1"
+      },
+      {
+        "value": "SN2026aboe",
+        "source": "1"
+      },
+      {
+        "value": "SN 2026aboe",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "21:16:39.657",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "-00:46:11.89",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "claimedtype": [
+      {
+        "value": "Ia",
+        "source": "1"
+      }
+    ],
+    "redshift": [
+      {
+        "value": "0.0595",
+        "kind": "spectroscopic",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "YSE_Bot1",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2026/09/13",
+        "source": "1"
+      }
+    ],
+    "photometry": [
+      {
+        "time": "61296.31756",
+        "magnitude": "20.47",
+        "band": "g-P1",
+        "u_time": "MJD",
+        "source": "2",
+        "telescope": "YSE, GOTO"
+      }
+    ]
+  }
+}

@@ -1,0 +1,98 @@
+{
+  "SN2026abyp": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "SN2026abyp",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/2026abyp",
+        "alias": "1"
+      },
+      {
+        "name": "2026TNSTR3758....1T",
+        "bibcode": "2026TNSTR3758....1T",
+        "reference": "ATLAS_Bot1",
+        "alias": "2"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "3"
+      }
+    ],
+    "alias": [
+      {
+        "value": "2026abyp",
+        "source": "1"
+      },
+      {
+        "value": "AT2026abyp",
+        "source": "1"
+      },
+      {
+        "value": "ATLAS26lpu",
+        "source": "1"
+      },
+      {
+        "value": "SN2026abyp",
+        "source": "1"
+      },
+      {
+        "value": "SN 2026abyp",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "02:57:48.538",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "-36:42:45.80",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "claimedtype": [
+      {
+        "value": "II",
+        "source": "1"
+      }
+    ],
+    "redshift": [
+      {
+        "value": "0.02109",
+        "kind": "spectroscopic",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "ATLAS_Bot1",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2026/09/17",
+        "source": "1"
+      }
+    ],
+    "photometry": [
+      {
+        "time": "61300.56614",
+        "magnitude": "18.55",
+        "band": "orange-ATLAS",
+        "u_time": "MJD",
+        "source": "2",
+        "telescope": "ATLAS, Pan-STARRS, GOTO"
+      }
+    ]
+  }
+}
