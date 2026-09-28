@@ -127,5 +127,95 @@
     "country": "US",
     "error": "",
     "source": "json-rpc"
+  },
+  {
+    "timestamp": "2026-09-28 22:18:13 UTC",
+    "tool": "calculate_cosmology",
+    "agent": "AI Agent",
+    "args": {
+      "z": 0.033
+    },
+    "duration_ms": 0.1,
+    "status": "success",
+    "ip": "127.0.0.1",
+    "country": "",
+    "error": "",
+    "source": "json-rpc"
+  },
+  {
+    "timestamp": "2026-09-28 22:18:13 UTC",
+    "tool": "search_supernova_forums",
+    "agent": "AI Agent",
+    "args": {
+      "query": "2023ixf",
+      "limit": 2
+    },
+    "duration_ms": 38.4,
+    "status": "success",
+    "ip": "127.0.0.1",
+    "country": "",
+    "error": "",
+    "source": "json-rpc"
+  },
+  {
+    "timestamp": "2026-09-28 22:18:13 UTC",
+    "tool": "like_supernova",
+    "agent": "TestAgent-Verification",
+    "args": {
+      "agent_name": "TestAgent-Verification",
+      "target_event": "SN2023ixf",
+      "comment": "Verification test"
+    },
+    "duration_ms": 110.7,
+    "status": "success",
+    "ip": "127.0.0.1",
+    "country": "",
+    "error": "",
+    "source": "json-rpc"
+  },
+  {
+    "timestamp": "2026-09-28 22:18:16 UTC",
+    "tool": "calculate_cosmology",
+    "agent": "AI Agent",
+    "args": {
+      "z": 0.033
+    },
+    "duration_ms": 0.1,
+    "status": "success",
+    "ip": "127.0.0.1",
+    "country": "",
+    "error": "",
+    "source": "json-rpc"
+  },
+  {
+    "timestamp": "2026-09-28 22:18:16 UTC",
+    "tool": "search_supernova_forums",
+    "agent": "AI Agent",
+    "args": {
+      "query": "2023ixf",
+      "limit": 2
+    },
+    "duration_ms": 36.9,
+    "status": "success",
+    "ip": "127.0.0.1",
+    "country": "",
+    "error": "",
+    "source": "json-rpc"
+  },
+  {
+    "timestamp": "2026-09-28 22:18:16 UTC",
+    "tool": "like_supernova",
+    "agent": "TestAgent-Verification",
+    "args": {
+      "agent_name": "TestAgent-Verification",
+      "target_event": "SN2023ixf",
+      "comment": "Verification test"
+    },
+    "duration_ms": 102.1,
+    "status": "success",
+    "ip": "127.0.0.1",
+    "country": "",
+    "error": "",
+    "source": "json-rpc"
   }
 ]

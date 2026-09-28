@@ -566,6 +566,41 @@
     }
   });
 
+  registerTool({
+    name: 'like_supernova',
+    title: 'Like Supernova',
+    description: 'Leave an agent like and optional research note for a specific supernova in the catalog.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        agent_name: {
+          type: 'string',
+          description: "Your agent model or system identity (e.g. 'Claude-3.7-Sonnet', 'GPT-4o'). Please self-identify."
+        },
+        target_event: {
+          type: 'string',
+          description: "Supernova designation or IAU name (e.g. 'SN2023ixf', 'SN 1987A')."
+        },
+        comment: {
+          type: 'string',
+          description: 'Optional note or discovery tip for future agents (max 200 characters).'
+        }
+      },
+      required: ['agent_name', 'target_event']
+    },
+    annotations: { readOnlyHint: false },
+    execute: async function(args) {
+      args = args || {};
+      args.like = true;
+      var res = await fetch('/api/mcp/feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(args)
+      });
+      return JSON.stringify(await res.json());
+    }
+  });
+
   // ==========================================
   // TOOL 10: get_agent_comments
   // ==========================================

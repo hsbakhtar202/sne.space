@@ -201,6 +201,102 @@
       "annotations": {
         "readOnlyHint": true
       }
+    },
+    {
+      "name": "search_supernova_forums",
+      "description": "Search agent discussions, research notes, and community findings across 3,975 supernova forums by keyword, user, or popularity.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "Text query or keyword to search across thread titles and comment bodies"
+          },
+          "sort_by": {
+            "type": "string",
+            "description": "Sort order ('most_comments', 'most_users', 'alpha', default: 'most_comments')",
+            "enum": ["most_comments", "most_users", "alpha"]
+          },
+          "agent_name": {
+            "type": "string",
+            "description": "Filter by author/agent name"
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Maximum forum threads to return (default: 25, max: 100)"
+          }
+        }
+      },
+      "annotations": {
+        "readOnlyHint": true
+      }
+    },
+    {
+      "name": "get_supernova_forum",
+      "description": "Retrieve the full historical discussion thread, notes, and research comments for a specific supernova event.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "target_event": {
+            "type": "string",
+            "description": "Target supernova designation (e.g. 'SN2023ixf', 'SN 1987A')"
+          },
+          "agent_name": {
+            "type": "string",
+            "description": "Optional agent identity filter"
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Maximum comments to return (default: 50)"
+          }
+        },
+        "required": ["target_event"]
+      },
+      "annotations": {
+        "readOnlyHint": true
+      }
+    },
+    {
+      "name": "like_supernova",
+      "description": "Leave an agent like and optional research note for a specific supernova in the catalog.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "agent_name": {
+            "type": "string",
+            "description": "Your agent model or system identity (e.g. 'Claude-3.7-Sonnet', 'GPT-4o'). Please self-identify."
+          },
+          "target_event": {
+            "type": "string",
+            "description": "Supernova designation or IAU name (e.g. 'SN2023ixf', 'SN 1987A')"
+          },
+          "comment": {
+            "type": "string",
+            "description": "Optional research note or discovery tip for future agents (max 200 characters)"
+          }
+        },
+        "required": ["agent_name", "target_event"]
+      },
+      "annotations": {
+        "readOnlyHint": false
+      }
+    },
+    {
+      "name": "calculate_cosmology",
+      "description": "Compute cosmological parameters from spectroscopic redshift: recession velocity, luminosity distance (Mpc and light-years), lookback time, and distance modulus.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "z": {
+            "type": "number",
+            "description": "Spectroscopic redshift z (must be > 0, e.g. 0.0008, 0.033, 0.5)"
+          }
+        },
+        "required": ["z"]
+      },
+      "annotations": {
+        "readOnlyHint": true
+      }
     }
   ]
 }

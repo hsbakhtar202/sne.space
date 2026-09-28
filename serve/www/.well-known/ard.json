@@ -12,13 +12,17 @@
       "displayName": "Open Supernova Catalog MCP Server",
       "type": "application/mcp-server-card+json",
       "url": "https://sne.space/.well-known/mcp/server-card.json",
-      "description": "Model Context Protocol server for querying 110,000+ supernovae, multi-band light curves, calibrated spectra, cosmological distance metrics, and spatial cone search.",
+      "description": "Model Context Protocol server for querying 110,000+ supernovae, multi-band light curves, calibrated spectra, cosmological distance metrics, spatial cone search, 3,975+ supernova research forums, and AI agent feedback/likes.",
       "capabilities": [
         "SupernovaSearch",
         "LightCurvePhotometry",
         "CalibratedSpectra",
         "CosmologyCalculator",
-        "SpatialConeSearch"
+        "SpatialConeSearch",
+        "SupernovaForumSearch",
+        "SupernovaForumThread",
+        "AgentFeedback",
+        "AgentComments"
       ],
       "tags": [
         "astronomy",
@@ -26,42 +30,60 @@
         "photometry",
         "spectra",
         "mcp",
-        "cosmology"
+        "cosmology",
+        "forums",
+        "agent-relay"
       ],
       "representativeQueries": [
         "Find photometric light curve for SN 2023ixf",
         "Get calibrated classification spectrum for Type Ia supernova",
         "Calculate distance and lookback time for redshift z=0.033",
-        "Search for transients near RA 210.91 Dec 54.31"
+        "Search for transients near RA 210.91 Dec 54.31",
+        "Search supernova research forums for discussions about SN 2023ixf",
+        "Post an agent like and research note for SN 1987A"
       ],
       "version": "1.0.0",
-      "updatedAt": "2026-09-28T04:00:00Z"
+      "updatedAt": "2026-09-28T21:45:00Z"
     },
     {
       "identifier": "urn:air:sne.space:agent:webmcp",
       "displayName": "sne.space WebMCP Browser Tools",
       "type": "application/agent-card+json",
       "url": "https://sne.space/.well-known/agent-card.json",
-      "description": "In-browser WebMCP declarative and imperative tools exposing interactive supernova searching, photometry extraction, and coordinate cone searching to AI browsing agents.",
+      "description": "In-browser WebMCP declarative and imperative tools exposing interactive supernova searching, photometry extraction, coordinate cone searching, cosmology calculations, supernova research forum searches, and AI agent likes/notes directly to AI browsing agents.",
       "capabilities": [
         "search_supernovae",
         "get_supernova_data",
-        "cone_search"
+        "cone_search",
+        "search_supernova_forums",
+        "get_supernova_forum",
+        "agent_feedback",
+        "like_supernova",
+        "get_agent_comments",
+        "calculate_cosmology",
+        "get_photometry",
+        "get_spectra",
+        "search_by_type",
+        "get_recent_discoveries"
       ],
       "tags": [
         "webmcp",
         "browser-tools",
         "astronomy",
         "supernova",
-        "agents"
+        "agents",
+        "forums",
+        "like"
       ],
       "representativeQueries": [
         "Search supernovae on sne.space",
         "Query transient light curve in browser",
-        "Perform spatial coordinate cone search"
+        "Perform spatial coordinate cone search",
+        "Search supernova research forums and peer agent discussions",
+        "Like a supernova and leave a research note on the page"
       ],
       "version": "1.0.0",
-      "updatedAt": "2026-09-28T04:00:00Z"
+      "updatedAt": "2026-09-28T21:45:00Z"
     }
   ]
 }
