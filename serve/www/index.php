@@ -66,9 +66,14 @@ require __DIR__ . '/wp-content/plugins/transient-table/transient-table.php';
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Open Supernova Catalog — sne.space</title>
 <meta name="description" content="Comprehensive astrophysical archive containing multi-band light curves, calibrated spectra, and metadata for over 110,000 supernovae from 1000 AD to 2026+.">
+<link rel="stylesheet" href="https://cdn.datatables.net/1.10.16/css/jquery.dataTables.min.css" media="print" onload="this.media='all'">
+<link rel="stylesheet" href="https://cdn.datatables.net/v/dt/b-1.5.2/b-colvis-1.5.2/b-html5-1.5.2/r-2.2.2/sc-1.5.0/sl-1.2.6/datatables.min.css" media="print" onload="this.media='all'">
+<link rel="stylesheet" href="/wp-content/plugins/transient-table/transient-table.sne.css" media="print" onload="this.media='all'">
+<noscript>
 <link rel="stylesheet" href="https://cdn.datatables.net/1.10.16/css/jquery.dataTables.min.css">
 <link rel="stylesheet" href="https://cdn.datatables.net/v/dt/b-1.5.2/b-colvis-1.5.2/b-html5-1.5.2/r-2.2.2/sc-1.5.0/sl-1.2.6/datatables.min.css">
 <link rel="stylesheet" href="/wp-content/plugins/transient-table/transient-table.sne.css">
+</noscript>
 <style>
   :root {
     --bg-space: #070a12;
@@ -210,7 +215,7 @@ require __DIR__ . '/wp-content/plugins/transient-table/transient-table.php';
     text-transform: uppercase;
     font-weight: 700;
     letter-spacing: 0.05em;
-    color: var(--text-muted);
+    color: #cbd5e1;
     margin-bottom: 0.25rem;
   }
   .telemetry-val {
@@ -221,7 +226,7 @@ require __DIR__ . '/wp-content/plugins/transient-table/transient-table.php';
   }
   .telemetry-desc {
     font-size: 0.75rem;
-    color: var(--text-slate);
+    color: #cbd5e1;
     margin-top: 0.2rem;
   }
 
@@ -372,18 +377,12 @@ require __DIR__ . '/wp-content/plugins/transient-table/transient-table.php';
   a { color: var(--accent-cyan); text-decoration: none; }
   a:hover { text-decoration: underline; }
 </style>
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://cdn.datatables.net/1.10.16/js/jquery.dataTables.min.js"></script>
-<script src="https://cdn.datatables.net/v/dt/b-1.5.2/b-colvis-1.5.2/b-html5-1.5.2/r-2.2.2/sc-1.5.0/sl-1.2.6/datatables.min.js"></script>
-<script src="/wp-content/plugins/transient-table/transient-table.js"></script>
-<script src="/wp-content/plugins/transient-table/suncalc.js"></script>
-<?php datatables_functions(); ?>
 </head>
 <body>
   <header class="global-nav">
     <div class="brand-group">
       <a href="/" class="brand-title" title="sne.space — The Open Supernova Catalog">
-        <img src="/assets/img/logo-color.png" alt="sne.space" class="brand-logo-img">
+        <img src="/assets/img/logo-color.webp" alt="sne.space" class="brand-logo-img" width="125" height="42" decoding="async">
       </a>
       <span class="brand-pill">Open Supernova Catalog</span>
     </div>
@@ -443,5 +442,11 @@ require __DIR__ . '/wp-content/plugins/transient-table/transient-table.php';
       <?php transient_catalog(false); ?>
     </div>
   </main>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.10.16/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/v/dt/b-1.5.2/b-colvis-1.5.2/b-html5-1.5.2/r-2.2.2/sc-1.5.0/sl-1.2.6/datatables.min.js"></script>
+<script src="/wp-content/plugins/transient-table/transient-table.js"></script>
+<script src="/wp-content/plugins/transient-table/suncalc.js"></script>
+<?php datatables_functions(); ?>
 </body>
 </html>

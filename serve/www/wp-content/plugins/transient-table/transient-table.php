@@ -2225,6 +2225,7 @@ function transient_catalog($bones = false) {
 		var modal = document.getElementById('addmodalwindow');
 		var span = document.getElementsByClassName("addmodal-close")[0];
 		var addgithub = document.getElementById("addgithub");
+		if (span && modal) {
 		span.onclick = function() {
 			modal.style.display = "none";
 		}
@@ -2233,6 +2234,8 @@ function transient_catalog($bones = false) {
 				modal.style.display = "none";
 			}
 		}
+		}
+		if (addgithub) {
 		addgithub.onclick = function () {
 			var addname = document.getElementById('objectname').value;
 			var addnamel = addname.toLowerCase();
@@ -2261,6 +2264,7 @@ function transient_catalog($bones = false) {
 				return;
 			}
 			eSN(addname, addname, ghpr, quantities, bibcode);
+		}
 		}
 
 		setInterval( function () {

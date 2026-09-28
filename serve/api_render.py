@@ -249,7 +249,7 @@ def render_api_docs_page() -> str:
 <body>
   <header class="cockpit-hdr">
     <a href="/" class="brand-link" title="sne.space — The Open Supernova Catalog">
-      <img src="/assets/img/logo-color.png" alt="sne.space" class="brand-logo-img">
+      <img src="/assets/img/logo-color.webp" alt="sne.space" class="brand-logo-img">
       <span class="brand-badge">Open Supernova Catalog</span>
     </a>
     <div class="nav-links">

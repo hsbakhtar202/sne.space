@@ -1651,7 +1651,7 @@ def render_pro_cockpit(name: str, meta: dict, entered: str | None = None, legacy
   <header class="cockpit-hdr">
     <div class="brand-group">
       <a class="brand-title" href="/" title="sne.space — The Open Supernova Catalog">
-        <img src="/assets/img/logo-color.png" alt="sne.space" class="brand-logo-img">
+        <img src="/assets/img/logo-color.webp" alt="sne.space" class="brand-logo-img">
       </a>
       <span class="brand-badge">Open Supernova Catalog</span>
     </div>
@@ -4237,7 +4237,7 @@ def render_story_mode(name: str, meta: dict, entered: str | None = None) -> str:
   <header class="cockpit-hdr">
     <div class="brand-group">
       <a class="brand-title" href="/" title="sne.space — The Open Supernova Catalog">
-        <img src="/assets/img/logo-color.png" alt="sne.space" class="brand-logo-img">
+        <img src="/assets/img/logo-color.webp" alt="sne.space" class="brand-logo-img">
       </a>
     </div>
     <form class="hdr-search-form" action="/" method="GET" toolname="search_supernovae" tooldescription="Search 110,000+ supernovae by IAU designation, name, or survey alias">

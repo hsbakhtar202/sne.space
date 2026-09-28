@@ -18,7 +18,7 @@ import subprocess
 import threading
 import urllib.parse
 import urllib.request
-from functools import lru_cache
+mimetypes.add_type("image/webp", ".webp")
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
@@ -582,7 +582,7 @@ def _fallback_event_page(name: str, entered: str | None = None) -> bytes:
   table.sub-table th {{ background: #f7f7f7; font-weight: 600; }}
 </style></head><body>
 <header class="site">
-  <a class="brand" href="/" title="sne.space — The Open Supernova Catalog"><img src="/assets/img/logo-plain.png" alt="sne.space" class="brand-logo-ia"><span>Open Supernova Catalog</span></a>
+  <a class="brand" href="/" title="sne.space — The Open Supernova Catalog"><img src="/assets/img/logo-plain.webp" alt="sne.space" class="brand-logo-ia"><span>Open Supernova Catalog</span></a>
   <nav><a href="/">Catalog</a><a href="/download/">Download</a></nav>
 </header>
 <main>
@@ -1036,20 +1036,52 @@ class Handler(SimpleHTTPRequestHandler):
                 self.end_headers()
                 return
 
+        static = (WWW / rel).resolve()
+        try:
+            static.relative_to(WWW.resolve())
+        except ValueError:
+            static = None
+        if static is not None and static.is_file():
+            ctype = mimetypes.guess_type(str(static))[0] or "application/octet-stream"
+            if ctype.startswith("text/") or ctype in ("application/javascript", "application/json", "application/xml"):
+                ctype += "; charset=utf-8"
+            data = static.read_bytes()
+            cache = "public, max-age=604800"
+            if static.suffix in (".html", ".txt", ".xml"):
+                cache = "public, max-age=300"
+            self._send(200, ctype, data, {"Cache-Control": cache})
+            return
+
         return super().do_GET()
 
     def _send(self, code: int, ctype: str, body: bytes, headers: dict | None = None):
+        headers = dict(headers or {})
+        accept = (self.headers.get("Accept-Encoding") or "").lower()
+        compressible = (
+            ctype.startswith("text/")
+            or "javascript" in ctype
+            or ctype.startswith("application/json")
+            or ctype.startswith("application/xml")
+            or "xml" in ctype
+        )
+        if compressible and "gzip" in accept and len(body) > 256 and "Content-Encoding" not in headers:
+            body = gzip.compress(body, compresslevel=5)
+            headers["Content-Encoding"] = "gzip"
+            headers["Vary"] = "Accept-Encoding"
+        if "Cache-Control" not in headers:
+            if "text/html" in ctype:
+                headers["Cache-Control"] = "public, max-age=120"
         self.send_response(code)
         self.send_header("Content-Type", ctype)
         self.send_header("Content-Length", str(len(body)))
         self.send_header("Access-Control-Allow-Origin", "*")
         if "text/html" in ctype:
-            self.send_header("Link", '</.well-known/ai-catalog.json>; rel="ai-catalog", </.well-known/ard.json>; rel="ard"')
-        if headers:
-            for k, v in headers.items():
-                self.send_header(k, v)
+            self.send_header("Link", '</.well-known/ai-catalog.json>; rel="ai-catalog", </.well-known/ard.json>; rel="ard", </llms.txt>; rel="describedby"')
+        for k, v in headers.items():
+            self.send_header(k, v)
         self.end_headers()
-        self.wfile.write(body)
+        if self.command != "HEAD":
+            self.wfile.write(body)
 
 
 class ReusableThreadingServer(ThreadingHTTPServer):

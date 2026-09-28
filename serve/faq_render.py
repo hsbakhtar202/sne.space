@@ -381,7 +381,7 @@ def render_faq_page() -> str:
   <header class="cockpit-hdr">
     <div class="brand-group">
       <a class="brand-title" href="/" title="sne.space — The Open Supernova Catalog">
-        <img src="/assets/img/logo-color.png" alt="sne.space" class="brand-logo-img">
+        <img src="/assets/img/logo-color.webp" alt="sne.space" class="brand-logo-img">
       </a>
       <span class="brand-badge">Open Supernova Catalog</span>
     </div>
