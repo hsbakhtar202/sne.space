@@ -353,6 +353,15 @@ def render_radar_page(obs_key: str = "keck", filter_mode: str = "active") -> str
     html = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-P1SCVZ0V7T"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){{dataLayer.push(arguments);}}
+    gtag('js', new Date());
+
+    gtag('config', 'G-P1SCVZ0V7T');
+  </script>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Observers Radar &amp; Target Feed — sne.space</title>

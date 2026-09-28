@@ -49,7 +49,16 @@ function render_event_frame(string $name, ?string $entered = null): void {
     global $htmlpath;
     $src = '/' . $htmlpath . name_to_filename($name) . '.html';
     header('Content-Type: text/html; charset=utf-8');
-    echo '<!DOCTYPE html><html><head><meta charset="utf-8"><title>'
+    echo '<!DOCTYPE html><html><head>'
+        . '<!-- Google tag (gtag.js) -->'
+        . '<script async src="https://www.googletagmanager.com/gtag/js?id=G-P1SCVZ0V7T"></script>'
+        . '<script>'
+        . 'window.dataLayer = window.dataLayer || [];'
+        . 'function gtag(){dataLayer.push(arguments);}'
+        . 'gtag(\'js\', new Date());'
+        . 'gtag(\'config\', \'G-P1SCVZ0V7T\');'
+        . '</script>'
+        . '<meta charset="utf-8"><title>'
         . htmlspecialchars($name) . ' — Open Supernova Catalog</title>'
         . '<style>body{margin:0;background:#111}#warn{text-align:center;color:orange;padding:.5rem;background:#222}'
         . 'iframe{border:0;width:100%;min-height:100vh;display:block;background:#fff}</style></head><body>';

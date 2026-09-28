@@ -685,7 +685,17 @@ def _fallback_event_page(name: str, entered: str | None = None) -> bytes:
             enrich_action = f'<a class="btn-re-enrich" href="?enrich=1" style="color:var(--muted);text-decoration:underline;font-size:0.9rem">Re-check ALeRCE/WISeREP</a>'
 
     html = f"""<!DOCTYPE html>
-<html lang="en"><head><meta charset="utf-8">
+<html lang="en"><head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-P1SCVZ0V7T"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){{dataLayer.push(arguments);}}
+  gtag('js', new Date());
+
+  gtag('config', 'G-P1SCVZ0V7T');
+</script>
+<meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{name} — Open Supernova Catalog</title>
 <link rel="stylesheet" href="/assets/ia.css">
@@ -726,6 +736,15 @@ def _not_found_page(name: str) -> bytes:
     html = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-P1SCVZ0V7T"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){{dataLayer.push(arguments);}}
+    gtag('js', new Date());
+
+    gtag('config', 'G-P1SCVZ0V7T');
+  </script>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Transient '{name}' Not Found — sne.space</title>
@@ -915,6 +934,15 @@ def _render_logs_page() -> bytes:
     page = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-P1SCVZ0V7T"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){{dataLayer.push(arguments);}}
+    gtag('js', new Date());
+
+    gtag('config', 'G-P1SCVZ0V7T');
+  </script>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Live Access &amp; API Logs — sne.space</title>
