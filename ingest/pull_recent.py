@@ -18,6 +18,8 @@ from ingest.coordinates import ra_dec_to_deg
 from ingest.manager import SUPERNOVAE_OUTPUT, atomic_write_json, get_target_repo_folder
 from ingest.tns import build_event_dict
 
+import time
+
 ROOT = Path(__file__).resolve().parent.parent
 RECENT_PATH = ROOT / "serve/www/assets/recent-events.json"
 
@@ -34,10 +36,20 @@ def fetch_classified(days: int = 40) -> list[dict[str, str]]:
         "page": "0",
     })
     url = f"https://www.wis-tns.org/search?{query}"
-    req = urllib.request.Request(url, headers={"User-Agent": "sne.space/1.0"})
-    with urllib.request.urlopen(req, timeout=60) as resp:
-        text = resp.read().decode("utf-8", errors="replace")
-    return list(csv.DictReader(io.StringIO(text)))
+    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 (sne.space Ingestion)"})
+    for attempt in range(3):
+        try:
+            with urllib.request.urlopen(req, timeout=60) as resp:
+                text = resp.read().decode("utf-8", errors="replace")
+            return list(csv.DictReader(io.StringIO(text)))
+        except urllib.error.HTTPError as e:
+            if e.code == 429:
+                reset_sec = float(e.headers.get("x-rate-limit-reset", "20")) + 1.0
+                print(f"[TNS Search] Rate limit active. Sleeping {reset_sec:.1f}s for reset...", flush=True)
+                time.sleep(reset_sec)
+                continue
+            raise
+    return []
 
 
 def _row(item: dict[str, str]) -> dict[str, str] | None:
@@ -74,11 +86,37 @@ def pull_recent(days: int = 40) -> int:
         row = _row(item)
         if row is None:
             continue
-        cname, event = build_event_dict(row, enrich_alerce=False, enrich_wiserep=False)
+
+        cname_raw = f"{row.get('name_prefix', 'SN')}{row['name']}"
         year = int(row["discoverydate"][:4]) if row["discoverydate"][:4].isdigit() else 2026
         dest = get_target_repo_folder(year)
         dest.mkdir(parents=True, exist_ok=True)
-        atomic_write_json(dest / f"{cname}.json", event)
+        dest_file = dest / f"{cname_raw}.json"
+
+        event = None
+        if dest_file.is_file():
+            try:
+                ex_data = json.loads(dest_file.read_text(encoding="utf-8"))
+                ex_key = list(ex_data.keys())[0] if ex_data else cname_raw
+                if len(ex_data.get(ex_key, {}).get("spectra", [])) > 0:
+                    cname = ex_key
+                    event = ex_data
+            except Exception:
+                pass
+
+        if event is None:
+            cname, event = build_event_dict(
+                row,
+                enrich_alerce=True,
+                enrich_wiserep=False,
+                enrich_tns_spectra=True
+            )
+            time.sleep(0.5)  # Respectful cadence to prevent TNS rate-limiting
+            atomic_write_json(dest / f"{cname}.json", event)
+
+        n_spectra = len(event[cname].get("spectra", []))
+        n_photo = len(event[cname].get("photometry", []))
+
         written.append({
             "name": cname,
             "date": row["discoverydate"][:10],
@@ -86,6 +124,8 @@ def pull_recent(days: int = 40) -> int:
             "discoverer": (row["reporters"] or "")[:48],
             "ra": event[cname].get("ra", [{"value": ""}])[0].get("value", ""),
             "dec": event[cname].get("dec", [{"value": ""}])[0].get("value", ""),
+            "spectra_count": n_spectra,
+            "photo_count": n_photo,
             "sort": row["discoverydate"],
         })
     written.sort(key=lambda r: r["sort"], reverse=True)
@@ -95,6 +135,8 @@ def pull_recent(days: int = 40) -> int:
     catalog_rows = []
     for row in written:
         day = row["date"].replace("-", "/")
+        s_count = row.get("spectra_count", 0)
+        p_count = row.get("photo_count", 1)
         catalog_rows.append({
             "name": row["name"],
             "alias": [{"value": row["name"]}],
@@ -105,7 +147,8 @@ def pull_recent(days: int = 40) -> int:
             "ra": [{"value": row.get("ra", "")}],
             "dec": [{"value": row.get("dec", "")}],
             "claimedtype": [{"value": row["type"]}],
-            "photolink": "1,0",
+            "photolink": f"{p_count},0",
+            "spectralink": f"{s_count}" if s_count > 0 else "0",
         })
     catalog_path = RECENT_PATH.parent / "recent-catalog.min.json"
     catalog_path.write_text(json.dumps(catalog_rows, separators=(",", ":")), encoding="utf-8")

@@ -13,3 +13,4 @@
 2026-09-28 22:18:16 UTC	calculate_cosmology	AI Agent	success	0.1ms	127.0.0.1		json-rpc	{"z": 0.033}
 2026-09-28 22:18:16 UTC	search_supernova_forums	AI Agent	success	36.9ms	127.0.0.1		json-rpc	{"query": "2023ixf", "limit": 2}
 2026-09-28 22:18:16 UTC	like_supernova	TestAgent-Verification	success	102.1ms	127.0.0.1		json-rpc	{"agent_name": "TestAgent-Verification", "target_event": "SN2023ixf", "comment": "Verification test"}
+2026-10-07 08:12:43 UTC	get_spectrum	AI Agent	success	0.9ms	127.0.0.1		json-rpc	{"name": "SN2026aeiv"}

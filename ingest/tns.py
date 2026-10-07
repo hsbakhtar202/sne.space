@@ -10,6 +10,7 @@ from typing import Any, Dict, Generator, List, Optional, Set, Tuple
 
 from ingest.alerce import convert_alerce_to_astrocats_photometry, get_alerce_lightcurve
 from ingest.coordinates import deg_to_ra_dec, parse_float_safe, parse_iso_datetime
+from ingest.tns_spectra import convert_tns_to_astrocats_spectra, is_duplicate_spectrum, search_tns_spectra
 from ingest.wiserep import convert_wiserep_to_astrocats_spectra, search_wiserep_spectra
 
 logger = logging.getLogger(__name__)
@@ -92,7 +93,8 @@ def parse_aliases(prefix: str, name: str, internal_names: str) -> List[str]:
 def build_event_dict(
     row: Dict[str, str],
     enrich_alerce: bool = False,
-    enrich_wiserep: bool = False
+    enrich_wiserep: bool = False,
+    enrich_tns_spectra: bool = True
 ) -> Tuple[str, Dict[str, Any]]:
     """Transform a TNS row into a full AstroCats JSON event dict."""
     prefix = row.get("name_prefix", "SN").strip() or "SN"
@@ -254,7 +256,19 @@ def build_event_dict(
         photometry.sort(key=lambda x: float(x.get("time", 0)))
         event["photometry"] = photometry
 
-    # Optional Enrichment: WISeREP Classification Spectra
+    # Spectra Enrichment: Direct TNS Public Spectra and/or WISeREP
+    all_spectra: List[Dict[str, Any]] = []
+
+    if enrich_tns_spectra:
+        tns_spec_rows = search_tns_spectra(name)
+        if tns_spec_rows:
+            tns_spectra = convert_tns_to_astrocats_spectra(
+                tns_spec_rows, source_alias=tns_source_alias, max_spectra=5
+            )
+            for s in tns_spectra:
+                if not is_duplicate_spectrum(s, all_spectra):
+                    all_spectra.append(s)
+
     if enrich_wiserep:
         wiserep_rows = search_wiserep_spectra(name)
         if wiserep_rows:
@@ -268,10 +282,14 @@ def build_event_dict(
                 "alias": wiserep_source_alias,
             })
             source_counter += 1
-            spectra = convert_wiserep_to_astrocats_spectra(
-                wiserep_rows, source_alias=wiserep_source_alias, max_spectra=3
+            wiserep_specs = convert_wiserep_to_astrocats_spectra(
+                wiserep_rows, source_alias=wiserep_source_alias, max_spectra=5
             )
-            if spectra:
-                event["spectra"] = spectra
+            for s in wiserep_specs:
+                if not is_duplicate_spectrum(s, all_spectra):
+                    all_spectra.append(s)
+
+    if all_spectra:
+        event["spectra"] = all_spectra
 
     return canonical_name, {canonical_name: event}

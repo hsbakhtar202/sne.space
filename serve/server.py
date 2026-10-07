@@ -1309,6 +1309,21 @@ def _event_page(name: str, entered: str | None = None, is_story: bool = False, f
                 meta = raw.get(name) or raw
         except Exception:
             meta = {}
+
+        # Auto-enrich missing classification spectra from TNS/WISeREP for recent transients
+        if enrich_event is not None and not meta.get("spectra"):
+            match_yr = re.search(r'(?<!\d)(202[0-9])(?!\d)', name)
+            if match_yr and int(match_yr.group(1)) >= 2024:
+                try:
+                    if is_file_stale is not None and is_file_stale(path):
+                        enrich_event(name, fetch_lightcurve=False, fetch_spectra=True, force=False)
+                        raw = json.loads(path.read_text(encoding="utf-8", errors="replace"))
+                        if isinstance(raw, dict) and len(raw) == 1:
+                            meta = next(iter(raw.values()))
+                        elif isinstance(raw, dict):
+                            meta = raw.get(name) or raw
+                except Exception:
+                    pass
     if not meta or not (meta.get("ra") or meta.get("photometry") or meta.get("claimedtype") or meta.get("dec")):
         cat_meta = _get_catalog_entry(entered or name)
         if cat_meta:
@@ -1482,6 +1497,14 @@ def _execute_mcp_tool_by_name(tool_name: str, args: dict, client_meta: dict) -> 
                 raw = json.loads(fp.read_text(encoding="utf-8", errors="replace"))
                 ev_data = next(iter(raw.values())) if len(raw) == 1 else raw.get(canon_name, {})
                 spectra = ev_data.get("spectra", [])
+                if not spectra and enrich_event is not None:
+                    try:
+                        enrich_event(canon_name, fetch_lightcurve=False, fetch_spectra=True, force=False)
+                        raw = json.loads(fp.read_text(encoding="utf-8", errors="replace"))
+                        ev_data = next(iter(raw.values())) if len(raw) == 1 else raw.get(canon_name, {})
+                        spectra = ev_data.get("spectra", [])
+                    except Exception:
+                        pass
                 if not spectra:
                     res = {"name": canon_name, "total_spectra": 0, "message": "No calibrated spectra available for this transient."}
                 elif epoch_index < 0 or epoch_index >= len(spectra):
@@ -3723,6 +3746,16 @@ class Handler(SimpleHTTPRequestHandler):
                         ev_key = list(ev_data.keys())[0]
                         ev_obj = ev_data[ev_key]
                         q_data = ev_obj.get(quantity, [])
+
+                        if quantity == "spectra" and not q_data and enrich_event is not None:
+                            try:
+                                enrich_event(canon or raw_event, fetch_lightcurve=False, fetch_spectra=True, force=False)
+                                ev_data = json.loads(fp.read_text(encoding="utf-8"))
+                                ev_key = list(ev_data.keys())[0]
+                                ev_obj = ev_data[ev_key]
+                                q_data = ev_obj.get(quantity, [])
+                            except Exception:
+                                pass
 
                         if selected_cols:
                             q_data = [{k: row[k] for k in selected_cols if k in row} for row in q_data]

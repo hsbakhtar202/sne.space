@@ -35,6 +35,11 @@ from cone_search import cone_search as do_cone_search
 from event_render import extract_coords, get_val
 from server import _find_event_file, _names_maps, _resolve_event
 
+try:
+    from ingest.manager import enrich_event
+except ImportError:
+    enrich_event = None
+
 # Initialize FastMCP app
 mcp = FastMCP(
     "sne-space-mcp",
@@ -292,6 +297,15 @@ def get_spectrum(name: str, epoch_index: int = 0) -> Dict[str, Any]:
     ev_data = next(iter(raw.values())) if len(raw) == 1 else raw.get(canon_name, {})
 
     spectra = ev_data.get("spectra", [])
+    if not spectra and enrich_event is not None:
+        try:
+            enrich_event(canon_name, fetch_lightcurve=False, fetch_spectra=True, force=False)
+            raw = json.loads(fp.read_text(encoding="utf-8", errors="replace"))
+            ev_data = next(iter(raw.values())) if len(raw) == 1 else raw.get(canon_name, {})
+            spectra = ev_data.get("spectra", [])
+        except Exception:
+            pass
+
     if not spectra:
         res = {"name": canon_name, "spectra_available": 0, "message": "No calibrated spectra available."}
         record_mcp_invocation(

@@ -13,6 +13,7 @@ from ingest.alerce import convert_alerce_to_astrocats_photometry, get_alerce_lig
 from ingest.astronomy import compute_cosmology, compute_peak_magnitudes, fetch_irsa_dust
 from ingest.coordinates import ra_dec_to_deg
 from ingest.tns import build_event_dict, stream_tns_rows
+from ingest.tns_spectra import convert_tns_to_astrocats_spectra, is_duplicate_spectrum, search_tns_spectra
 from ingest.wiserep import convert_wiserep_to_astrocats_spectra, search_wiserep_spectra
 
 logger = logging.getLogger(__name__)
@@ -448,27 +449,51 @@ def enrich_event(
                             existing_pts.add((t, b))
                     event["photometry"].sort(key=lambda x: float(x.get("time", 0)))
 
-        # Fetch WISeREP spectra
+        # Fetch TNS and WISeREP spectra
         if fetch_spectra:
             tns_id = key[2:] if key.startswith(("SN", "AT")) else key
-            print(f"Querying WISeREP for {tns_id} spectra...")
-            wrows = search_wiserep_spectra(tns_id, max_cache_age=broker_cache_age)
-            if wrows:
-                src_alias = _get_or_add_source(
-                    event,
-                    name="WISeREP",
-                    bibcode="2012PASP..124..668Y",
-                    reference="Yaron & Gal-Yam (2012)",
-                    url="https://www.wiserep.org",
-                    secondary=True,
-                )
-                specs = convert_wiserep_to_astrocats_spectra(wrows, source_alias=src_alias, max_spectra=5)
-                print(f"Retrieved {len(specs)} spectra from WISeREP.")
-                if specs:
-                    existing_fn = {s.get("filename") for s in event.get("spectra", [])}
-                    for s in specs:
-                        if s.get("filename") not in existing_fn:
-                            event.setdefault("spectra", []).append(s)
+            current_spectra = event.setdefault("spectra", [])
+
+            # 1. Query TNS directly for public classification spectra
+            try:
+                print(f"Querying TNS for {tns_id} classification spectra...")
+                trows = search_tns_spectra(tns_id, max_cache_age=broker_cache_age)
+                if trows:
+                    tns_alias = _get_or_add_source(
+                        event,
+                        name="Transient Name Server",
+                        url=f"https://www.wis-tns.org/object/{tns_id}",
+                        secondary=True,
+                    )
+                    tspecs = convert_tns_to_astrocats_spectra(trows, source_alias=tns_alias, max_spectra=5)
+                    print(f"Retrieved {len(tspecs)} spectra from TNS.")
+                    for s in tspecs:
+                        if not is_duplicate_spectrum(s, current_spectra):
+                            current_spectra.append(s)
+            except Exception as e:
+                logger.warning(f"TNS spectra query failed for {tns_id}: {e}")
+
+            # 2. Query WISeREP (fallback if TNS had no spectra, or if force is enabled)
+            if not current_spectra or force:
+                try:
+                    print(f"Querying WISeREP for {tns_id} spectra...")
+                    wrows = search_wiserep_spectra(tns_id, max_cache_age=broker_cache_age)
+                    if wrows:
+                        src_alias = _get_or_add_source(
+                            event,
+                            name="WISeREP",
+                            bibcode="2012PASP..124..668Y",
+                            reference="Yaron & Gal-Yam (2012)",
+                            url="https://www.wiserep.org",
+                            secondary=True,
+                        )
+                        specs = convert_wiserep_to_astrocats_spectra(wrows, source_alias=src_alias, max_spectra=5)
+                        print(f"Retrieved {len(specs)} spectra from WISeREP.")
+                        for s in specs:
+                            if not is_duplicate_spectrum(s, current_spectra):
+                                current_spectra.append(s)
+                except Exception as e:
+                    logger.warning(f"WISeREP spectra query failed for {tns_id}: {e}")
 
         # Calculate Cosmological Distances & Recession Velocity
         dl_val = None

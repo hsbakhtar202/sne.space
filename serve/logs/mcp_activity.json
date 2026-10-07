@@ -217,5 +217,19 @@
     "country": "",
     "error": "",
     "source": "json-rpc"
+  },
+  {
+    "timestamp": "2026-10-07 08:12:43 UTC",
+    "tool": "get_spectrum",
+    "agent": "AI Agent",
+    "args": {
+      "name": "SN2026aeiv"
+    },
+    "duration_ms": 0.9,
+    "status": "success",
+    "ip": "127.0.0.1",
+    "country": "",
+    "error": "",
+    "source": "json-rpc"
   }
 ]

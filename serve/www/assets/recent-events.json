@@ -1,50 +1,82 @@
 [
   {
-    "name": "SN2026acxa",
-    "date": "2026-09-25",
-    "type": "Ic-BL",
-    "discoverer": "BTSbot_bot"
+    "name": "SN2026aeiv",
+    "date": "2026-10-05",
+    "type": "Ia-91T-like",
+    "discoverer": "ATLAS_Bot1",
+    "ra": "03:16:41.828",
+    "dec": "+80:48:09.12",
+    "spectra_count": 1,
+    "photo_count": 1
   },
   {
-    "name": "SN2026acow",
-    "date": "2026-09-20",
+    "name": "SN2026aedv",
+    "date": "2026-10-02",
     "type": "Ia",
-    "discoverer": "Fritz"
+    "discoverer": "Fritz",
+    "ra": "02:25:05.075",
+    "dec": "+22:13:11.52",
+    "spectra_count": 1,
+    "photo_count": 14
   },
   {
-    "name": "SN2026acna",
-    "date": "2026-09-20",
+    "name": "SN2026aebj",
+    "date": "2026-10-02",
     "type": "Ia",
-    "discoverer": "Ismael Perez-Fournon"
+    "discoverer": "Fritz",
+    "ra": "21:45:41.050",
+    "dec": "-07:03:45.02",
+    "spectra_count": 1,
+    "photo_count": 16
   },
   {
-    "name": "SN2026acjs",
-    "date": "2026-09-20",
-    "type": "II",
-    "discoverer": "GOTO_bot"
-  },
-  {
-    "name": "SN2026acka",
-    "date": "2026-09-20",
+    "name": "SN2026aeaq",
+    "date": "2026-10-02",
     "type": "Ia",
-    "discoverer": "Fritz"
+    "discoverer": "Krzysztof Stanek",
+    "ra": "15:03:12.986",
+    "dec": "+49:51:05.44",
+    "spectra_count": 1,
+    "photo_count": 1
   },
   {
-    "name": "SN2026acjo",
-    "date": "2026-09-19",
+    "name": "SN2026adlt",
+    "date": "2026-10-01",
     "type": "Ia",
-    "discoverer": "Fritz"
+    "discoverer": "Fritz",
+    "ra": "15:57:50.638",
+    "dec": "+64:00:21.41",
+    "spectra_count": 2,
+    "photo_count": 1
   },
   {
-    "name": "SN2026acou",
-    "date": "2026-09-18",
+    "name": "SN2026adiy",
+    "date": "2026-09-30",
     "type": "Ia",
-    "discoverer": "Fritz"
+    "discoverer": "Fritz",
+    "ra": "01:37:39.555",
+    "dec": "-03:55:53.50",
+    "spectra_count": 0,
+    "photo_count": 24
   },
   {
-    "name": "SN2026abzf",
-    "date": "2026-09-18",
+    "name": "SN2026adix",
+    "date": "2026-09-30",
     "type": "Ia",
-    "discoverer": "Fritz"
+    "discoverer": "Fritz",
+    "ra": "02:37:31.891",
+    "dec": "-20:20:15.85",
+    "spectra_count": 1,
+    "photo_count": 14
+  },
+  {
+    "name": "SN2026adhk",
+    "date": "2026-09-30",
+    "type": "Ia",
+    "discoverer": "GOTO_bot",
+    "ra": "06:36:24.125",
+    "dec": "+58:26:11.53",
+    "spectra_count": 1,
+    "photo_count": 1
   }
 ]
