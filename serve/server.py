@@ -7,6 +7,7 @@ Dynamic pages (/ and /sne|/event) are rendered via PHP CLI against www/.
 """
 from __future__ import annotations
 
+from typing import Any
 import base64
 import csv
 import collections
@@ -47,6 +48,16 @@ except Exception:
         render_story_mode = None
         extract_coords = None
         classify_event_tier = None
+
+try:
+    from astro_engine import enrich_transient_astrophysics, calc_cosmology, get_milkyway_extinction
+except Exception:
+    try:
+        from serve.astro_engine import enrich_transient_astrophysics, calc_cosmology, get_milkyway_extinction
+    except Exception:
+        enrich_transient_astrophysics = None
+        calc_cosmology = None
+        get_milkyway_extinction = None
 
 try:
     from radar import render_radar_page, scan_catalog_targets, compute_observability_for_targets
@@ -1339,6 +1350,11 @@ def _event_page(name: str, entered: str | None = None, is_story: bool = False, f
             meta = cat_meta
         else:
             return 404, _not_found_page(entered or name)
+    if enrich_transient_astrophysics is not None:
+        try:
+            meta = enrich_transient_astrophysics(name, meta)
+        except Exception:
+            pass
     if is_story and render_story_mode is not None:
         return 200, render_story_mode(name, meta, entered).encode("utf-8")
     if render_pro_cockpit is not None:
@@ -3882,6 +3898,28 @@ class Handler(SimpleHTTPRequestHandler):
                     # Stale-while-revalidate: spawn background thread to refresh active supernova
                     threading.Thread(target=enrich_event, args=(canon or raw,), kwargs={"force": False}, daemon=True).start()
             if fp and fp.is_file():
+                if enrich_transient_astrophysics is not None:
+                    try:
+                        ev_dict = json.loads(fp.read_text(encoding="utf-8", errors="replace"))
+                        ev_name = canon or raw
+                        if isinstance(ev_dict, dict) and ev_name in ev_dict and isinstance(ev_dict[ev_name], dict):
+                            ev_dict[ev_name] = enrich_transient_astrophysics(ev_name, ev_dict[ev_name])
+                            data = json.dumps(ev_dict, indent=2).encode("utf-8")
+                            self._send(200, "application/json; charset=utf-8", data, {
+                                "Content-Disposition": f'attachment; filename="{canon or raw}.json"'
+                            })
+                            return
+                        elif isinstance(ev_dict, dict) and len(ev_dict) == 1:
+                            k = next(iter(ev_dict))
+                            if isinstance(ev_dict[k], dict):
+                                ev_dict[k] = enrich_transient_astrophysics(k, ev_dict[k])
+                                data = json.dumps(ev_dict, indent=2).encode("utf-8")
+                                self._send(200, "application/json; charset=utf-8", data, {
+                                    "Content-Disposition": f'attachment; filename="{canon or raw}.json"'
+                                })
+                                return
+                    except Exception:
+                        pass
                 data = fp.read_bytes()
                 self._send(200, "application/json; charset=utf-8", data, {
                     "Content-Disposition": f'attachment; filename="{canon or raw}.json"'

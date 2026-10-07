@@ -68,6 +68,17 @@ except Exception:
     except Exception:
         get_blockbuster_article = None
 
+try:
+    from astro_engine import enrich_transient_astrophysics, calc_cosmology, get_milkyway_extinction
+except Exception:
+    try:
+        from serve.astro_engine import enrich_transient_astrophysics, calc_cosmology, get_milkyway_extinction
+    except Exception:
+        enrich_transient_astrophysics = None
+        calc_cosmology = None
+        get_milkyway_extinction = None
+
+
 
 def ra_to_deg(ra_str: str | None, u_val: str | None = None) -> float | None:
     """Convert Right Ascension string (sexagesimal or decimal) to decimal degrees (0..360)."""
@@ -801,6 +812,12 @@ def format_cosmic_neighbors_panel(
 
 def render_pro_cockpit(name: str, meta: dict, entered: str | None = None, legacy_html_exists: bool = False) -> str:
     """Render the high-performance professional scientific cockpit."""
+    if enrich_transient_astrophysics is not None:
+        try:
+            meta = enrich_transient_astrophysics(name, meta)
+        except Exception:
+            pass
+
     ra_deg, dec_deg, ra_str, dec_str = extract_coords(meta)
     aliases = []
     for a in meta.get("alias", []):
@@ -827,7 +844,50 @@ def render_pro_cockpit(name: str, meta: dict, entered: str | None = None, legacy
     if ebv != "—" and not ebv.endswith("mag"):
         ebv += " mag"
     host = get_val(meta, "host")
-    host_offset_str = extract_host_offset(meta, ra_deg, dec_deg, redshift, lumdist)
+    host_offset_str = get_val(meta, "hostoffsetang")
+    if host_offset_str == "—":
+        host_offset_str = extract_host_offset(meta, ra_deg, dec_deg, redshift, lumdist)
+
+    # Cosmological distance modulus & formatted values for astronomers
+    dist_mod_val = None
+    dist_ly_str = "Millions of Light-Years"
+    lumdist_raw = meta.get("lumdist")
+    if isinstance(lumdist_raw, list) and lumdist_raw and isinstance(lumdist_raw[0], dict):
+        dist_mod_val = lumdist_raw[0].get("dist_mod")
+        if lumdist_raw[0].get("dist_mly"):
+            dist_ly_str = f"{lumdist_raw[0]['dist_mly']:.1f} Million Light-Years"
+    if dist_mod_val is None and redshift != "—" and calc_cosmology is not None:
+        try:
+            m_z = re.search(r"[-+]?\d*\.?\d+", str(redshift))
+            if m_z:
+                c_res = calc_cosmology(float(m_z.group(0)))
+                dist_mod_val = c_res.get("dist_mod")
+                if c_res.get("dist_mly"):
+                    dist_ly_str = f"{c_res['dist_mly']:.1f} Million Light-Years"
+        except Exception:
+            pass
+
+    lumdist_display = lumdist
+    if lumdist != "—":
+        if dist_mod_val and dist_ly_str != "Millions of Light-Years":
+            lumdist_display = f"{lumdist} (~{dist_ly_str}, μ = {dist_mod_val:.2f})"
+        elif dist_ly_str != "Millions of Light-Years":
+            lumdist_display = f"{lumdist} (~{dist_ly_str})"
+
+    ebv_display = ebv
+    ebv_raw = meta.get("ebv")
+    if isinstance(ebv_raw, list) and ebv_raw and isinstance(ebv_raw[0], dict):
+        a_v_val = ebv_raw[0].get("a_v")
+        if a_v_val:
+            ebv_display = f"{ebv} (A<sub>V</sub> = {a_v_val:.2f} mag)"
+
+    maxabsmag_display = maxabsmag
+    maxabs_raw = meta.get("maxabsmag")
+    if isinstance(maxabs_raw, list) and maxabs_raw and isinstance(maxabs_raw[0], dict):
+        dered_str = maxabs_raw[0].get("dereddened")
+        if dered_str and dered_str != "—":
+            maxabsmag_display = f"{maxabsmag} ({dered_str})"
+
     lifecycle = get_transient_lifecycle(meta, host_name=host, event_name=name, redshift=redshift, claimedtype=claimedtype)
 
     # MOSFiT Theoretical Models & Magnetar Engine Fit
@@ -1037,8 +1097,21 @@ def render_pro_cockpit(name: str, meta: dict, entered: str | None = None, legacy
         warn_html = f'<div class="banner-warn">Resolved "{urllib.parse.unquote(entered)}" to canonical transient <strong>{name}</strong></div>'
 
     re_num = re.compile(r'^-?\d+(\.\d+)?$')
-    redshift_val = float(redshift) if redshift != "—" and re_num.match(redshift) else 0.0
-    maxdate_val = float(maxdate) if maxdate != "—" and re_num.match(maxdate) else 'null'
+    redshift_val = 0.0
+    if redshift != "—":
+        m_z = re.search(r"[-+]?\d*\.?\d+", str(redshift))
+        if m_z:
+            redshift_val = float(m_z.group(0))
+
+    maxdate_val = 'null'
+    if maxdate != "—":
+        m_mjd = re.search(r"MJD\s*([\d.]+)", str(maxdate))
+        if m_mjd:
+            maxdate_val = float(m_mjd.group(1))
+        elif re_num.match(str(maxdate)):
+            maxdate_val = float(maxdate)
+
+    dist_mod_js = f"{dist_mod_val:.2f}" if dist_mod_val is not None else "null"
 
     html = f"""<!DOCTYPE html>
 <html lang="en">
@@ -1968,10 +2041,10 @@ def render_pro_cockpit(name: str, meta: dict, entered: str | None = None, legacy
           <tr><th>Spectral Type</th><td>{claimedtype}</td></tr>
           <tr><th>Redshift (z)</th><td>{redshift}</td></tr>
           <tr><th>Recession Velocity</th><td>{velocity}</td></tr>
-          <tr><th>Luminosity Distance</th><td>{lumdist}</td></tr>
+          <tr><th>Luminosity Distance</th><td>{lumdist_display}</td></tr>
           <tr><th>Peak Apparent Mag</th><td>{maxappmag}</td></tr>
-          <tr><th>Peak Absolute Mag</th><td>{maxabsmag}</td></tr>
-          <tr><th>MW Dust E(B-V)</th><td>{ebv}</td></tr>
+          <tr><th>Peak Absolute Mag</th><td>{maxabsmag_display}</td></tr>
+          <tr><th>MW Dust E(B-V)</th><td>{ebv_display}</td></tr>
           <tr><th>Host Galaxy</th><td>{host}</td></tr>
           <tr><th>Host Offset</th><td>{host_offset_str}</td></tr>
           <tr><th>Observations</th><td>{photo_count} photometry, {spec_count} spectra</td></tr>
@@ -2054,9 +2127,13 @@ def render_pro_cockpit(name: str, meta: dict, entered: str | None = None, legacy
       <div class="panel">
         <div class="panel-title">
           <span>Multi-Band Light Curve</span>
-          <div style="display:flex;gap:0.4rem;">
+          <div style="display:flex;gap:0.35rem;align-items:center;flex-wrap:wrap;">
             <button class="cutout-tag active" id="btn-time-mjd" onclick="switchTimeBase('mjd')">MJD</button>
             <button class="cutout-tag" id="btn-time-rest" onclick="switchTimeBase('rest')">Days from Peak</button>
+            <span style="color:var(--border);font-size:0.75rem;">|</span>
+            <button class="cutout-tag active" id="btn-mag-app" onclick="switchMagBase('app')">Apparent (m)</button>
+            <button class="cutout-tag" id="btn-mag-abs" onclick="switchMagBase('abs')" title="Plot in absolute magnitude M = m - μ">Absolute (M)</button>
+            <button class="cutout-tag" id="btn-download-lc" onclick="downloadPhotometryCsv()" title="Download Calibrated Photometry CSV">📥 CSV</button>
           </div>
         </div>
         <div id="plot-lc" class="plot-box"></div>
@@ -2066,12 +2143,26 @@ def render_pro_cockpit(name: str, meta: dict, entered: str | None = None, legacy
       <div class="panel">
         <div class="panel-title">
           <span>Calibrated Spectra Viewer</span>
-          <div style="display:flex;gap:0.4rem;">
+          <div style="display:flex;gap:0.35rem;align-items:center;flex-wrap:wrap;">
             <button class="cutout-tag" id="btn-deredshift" onclick="toggleDeredshift()">De-redshift (z)</button>
             <button class="cutout-tag" id="btn-lines" onclick="toggleLines()">Atomic Features</button>
+            <select id="sel-line-set" onchange="changeLineSet(this.value)" style="background:#070a12;color:var(--accent);border:1px solid var(--border);border-radius:4px;padding:2px 5px;font-size:0.7rem;cursor:pointer;display:none;">
+              <option value="auto">Auto ({claimedtype})</option>
+              <option value="ia">Type Ia (Si/Ca/S/Fe)</option>
+              <option value="ii">Type II (H-Balmer/Fe/Na)</option>
+              <option value="ibc">Type Ib/c (He/O/Ca)</option>
+              <option value="telluric">Telluric Atmospheric</option>
+              <option value="all">All Common</option>
+            </select>
+            <button class="cutout-tag" id="btn-vexp" onclick="toggleVexpTool()" title="Interactive ejecta blueshift expansion velocity tool">⚡ Velocity</button>
+            <button class="cutout-tag" id="btn-download-spec" onclick="downloadActiveSpectrum()" title="Download Calibrated Spectrum ASCII">📥 ASCII</button>
           </div>
         </div>
         <div id="plot-spec" class="plot-box"></div>
+        <div id="vexp-hud" style="display:none;background:rgba(8,26,46,0.92);border:1px solid #38bdf8;border-radius:6px;padding:6px 12px;margin:6px 0;font-size:0.75rem;color:#f1f5f9;justify-content:space-between;align-items:center;">
+          <div><strong style="color:#38bdf8;">⚡ Expansion Velocity (v<sub>exp</sub>):</strong> <span id="vexp-readout" style="color:#fde047;font-family:monospace;margin-left:6px;">Hover/click absorption trough</span></div>
+          <div style="font-size:0.7rem;color:#94a3b8;">Reference: <span id="vexp-ref-name" style="color:#e2e8f0;font-weight:600;">Si II λ6355</span></div>
+        </div>
         <div class="slider-wrap">
           <label><span>Spectrum Smoothing (Filter noise)</span><span id="smooth-val">1x</span></label>
           <input type="range" min="1" max="15" value="1" step="2" style="width:100%" oninput="updateSmoothing(this.value)">
@@ -2116,6 +2207,8 @@ def render_pro_cockpit(name: str, meta: dict, entered: str | None = None, legacy
   </div>
 
   <script>
+    const EVENT_NAME = "{name}";
+    const CLAIMED_TYPE = "{claimedtype}";
     const RA_DEG = {ra_deg if ra_deg is not None else 'null'};
     const DEC_DEG = {dec_deg if dec_deg is not None else 'null'};
     const DESI_URL = "{desi_url}";
@@ -2126,6 +2219,7 @@ def render_pro_cockpit(name: str, meta: dict, entered: str | None = None, legacy
     const SPEC_DATA = {json.dumps(spec_samples)};
     const REDSHIFT = {redshift_val};
     const MAX_DATE = {maxdate_val};
+    const DIST_MOD = {dist_mod_js};
 
     // Cutout layer switcher & Archival Blink Comparator
     let primaryLayer = '{default_layer}';
@@ -2683,6 +2777,7 @@ def render_pro_cockpit(name: str, meta: dict, entered: str | None = None, legacy
       'B': '#2196f3', 'V': '#4caf50', 'R': '#e91e63', 'I': '#9c27b0'
     }};
     let currentTimeBase = 'mjd';
+    let currentMagBase = 'app';
 
     function renderLightCurve() {{
       if (!PHOTO_DATA || PHOTO_DATA.length === 0) {{
@@ -2702,6 +2797,7 @@ def render_pro_cockpit(name: str, meta: dict, entered: str | None = None, legacy
 
       const peakTime = MAX_DATE !== null ? MAX_DATE : (minMjd !== Infinity ? minMjd : 0);
       const traces = [];
+      const dMod = (currentMagBase === 'abs' && DIST_MOD !== null && DIST_MOD > 0) ? DIST_MOD : 0.0;
 
       Object.keys(bands).forEach(b => {{
         const color = BAND_COLORS[b] || '#94a3b8';
@@ -2710,7 +2806,7 @@ def render_pro_cockpit(name: str, meta: dict, entered: str | None = None, legacy
           traces.push({{
             name: b,
             x: dets.map(p => currentTimeBase === 'mjd' ? p.time : (p.time - peakTime) / (1 + REDSHIFT)),
-            y: dets.map(p => p.mag),
+            y: dets.map(p => p.mag - dMod),
             error_y: {{
               type: 'data',
               array: dets.map(p => p.err || 0),
@@ -2721,7 +2817,7 @@ def render_pro_cockpit(name: str, meta: dict, entered: str | None = None, legacy
             mode: 'markers',
             type: 'scatter',
             marker: {{ size: 7, color: color }},
-            text: dets.map(p => `${{p.tel}} (mag ${{p.mag}})`),
+            text: dets.map(p => `${{p.tel}} (${{currentMagBase === 'abs' ? 'M ' + (p.mag - dMod).toFixed(2) : 'm ' + p.mag}})`),
             hoverinfo: 'x+y+text+name'
           }});
         }}
@@ -2730,7 +2826,7 @@ def render_pro_cockpit(name: str, meta: dict, entered: str | None = None, legacy
           traces.push({{
             name: `${{b}} (limits)`,
             x: uplims.map(p => currentTimeBase === 'mjd' ? p.time : (p.time - peakTime) / (1 + REDSHIFT)),
-            y: uplims.map(p => p.mag),
+            y: uplims.map(p => p.mag - dMod),
             mode: 'markers',
             type: 'scatter',
             marker: {{ size: 8, color: color, symbol: 'triangle-down-open' }},
@@ -2738,6 +2834,10 @@ def render_pro_cockpit(name: str, meta: dict, entered: str | None = None, legacy
           }});
         }}
       }});
+
+      const yTitle = (currentMagBase === 'abs' && DIST_MOD !== null)
+        ? 'Absolute Magnitude (M = m - μ)'
+        : 'Apparent Magnitude (m)';
 
       const layout = {{
         paper_bgcolor: 'transparent',
@@ -2750,7 +2850,7 @@ def render_pro_cockpit(name: str, meta: dict, entered: str | None = None, legacy
           zerolinecolor: '#334155'
         }},
         yaxis: {{
-          title: 'Apparent Magnitude',
+          title: yTitle,
           autorange: 'reversed',
           gridcolor: '#1e293b',
           zerolinecolor: '#334155'
@@ -2763,15 +2863,105 @@ def render_pro_cockpit(name: str, meta: dict, entered: str | None = None, legacy
 
     function switchTimeBase(base) {{
       currentTimeBase = base;
-      document.getElementById('btn-time-mjd').classList.toggle('active', base === 'mjd');
-      document.getElementById('btn-time-rest').classList.toggle('active', base === 'rest');
+      document.getElementById('btn-time-mjd')?.classList.toggle('active', base === 'mjd');
+      document.getElementById('btn-time-rest')?.classList.toggle('active', base === 'rest');
       renderLightCurve();
+    }}
+
+    function switchMagBase(base) {{
+      if (base === 'abs' && (DIST_MOD === null || DIST_MOD <= 0)) {{
+        alert('Cosmological distance modulus μ is unavailable for this transient (requires redshift z > 0).');
+        return;
+      }}
+      currentMagBase = base;
+      document.getElementById('btn-mag-app')?.classList.toggle('active', base === 'app');
+      document.getElementById('btn-mag-abs')?.classList.toggle('active', base === 'abs');
+      renderLightCurve();
+    }}
+
+    function downloadPhotometryCsv() {{
+      if (!PHOTO_DATA || PHOTO_DATA.length === 0) {{
+        alert('No photometry observations available to export.');
+        return;
+      }}
+      let csv = '# Open Supernova Catalog (sne.space)\\n# Transient: ' + EVENT_NAME + '\\n# Spectral Type: ' + CLAIMED_TYPE + '\\n# Redshift: ' + REDSHIFT + '\\n# Distance Modulus: ' + (DIST_MOD !== null ? DIST_MOD : 'N/A') + '\\n# Columns: Time_MJD,Apparent_Mag,Uncertainty,Band,Is_Upperlimit,Telescope,Source\\n';
+      csv += 'time_mjd,magnitude,e_magnitude,band,upperlimit,telescope,source\\n';
+      PHOTO_DATA.forEach(p => {{
+        csv += `${{p.time}},${{p.mag}},${{p.err !== null ? p.err : ''}},"${{p.band || ''}}",${{p.uplim ? 1 : 0}},"${{p.tel || ''}}","${{p.src || ''}}"\\n`;
+      }});
+      const blob = new Blob([csv], {{ type: 'text/csv;charset=utf-8;' }});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = EVENT_NAME + '_photometry.csv';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
     }}
 
     // Spectra Viewer
     let deredshift = false;
     let showLines = false;
+    let currentLineSet = 'auto';
+    let vexpToolActive = false;
     let smoothing = 1;
+
+    const SPECTRAL_LINE_SETS = {{
+      ia: [
+        {{ name: 'Si II λ6355', wave: 6355, color: '#f59e0b', primary: true }},
+        {{ name: 'Si II λ5972', wave: 5972, color: '#fbbf24' }},
+        {{ name: 'Ca II H&K', wave: 3945, color: '#ec4899' }},
+        {{ name: 'S II W λ5454', wave: 5454, color: '#a855f7' }},
+        {{ name: 'S II W λ5640', wave: 5640, color: '#c084fc' }},
+        {{ name: 'Fe II/III λ5050', wave: 5050, color: '#06b6d4' }},
+        {{ name: 'O I λ7774', wave: 7774, color: '#10b981' }},
+        {{ name: 'Ca II NIR λ8542', wave: 8542, color: '#f43f5e' }}
+      ],
+      ii: [
+        {{ name: 'Hα λ6563', wave: 6563, color: '#3b82f6', primary: true }},
+        {{ name: 'Hβ λ4861', wave: 4861, color: '#06b6d4' }},
+        {{ name: 'Hγ λ4340', wave: 4340, color: '#818cf8' }},
+        {{ name: 'Fe II λ5169', wave: 5169, color: '#10b981' }},
+        {{ name: 'Na I D λ5892', wave: 5892, color: '#eab308' }},
+        {{ name: '[O I] λ6300', wave: 6300, color: '#22c55e' }},
+        {{ name: '[Ca II] λ7291', wave: 7291, color: '#ec4899' }}
+      ],
+      ibc: [
+        {{ name: 'He I λ5876', wave: 5876, color: '#10b981', primary: true }},
+        {{ name: 'He I λ6678', wave: 6678, color: '#34d399' }},
+        {{ name: 'He I λ7065', wave: 7065, color: '#6ee7b7' }},
+        {{ name: 'O I λ7774', wave: 7774, color: '#eab308' }},
+        {{ name: 'Ca II H&K', wave: 3945, color: '#ec4899' }}
+      ],
+      telluric: [
+        {{ name: 'Telluric O₂ B λ6870', wave: 6870, color: '#94a3b8', telluric: true }},
+        {{ name: 'Telluric H₂O λ7200', wave: 7200, color: '#64748b', telluric: true }},
+        {{ name: 'Telluric O₂ A λ7600', wave: 7600, color: '#94a3b8', telluric: true }},
+        {{ name: 'Telluric H₂O λ8200', wave: 8200, color: '#64748b', telluric: true }}
+      ]
+    }};
+
+    function getLinesForCurrentSet() {{
+      let setKey = currentLineSet;
+      if (setKey === 'auto') {{
+        const ct = (CLAIMED_TYPE || '').toLowerCase();
+        if (ct.includes('ia')) setKey = 'ia';
+        else if (ct.includes('ib') || ct.includes('ic')) setKey = 'ibc';
+        else setKey = 'ii';
+      }}
+      if (setKey === 'all') {{
+        return [
+          ...SPECTRAL_LINE_SETS.ia,
+          ...SPECTRAL_LINE_SETS.ii.filter(l => !SPECTRAL_LINE_SETS.ia.some(x => Math.abs(x.wave - l.wave) < 20)),
+          ...SPECTRAL_LINE_SETS.telluric
+        ];
+      }}
+      const lines = [...(SPECTRAL_LINE_SETS[setKey] || SPECTRAL_LINE_SETS.ia)];
+      if (setKey !== 'telluric') {{
+        lines.push(...SPECTRAL_LINE_SETS.telluric);
+      }}
+      return lines;
+    }}
 
     function renderSpectra() {{
       if (!SPEC_DATA || SPEC_DATA.length === 0) {{
@@ -2790,7 +2980,7 @@ def render_pro_cockpit(name: str, meta: dict, entered: str | None = None, legacy
         // Normalize flux and clamp negative sky-subtraction/telluric artifacts to zero
         let y = rawY.map(v => Math.max(0.0, v / scale));
 
-        // Simple boxcar smoothing
+        // Boxcar smoothing
         if (smoothing > 1) {{
           let smoothed = [];
           for (let i = 0; i < y.length; i++) {{
@@ -2819,20 +3009,14 @@ def render_pro_cockpit(name: str, meta: dict, entered: str | None = None, legacy
       const shapes = [];
       const annotations = [];
       if (showLines) {{
-        const lines = [
-          {{ name: 'Si II λ6355', wave: 6355, color: '#f59e0b' }},
-          {{ name: 'Ca II H&K', wave: 3945, color: '#ec4899' }},
-          {{ name: 'Hα λ6563', wave: 6563, color: '#3b82f6' }},
-          {{ name: 'Hβ λ4861', wave: 4861, color: '#06b6d4' }},
-          {{ name: 'He I λ5876', wave: 5876, color: '#10b981' }}
-        ];
+        const lines = getLinesForCurrentSet();
         lines.forEach(l => {{
           shapes.push({{
             type: 'line',
             x0: l.wave, x1: l.wave,
             y0: 0, y1: 1,
             yref: 'paper',
-            line: {{ color: l.color, width: 1.5, dash: 'dot' }}
+            line: {{ color: l.color, width: 1.5, dash: l.telluric ? 'dash' : 'dot' }}
           }});
           annotations.push({{
             x: l.wave,
@@ -2840,7 +3024,7 @@ def render_pro_cockpit(name: str, meta: dict, entered: str | None = None, legacy
             yref: 'paper',
             text: l.name,
             showarrow: false,
-            font: {{ size: 10, color: l.color }}
+            font: {{ size: 9, color: l.color }}
           }});
         }});
       }}
@@ -2864,19 +3048,113 @@ def render_pro_cockpit(name: str, meta: dict, entered: str | None = None, legacy
         legend: {{ orientation: 'h', y: -0.2 }}
       }};
 
-      Plotly.newPlot('plot-spec', traces, layout, {{ responsive: true, displaylogo: false }});
+      Plotly.newPlot('plot-spec', traces, layout, {{ responsive: true, displaylogo: false }}).then(() => {{
+        const plotEl = document.getElementById('plot-spec');
+        if (plotEl && plotEl.removeAllListeners) {{
+          plotEl.removeAllListeners('plotly_hover');
+          plotEl.removeAllListeners('plotly_click');
+        }}
+        if (plotEl && plotEl.on) {{
+          plotEl.on('plotly_hover', function(data) {{
+            if (!vexpToolActive) return;
+            if (data && data.points && data.points[0]) {{
+              updateVexpReadout(data.points[0].x, false);
+            }}
+          }});
+          plotEl.on('plotly_click', function(data) {{
+            if (!vexpToolActive) return;
+            if (data && data.points && data.points[0]) {{
+              updateVexpReadout(data.points[0].x, true);
+            }}
+          }});
+        }}
+      }});
     }}
 
     function toggleDeredshift() {{
       deredshift = !deredshift;
-      document.getElementById('btn-deredshift').classList.toggle('active', deredshift);
+      document.getElementById('btn-deredshift')?.classList.toggle('active', deredshift);
       renderSpectra();
     }}
+
     function toggleLines() {{
       showLines = !showLines;
-      document.getElementById('btn-lines').classList.toggle('active', showLines);
+      document.getElementById('btn-lines')?.classList.toggle('active', showLines);
+      const sel = document.getElementById('sel-line-set');
+      if (sel) sel.style.display = showLines ? 'inline-block' : 'none';
       renderSpectra();
     }}
+
+    function changeLineSet(val) {{
+      currentLineSet = val;
+      renderSpectra();
+    }}
+
+    function toggleVexpTool() {{
+      vexpToolActive = !vexpToolActive;
+      document.getElementById('btn-vexp')?.classList.toggle('active', vexpToolActive);
+      const hud = document.getElementById('vexp-hud');
+      if (hud) hud.style.display = vexpToolActive ? 'flex' : 'none';
+      if (vexpToolActive) {{
+        if (!deredshift && REDSHIFT > 0) toggleDeredshift();
+        if (!showLines) toggleLines();
+      }}
+    }}
+
+    function updateVexpReadout(waveVal, isLocked) {{
+      const restWave = deredshift ? waveVal : (REDSHIFT > 0 ? waveVal / (1 + REDSHIFT) : waveVal);
+      const ct = (CLAIMED_TYPE || '').toLowerCase();
+      let refWave = 6355.0;
+      let refName = 'Si II λ6355';
+      if (ct.includes('ii')) {{
+        refWave = 6562.8;
+        refName = 'Hα λ6563';
+      }} else if (ct.includes('ib') || ct.includes('ic')) {{
+        refWave = 5876.0;
+        refName = 'He I λ5876';
+      }}
+      const refEl = document.getElementById('vexp-ref-name');
+      if (refEl) refEl.textContent = refName;
+      const c = 299792.458;
+      const dLambda = restWave - refWave;
+      const vKms = c * (refWave - restWave) / refWave;
+      const vFracC = vKms / c;
+      const readoutEl = document.getElementById('vexp-readout');
+      if (readoutEl) {{
+        if (vKms > 0 && vKms < 40000) {{
+          readoutEl.innerHTML = `λ<sub>rest</sub> = ${{restWave.toFixed(1)}} Å &nbsp;|&nbsp; Δλ = ${{dLambda.toFixed(1)}} Å &nbsp;|&nbsp; <strong>v<sub>ejecta</sub> = ${{Math.round(vKms).toLocaleString()}} km/s (${{(vFracC * 100).toFixed(2)}}% c)</strong>${{isLocked ? ' <span style="color:#22c55e">[LOCKED]</span>' : ''}}`;
+        }} else {{
+          readoutEl.innerHTML = `λ<sub>rest</sub> = ${{restWave.toFixed(1)}} Å (Offset from ${{refName}}: ${{dLambda >= 0 ? '+' : ''}}${{dLambda.toFixed(1)}} Å)`;
+        }}
+      }}
+    }}
+
+    function downloadActiveSpectrum() {{
+      if (!SPEC_DATA || SPEC_DATA.length === 0) {{
+        alert('No calibrated spectra available to download.');
+        return;
+      }}
+      const s = SPEC_DATA[0];
+      let txt = '# Open Supernova Catalog (sne.space)\\n';
+      txt += '# Event: ' + EVENT_NAME + '\\n';
+      txt += '# Spectral Type: ' + CLAIMED_TYPE + '\\n';
+      txt += '# Redshift: ' + REDSHIFT + '\\n';
+      txt += '# Telescope / Instrument: ' + (s.tel || 'Unknown') + '\\n';
+      txt += '# MJD: ' + (s.time || 'Unknown') + '\\n';
+      txt += '# Columns: Wavelength_Obs(Angstrom)\\tRelative_Flux\\n';
+      s.data.forEach(p => {{
+        txt += `${{p[0]}}\\t${{p[1]}}\\n`;
+      }});
+      const blob = new Blob([txt], {{ type: 'text/plain;charset=utf-8;' }});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = EVENT_NAME + '_spectrum.dat';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }}
+
     function updateSmoothing(val) {{
       smoothing = parseInt(val, 10);
       document.getElementById('smooth-val').textContent = val + 'x';
@@ -3191,6 +3469,12 @@ def classify_event_tier(name: str, meta: dict) -> int:
 
 def render_story_mode(name: str, meta: dict, entered: str | None = None) -> str:
     """Render the consumer-friendly Story Mode / Observer Dossier page (/sne/{event}/story)."""
+    if enrich_transient_astrophysics is not None:
+        try:
+            meta = enrich_transient_astrophysics(name, meta)
+        except Exception:
+            pass
+
     ra_deg, dec_deg, ra_str, dec_str = extract_coords(meta)
     claimedtype = get_val(meta, "claimedtype")
     discoverdate = get_val(meta, "discoverdate")
