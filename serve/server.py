@@ -92,6 +92,15 @@ except Exception:
     except Exception:
         render_api_docs_page = None
 
+try:
+    from catalog_engine import CatalogEngine, sync_all_recent_partitions
+except Exception:
+    try:
+        from serve.catalog_engine import CatalogEngine, sync_all_recent_partitions
+    except Exception:
+        CatalogEngine = None
+        sync_all_recent_partitions = None
+
 import sys
 _SERVE_DIR_PARENT = Path(__file__).resolve().parent
 if str(_SERVE_DIR_PARENT) not in sys.path:
@@ -3550,6 +3559,61 @@ class Handler(SimpleHTTPRequestHandler):
             self._send(200, "application/json; charset=utf-8", json.dumps(resp, indent=2).encode("utf-8"))
             return
 
+        # Native High-Performance Catalog Search & Filtering API: /api/transients, /api/catalog/search
+        if path in ("/api/transients", "/api/transients/", "/api/catalog/search", "/api/catalog/filter"):
+            engine = CatalogEngine.get_instance() if CatalogEngine is not None else None
+            if engine:
+                q_str = query.get("q", [""])[0]
+                type_str = query.get("type", [""])[0]
+                has_spec_raw = query.get("has_spectra", query.get("has_spec", [""]))[0].lower()
+                has_spec = True if has_spec_raw in ("1", "true") else (False if has_spec_raw in ("0", "false") else None)
+                has_phot_raw = query.get("has_photo", query.get("has_photometry", [""]))[0].lower()
+                has_phot = True if has_phot_raw in ("1", "true") else (False if has_phot_raw in ("0", "false") else None)
+                sort_str = query.get("sort", ["discoverdate"])[0]
+                order_str = query.get("order", ["desc"])[0]
+                try:
+                    page_int = int(query.get("page", ["1"])[0])
+                except ValueError:
+                    page_int = 1
+                try:
+                    limit_int = int(query.get("limit", ["50"])[0])
+                except ValueError:
+                    limit_int = 50
+
+                if fmt in ("csv", "tsv") or query.get("format", [""])[0].lower() == "csv":
+                    csv_data = engine.export_csv(
+                        q=q_str,
+                        type_filter=type_str,
+                        has_spectra=has_spec,
+                        has_photometry=has_phot,
+                        sort=sort_str,
+                        order=order_str,
+                        max_rows=5000,
+                    )
+                    self._send(200, "text/csv; charset=utf-8", csv_data.encode("utf-8"), {
+                        "Content-Disposition": 'attachment; filename="transients.csv"',
+                        "Cache-Control": "public, max-age=60",
+                    })
+                    return
+
+                res = engine.query(
+                    q=q_str,
+                    type_filter=type_str,
+                    has_spectra=has_spec,
+                    has_photometry=has_phot,
+                    sort=sort_str,
+                    order=order_str,
+                    page=page_int,
+                    limit=limit_int,
+                )
+                self._send(200, "application/json; charset=utf-8", json.dumps(res, indent=2).encode("utf-8"), {
+                    "Cache-Control": "public, max-age=30"
+                })
+                return
+            else:
+                self._send(503, "application/json", b'{"error":"CatalogEngine not initialized"}')
+                return
+
         # Recent Supernova Discoveries API: /api/recent, /api/recent-discoveries
         if path in ("/api/recent", "/api/recent-discoveries"):
             f_recent = WWW / "assets/recent-events.json"
@@ -4098,6 +4162,14 @@ def main():
     _names_maps()
     if init_cone_index is not None:
         threading.Thread(target=init_cone_index, daemon=True).start()
+    if CatalogEngine is not None:
+        def _warm_catalog():
+            try:
+                sync_all_recent_partitions()
+                CatalogEngine.get_instance().ensure_loaded()
+            except Exception as exc:
+                print(f"CatalogEngine warmup failed: {exc}", flush=True)
+        threading.Thread(target=_warm_catalog, name="catalog-engine-warm", daemon=True).start()
     threading.Thread(target=_recent_tns_loop, name="tns-recent", daemon=True).start()
     httpd = ReusableThreadingServer((HOST, PORT), Handler)
     print(f"sne.space local server on http://{HOST}:{PORT}/", flush=True)

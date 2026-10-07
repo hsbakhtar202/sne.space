@@ -1,63 +1,36 @@
 <?php
 /**
- * Open Supernova Catalog — local Transient Table homepage (S1.2).
- * No WordPress; loads vendor Transient Table with historical paths.
+ * Open Supernova Catalog — Modern Native Homepage.
+ * Fast, responsive, server-side rendered transient catalog with live API.
  */
 declare(strict_types=1);
 
-$ttPath = __DIR__ . '/wp-content/plugins/transient-table/tt.dat';
-if (!is_file($ttPath)) {
-    $ttPath = __DIR__ . '/wp-content/plugins/transient-table/tt.sne.dat';
-}
-if (!is_file($ttPath)) {
-    $ttPath = dirname(__DIR__, 2) . '/vendor/transient-table/tt.sne.dat';
-}
-if (!is_file($ttPath)) {
-    $raw = "sne\nsupernovae\nsne\nsne\nalias,maxdate,velocity,maxabsmag,masses,hostra,hostdec,hostoffsetang,hostoffsetdist,references,instruments,ebv,lumdist,altitude,azimuth,airmass,skybrightness,discoverer\nmaxdate,discoverdate\ndownload,spectralink,photolink,radiolink,xraylink\nphotolink,spectralink,radiolink,xraylink\nphotolink\n10,50,250\nSNe\nSupernova";
-} else {
-    $raw = (string)file_get_contents($ttPath);
-}
-$tt = explode("\n", $raw);
-$stem = trim($tt[0]);
-$modu = trim($tt[1]);
-$subd = trim($tt[2]);
-$ghpr = trim($tt[3]);
-$invi = '"' . implode('","', explode(",", trim($tt[4]))) . '"';
-$nowr = '"' . implode('","', explode(",", trim($tt[5]))) . '"';
-$nwnm = '"' . implode('","', explode(",", trim($tt[6]))) . '"';
-$revo = '"' . implode('","', explode(",", trim($tt[7]))) . '"';
-$ocol = trim($tt[8]);
-$plen = trim($tt[9]);
-$shrt = trim($tt[10]);
-$sing = trim($tt[11]);
-$outp = 'astrocats/astrocats/' . $modu . '/output/';
-
-// Stub WP helpers used by the plugin enqueue block (unused here).
-if (!function_exists('is_front_page')) {
-    function is_front_page(): bool { return true; }
-}
-if (!function_exists('is_page')) {
-    function is_page($x = null): bool { return false; }
-}
-if (!function_exists('is_search')) {
-    function is_search(): bool { return false; }
-}
-if (!function_exists('plugins_url')) {
-    function plugins_url(string $path = '', string $file = ''): string {
-        return '/wp-content/plugins/transient-table/' . ltrim($path, '/');
+$recentCatPath = __DIR__ . '/assets/recent-catalog.min.json';
+$initialItems = [];
+if (is_file($recentCatPath)) {
+    $rawRecent = json_decode((string)file_get_contents($recentCatPath), true);
+    if (is_array($rawRecent)) {
+        $initialItems = array_slice($rawRecent, 0, 50);
     }
 }
-if (!function_exists('wp_enqueue_style')) {
-    function wp_enqueue_style(...$args): void {}
-}
-if (!function_exists('wp_enqueue_script')) {
-    function wp_enqueue_script(...$args): void {}
-}
-if (!function_exists('add_action')) {
-    function add_action(...$args): void {}
+
+function _fmt_type_badge(string $type): string {
+    $t = strtolower($type);
+    if (strpos($t, 'ia') !== false) return 'badge-ia';
+    if (strpos($t, 'ii') !== false) return 'badge-ii';
+    if (strpos($t, 'ib') !== false || strpos($t, 'ic') !== false) return 'badge-ibc';
+    if (strpos($t, 'slsn') !== false) return 'badge-slsn';
+    if (strpos($t, 'tde') !== false) return 'badge-tde';
+    return 'badge-other';
 }
 
-require __DIR__ . '/wp-content/plugins/transient-table/transient-table.php';
+function _fmt_field_val($field): string {
+    if (is_array($field) && !empty($field)) {
+        $first = $field[0];
+        return is_array($first) ? (string)($first['value'] ?? '') : (string)$first;
+    }
+    return is_string($field) ? $field : '';
+}
 
 ?><!DOCTYPE html>
 <html lang="en">
@@ -80,14 +53,7 @@ require __DIR__ . '/wp-content/plugins/transient-table/transient-table.php';
 <link rel="webmcp-manifest" href="/.well-known/webmcp" type="application/json">
 <link rel="mcp-manifest" href="/.well-known/mcp.json" type="application/json">
 <link rel="describedby" href="/llms.txt" type="text/markdown">
-<link rel="stylesheet" href="https://cdn.datatables.net/1.10.16/css/jquery.dataTables.min.css" media="print" onload="this.media='all'">
-<link rel="stylesheet" href="https://cdn.datatables.net/v/dt/b-1.5.2/b-colvis-1.5.2/b-html5-1.5.2/r-2.2.2/sc-1.5.0/sl-1.2.6/datatables.min.css" media="print" onload="this.media='all'">
-<link rel="stylesheet" href="/wp-content/plugins/transient-table/transient-table.sne.css" media="print" onload="this.media='all'">
-<noscript>
-<link rel="stylesheet" href="https://cdn.datatables.net/1.10.16/css/jquery.dataTables.min.css">
-<link rel="stylesheet" href="https://cdn.datatables.net/v/dt/b-1.5.2/b-colvis-1.5.2/b-html5-1.5.2/r-2.2.2/sc-1.5.0/sl-1.2.6/datatables.min.css">
-<link rel="stylesheet" href="/wp-content/plugins/transient-table/transient-table.sne.css">
-</noscript>
+<link rel="stylesheet" href="/assets/catalog-table.css">
 <style>
   :root {
     --bg-space: #070a12;
@@ -718,15 +684,123 @@ require __DIR__ . '/wp-content/plugins/transient-table/transient-table.php';
     </section>
 
     <div class="catalog-table-wrap">
-      <?php transient_catalog(false); ?>
+      <div class="catalog-controls-card">
+        <div class="controls-top-row">
+          <div class="search-input-wrap">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="catalog-search" class="catalog-search-input" placeholder="Search 110,000+ supernovae by name, alias, type, discoverer, host (e.g. SN2026, Pinwheel, Type Ia)..." autocomplete="off" spellcheck="false">
+            <button id="search-clear-btn" class="search-clear-btn" title="Clear search" style="display:none;">✕</button>
+          </div>
+          <div class="export-actions">
+            <a id="btn-export-csv" class="btn-ctrl btn-export" href="/api/transients?format=csv" title="Download current filtered results as CSV">📥 Download CSV</a>
+            <a id="btn-export-json" class="btn-ctrl btn-export" href="/api/transients?format=json" target="_blank" title="View filtered JSON API response">⚡ JSON API</a>
+          </div>
+        </div>
+
+        <div class="filter-pills-row">
+          <div class="type-filter-group" id="type-filters">
+            <button class="filter-chip active" data-type="all">All Transients <span class="chip-count">110k+</span></button>
+            <button class="filter-chip" data-type="ia">Type Ia</button>
+            <button class="filter-chip" data-type="ii">Type II</button>
+            <button class="filter-chip" data-type="ibc">Type Ib/c</button>
+            <button class="filter-chip" data-type="slsn">SLSN</button>
+            <button class="filter-chip" data-type="tde">TDE</button>
+          </div>
+          <div class="toggle-filter-group">
+            <label class="toggle-pill">
+              <input type="checkbox" id="filter-has-spectra">
+              <span class="pill-label">✨ Has Spectra</span>
+            </label>
+            <label class="toggle-pill">
+              <input type="checkbox" id="filter-has-photo">
+              <span class="pill-label">📈 Has Light Curve</span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div class="table-responsive-box">
+        <div id="table-loading-bar" class="table-loading-bar" style="display:none;"></div>
+        <table class="native-transient-table" id="transient-catalog-table">
+          <thead>
+            <tr>
+              <th class="th-sortable" data-sort="name">Designation <span class="sort-indicator"></span></th>
+              <th class="th-sortable" data-sort="claimedtype">Type <span class="sort-indicator"></span></th>
+              <th class="th-sortable active desc" data-sort="discoverdate">Discovery Date <span class="sort-indicator">▼</span></th>
+              <th class="th-sortable" data-sort="redshift">Redshift <em>z</em> <span class="sort-indicator"></span></th>
+              <th class="th-sortable" data-sort="maxappmag">Peak Mag <span class="sort-indicator"></span></th>
+              <th>Coordinates (J2000)</th>
+              <th>Host Galaxy</th>
+              <th class="th-sortable" data-sort="spectralink">Spectra <span class="sort-indicator"></span></th>
+              <th class="th-sortable" data-sort="photolink">Light Curve <span class="sort-indicator"></span></th>
+              <th class="th-center">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="catalog-tbody">
+            <?php foreach ($initialItems as $row):
+              $name = (string)($row['name'] ?? '');
+              $type = _fmt_field_val($row['claimedtype'] ?? '—') ?: '—';
+              $badge = _fmt_type_badge($type);
+              $date = _fmt_field_val($row['discoverdate'] ?? '—') ?: '—';
+              $mag = _fmt_field_val($row['maxappmag'] ?? '—') ?: '—';
+              $z = _fmt_field_val($row['redshift'] ?? '—') ?: '—';
+              $ra = _fmt_field_val($row['ra'] ?? '—') ?: '—';
+              $dec = _fmt_field_val($row['dec'] ?? '—') ?: '—';
+              $host = _fmt_field_val($row['host'] ?? '—') ?: '—';
+              
+              $specRaw = (string)($row['spectralink'] ?? '0');
+              $specCount = (int)explode(',', $specRaw)[0];
+              
+              $photRaw = (string)($row['photolink'] ?? '0');
+              $photCount = (int)explode(',', $photRaw)[0];
+            ?>
+            <tr data-name="<?php echo htmlspecialchars($name, ENT_QUOTES); ?>">
+              <td class="cell-name"><a href="/sne/<?php echo rawurlencode($name); ?>/" class="name-link"><?php echo htmlspecialchars($name, ENT_QUOTES); ?></a></td>
+              <td class="cell-type"><span class="type-pill <?php echo $badge; ?>"><?php echo htmlspecialchars($type, ENT_QUOTES); ?></span></td>
+              <td class="cell-date"><span class="val-date"><?php echo htmlspecialchars($date, ENT_QUOTES); ?></span></td>
+              <td class="cell-num"><?php echo htmlspecialchars($z, ENT_QUOTES); ?></td>
+              <td class="cell-num"><?php echo htmlspecialchars($mag, ENT_QUOTES); ?></td>
+              <td class="cell-coords"><span class="coord-tag" title="Click to copy coordinates" onclick="navigator.clipboard.writeText('<?php echo htmlspecialchars($ra . ' ' . $dec, ENT_QUOTES); ?>'); this.classList.add('copied'); setTimeout(()=>this.classList.remove('copied'),1200);"><?php echo htmlspecialchars($ra . ', ' . $dec, ENT_QUOTES); ?></span></td>
+              <td class="cell-host"><?php echo htmlspecialchars($host, ENT_QUOTES); ?></td>
+              <td class="cell-spec"><?php if ($specCount > 0): ?><a href="/sne/<?php echo rawurlencode($name); ?>/#spectra" class="pill-badge pill-spec" title="<?php echo $specCount; ?> calibrated spectra">✨ <?php echo $specCount; ?></a><?php else: ?><span class="pill-dim">—</span><?php endif; ?></td>
+              <td class="cell-phot"><?php if ($photCount > 0): ?><a href="/sne/<?php echo rawurlencode($name); ?>/#lightcurve" class="pill-badge pill-phot" title="<?php echo $photCount; ?> photometry points">📈 <?php echo $photCount; ?></a><?php else: ?><span class="pill-dim">—</span><?php endif; ?></td>
+              <td class="cell-actions">
+                <a href="/sne/<?php echo rawurlencode($name); ?>/" class="btn-action btn-pro" title="Professional Cockpit">🔭 Pro</a>
+                <a href="/sne/<?php echo rawurlencode($name); ?>/story" class="btn-action btn-story" title="Story Dossier">📖 Story</a>
+              </td>
+            </tr>
+            <?php endforeach; ?>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="catalog-pagination-bar">
+        <div class="pagination-info" id="pagination-info">
+          Showing <span id="info-start">1</span>–<span id="info-end">50</span> of <span id="info-total">110,356</span> supernovae
+          <span class="telemetry-badge" id="query-time-badge">⚡ Instant</span>
+        </div>
+        <div class="pagination-controls">
+          <div class="per-page-selector">
+            <label for="per-page-select">Per page:</label>
+            <select id="per-page-select">
+              <option value="25">25</option>
+              <option value="50" selected>50</option>
+              <option value="100">100</option>
+              <option value="250">250</option>
+            </select>
+          </div>
+          <div class="page-nav-btns" id="page-nav-btns">
+            <button class="page-btn" id="btn-first" title="First page" disabled>«</button>
+            <button class="page-btn" id="btn-prev" title="Previous page" disabled>‹</button>
+            <span class="page-indicator" id="page-indicator">Page 1 of 2,208</span>
+            <button class="page-btn" id="btn-next" title="Next page">›</button>
+            <button class="page-btn" id="btn-last" title="Last page">»</button>
+          </div>
+        </div>
+      </div>
     </div>
   </main>
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://cdn.datatables.net/1.10.16/js/jquery.dataTables.min.js"></script>
-<script src="https://cdn.datatables.net/v/dt/b-1.5.2/b-colvis-1.5.2/b-html5-1.5.2/r-2.2.2/sc-1.5.0/sl-1.2.6/datatables.min.js"></script>
-<script src="/wp-content/plugins/transient-table/transient-table.js"></script>
-<script src="/wp-content/plugins/transient-table/suncalc.js"></script>
-<?php datatables_functions(); ?>
+<script src="/assets/catalog-table.js"></script>
 <script src="/assets/webmcp.js"></script>
 </body>
 </html>
