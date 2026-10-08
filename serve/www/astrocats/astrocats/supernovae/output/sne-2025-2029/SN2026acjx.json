@@ -21,6 +21,26 @@
         "secondary": true,
         "url": "https://sne.space",
         "alias": "3"
+      },
+      {
+        "name": "ALeRCE / ZTF",
+        "alias": "4",
+        "url": "https://alerce.online/object/ZTF26abvzwmz",
+        "secondary": true
+      },
+      {
+        "name": "Planck 2015",
+        "alias": "5",
+        "bibcode": "2016A&A...594A..13P",
+        "reference": "Planck Collaboration (2016)",
+        "secondary": true
+      },
+      {
+        "name": "Schlafly & Finkbeiner (2011)",
+        "alias": "6",
+        "bibcode": "2011ApJ...737..103S",
+        "reference": "Schlafly & Finkbeiner (2011)",
+        "secondary": true
       }
     ],
     "alias": [
@@ -43,6 +63,10 @@
       {
         "value": "SN 2026acjx",
         "source": "1"
+      },
+      {
+        "value": "ZTF26abvzwmz",
+        "source": "ALeRCE Cone Match"
       }
     ],
     "ra": [
@@ -86,12 +110,32 @@
     ],
     "photometry": [
       {
+        "time": "61301.51421",
+        "magnitude": "18.5486",
+        "band": "r",
+        "telescope": "ZTF",
+        "instrument": "ZTF",
+        "u_time": "MJD",
+        "source": "4",
+        "e_magnitude": "0.0755"
+      },
+      {
         "time": "61303.27883",
         "magnitude": "19.11",
         "band": "L-GOTO",
         "u_time": "MJD",
         "source": "2",
         "telescope": "GOTO, ZTF, ATLAS"
+      },
+      {
+        "time": "61305.51447",
+        "magnitude": "18.9575",
+        "band": "r",
+        "telescope": "ZTF",
+        "instrument": "ZTF",
+        "u_time": "MJD",
+        "source": "4",
+        "e_magnitude": "0.0835"
       }
     ],
     "spectra": [
@@ -962,6 +1006,94 @@
             "3.19400e-17"
           ]
         ]
+      }
+    ],
+    "lumdist": [
+      {
+        "value": "209.454",
+        "derived": true,
+        "u_value": "Mpc",
+        "source": "5"
+      }
+    ],
+    "comovingdist": [
+      {
+        "value": "200.284",
+        "derived": true,
+        "u_value": "Mpc",
+        "source": "5"
+      }
+    ],
+    "velocity": [
+      {
+        "value": "13411.8",
+        "derived": true,
+        "u_value": "km/s",
+        "source": "5"
+      }
+    ],
+    "ebv": [
+      {
+        "value": "0.0471",
+        "derived": true,
+        "source": "6",
+        "e_value": "0.0004"
+      }
+    ],
+    "maxappmag": [
+      {
+        "value": "18.55",
+        "derived": true,
+        "source": "4"
+      }
+    ],
+    "maxdate": [
+      {
+        "value": "2026/09/18",
+        "derived": true,
+        "source": "4"
+      }
+    ],
+    "maxband": [
+      {
+        "value": "r",
+        "derived": true,
+        "source": "4"
+      }
+    ],
+    "maxabsmag": [
+      {
+        "value": "-18.01",
+        "derived": true,
+        "source": "4"
+      }
+    ],
+    "maxvisualappmag": [
+      {
+        "value": "18.55",
+        "derived": true,
+        "source": "4"
+      }
+    ],
+    "maxvisualdate": [
+      {
+        "value": "2026/09/18",
+        "derived": true,
+        "source": "4"
+      }
+    ],
+    "maxvisualband": [
+      {
+        "value": "r",
+        "derived": true,
+        "source": "4"
+      }
+    ],
+    "maxvisualabsmag": [
+      {
+        "value": "-18.01",
+        "derived": true,
+        "source": "4"
       }
     ]
   }

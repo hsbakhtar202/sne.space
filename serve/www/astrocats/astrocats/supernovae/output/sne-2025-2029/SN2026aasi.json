@@ -21,6 +21,26 @@
         "secondary": true,
         "url": "https://sne.space",
         "alias": "3"
+      },
+      {
+        "name": "ALeRCE / ZTF",
+        "alias": "4",
+        "url": "https://alerce.online/object/ZTF21aaclrjb",
+        "secondary": true
+      },
+      {
+        "name": "Planck 2015",
+        "alias": "5",
+        "bibcode": "2016A&A...594A..13P",
+        "reference": "Planck Collaboration (2016)",
+        "secondary": true
+      },
+      {
+        "name": "Schlafly & Finkbeiner (2011)",
+        "alias": "6",
+        "bibcode": "2011ApJ...737..103S",
+        "reference": "Schlafly & Finkbeiner (2011)",
+        "secondary": true
       }
     ],
     "alias": [
@@ -43,6 +63,10 @@
       {
         "value": "SN 2026aasi",
         "source": "1"
+      },
+      {
+        "value": "ZTF21aaclrjb",
+        "source": "ALeRCE Cone Match"
       }
     ],
     "ra": [
@@ -85,6 +109,16 @@
       }
     ],
     "photometry": [
+      {
+        "time": "59222.56532",
+        "magnitude": "18.0848",
+        "band": "r",
+        "telescope": "ZTF",
+        "instrument": "ZTF",
+        "u_time": "MJD",
+        "source": "4",
+        "e_magnitude": "0.1918"
+      },
       {
         "time": "61288.85943",
         "magnitude": "18.06",
@@ -8238,6 +8272,94 @@
             "3.67853e-17"
           ]
         ]
+      }
+    ],
+    "lumdist": [
+      {
+        "value": "80.685",
+        "derived": true,
+        "u_value": "Mpc",
+        "source": "5"
+      }
+    ],
+    "comovingdist": [
+      {
+        "value": "79.259",
+        "derived": true,
+        "u_value": "Mpc",
+        "source": "5"
+      }
+    ],
+    "velocity": [
+      {
+        "value": "5347.7",
+        "derived": true,
+        "u_value": "km/s",
+        "source": "5"
+      }
+    ],
+    "ebv": [
+      {
+        "value": "0.4322",
+        "derived": true,
+        "source": "6",
+        "e_value": "0.0156"
+      }
+    ],
+    "maxappmag": [
+      {
+        "value": "18.06",
+        "derived": true,
+        "source": "2"
+      }
+    ],
+    "maxdate": [
+      {
+        "value": "2026/09/05",
+        "derived": true,
+        "source": "2"
+      }
+    ],
+    "maxband": [
+      {
+        "value": "wide-ATLAS",
+        "derived": true,
+        "source": "2"
+      }
+    ],
+    "maxabsmag": [
+      {
+        "value": "-16.45",
+        "derived": true,
+        "source": "2"
+      }
+    ],
+    "maxvisualappmag": [
+      {
+        "value": "18.08",
+        "derived": true,
+        "source": "2"
+      }
+    ],
+    "maxvisualdate": [
+      {
+        "value": "2021/01/08",
+        "derived": true,
+        "source": "2"
+      }
+    ],
+    "maxvisualband": [
+      {
+        "value": "r",
+        "derived": true,
+        "source": "2"
+      }
+    ],
+    "maxvisualabsmag": [
+      {
+        "value": "-16.43",
+        "derived": true,
+        "source": "2"
       }
     ]
   }

@@ -21,6 +21,20 @@
         "secondary": true,
         "url": "https://sne.space",
         "alias": "3"
+      },
+      {
+        "name": "Planck 2015",
+        "alias": "4",
+        "bibcode": "2016A&A...594A..13P",
+        "reference": "Planck Collaboration (2016)",
+        "secondary": true
+      },
+      {
+        "name": "Schlafly & Finkbeiner (2011)",
+        "alias": "5",
+        "bibcode": "2011ApJ...737..103S",
+        "reference": "Schlafly & Finkbeiner (2011)",
+        "secondary": true
       }
     ],
     "alias": [
@@ -962,6 +976,66 @@
             "2.22500e-16"
           ]
         ]
+      }
+    ],
+    "lumdist": [
+      {
+        "value": "286.925",
+        "derived": true,
+        "u_value": "Mpc",
+        "source": "4"
+      }
+    ],
+    "comovingdist": [
+      {
+        "value": "270.174",
+        "derived": true,
+        "u_value": "Mpc",
+        "source": "4"
+      }
+    ],
+    "velocity": [
+      {
+        "value": "18012.0",
+        "derived": true,
+        "u_value": "km/s",
+        "source": "4"
+      }
+    ],
+    "ebv": [
+      {
+        "value": "0.0972",
+        "derived": true,
+        "source": "5",
+        "e_value": "0.0019"
+      }
+    ],
+    "maxappmag": [
+      {
+        "value": "18.79",
+        "derived": true,
+        "source": "2"
+      }
+    ],
+    "maxdate": [
+      {
+        "value": "2026/09/03",
+        "derived": true,
+        "source": "2"
+      }
+    ],
+    "maxband": [
+      {
+        "value": "orange-ATLAS",
+        "derived": true,
+        "source": "2"
+      }
+    ],
+    "maxabsmag": [
+      {
+        "value": "-18.43",
+        "derived": true,
+        "source": "2"
       }
     ]
   }

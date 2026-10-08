@@ -21,6 +21,13 @@
         "secondary": true,
         "url": "https://sne.space",
         "alias": "3"
+      },
+      {
+        "name": "Planck 2015",
+        "alias": "4",
+        "bibcode": "2016A&A...594A..13P",
+        "reference": "Planck Collaboration (2016)",
+        "secondary": true
       }
     ],
     "alias": [
@@ -962,6 +969,58 @@
             "1.35700e-16"
           ]
         ]
+      }
+    ],
+    "lumdist": [
+      {
+        "value": "238.951",
+        "derived": true,
+        "u_value": "Mpc",
+        "source": "4"
+      }
+    ],
+    "comovingdist": [
+      {
+        "value": "227.14",
+        "derived": true,
+        "u_value": "Mpc",
+        "source": "4"
+      }
+    ],
+    "velocity": [
+      {
+        "value": "15184.4",
+        "derived": true,
+        "u_value": "km/s",
+        "source": "4"
+      }
+    ],
+    "maxappmag": [
+      {
+        "value": "17.46",
+        "derived": true,
+        "source": "2"
+      }
+    ],
+    "maxdate": [
+      {
+        "value": "2026/09/16",
+        "derived": true,
+        "source": "2"
+      }
+    ],
+    "maxband": [
+      {
+        "value": "g-ZTF",
+        "derived": true,
+        "source": "2"
+      }
+    ],
+    "maxabsmag": [
+      {
+        "value": "-19.38",
+        "derived": true,
+        "source": "2"
       }
     ]
   }

@@ -21,6 +21,20 @@
         "secondary": true,
         "url": "https://sne.space",
         "alias": "3"
+      },
+      {
+        "name": "Planck 2015",
+        "alias": "4",
+        "bibcode": "2016A&A...594A..13P",
+        "reference": "Planck Collaboration (2016)",
+        "secondary": true
+      },
+      {
+        "name": "Schlafly & Finkbeiner (2011)",
+        "alias": "5",
+        "bibcode": "2011ApJ...737..103S",
+        "reference": "Schlafly & Finkbeiner (2011)",
+        "secondary": true
       }
     ],
     "alias": [
@@ -43,6 +57,10 @@
       {
         "value": "SN 2026aeaq",
         "source": "1"
+      },
+      {
+        "value": "ZTF18aakihms",
+        "source": "ALeRCE Cone Match"
       }
     ],
     "ra": [
@@ -1954,6 +1972,66 @@
             "6.13887e-01"
           ]
         ]
+      }
+    ],
+    "lumdist": [
+      {
+        "value": "126.853",
+        "derived": true,
+        "u_value": "Mpc",
+        "source": "4"
+      }
+    ],
+    "comovingdist": [
+      {
+        "value": "123.387",
+        "derived": true,
+        "u_value": "Mpc",
+        "source": "4"
+      }
+    ],
+    "velocity": [
+      {
+        "value": "8302.4",
+        "derived": true,
+        "u_value": "km/s",
+        "source": "4"
+      }
+    ],
+    "ebv": [
+      {
+        "value": "0.0126",
+        "derived": true,
+        "source": "5",
+        "e_value": "0.0005"
+      }
+    ],
+    "maxappmag": [
+      {
+        "value": "16.30",
+        "derived": true,
+        "source": "2"
+      }
+    ],
+    "maxdate": [
+      {
+        "value": "2026/10/02",
+        "derived": true,
+        "source": "2"
+      }
+    ],
+    "maxband": [
+      {
+        "value": "g-Sloan",
+        "derived": true,
+        "source": "2"
+      }
+    ],
+    "maxabsmag": [
+      {
+        "value": "-19.19",
+        "derived": true,
+        "source": "2"
       }
     ]
   }
