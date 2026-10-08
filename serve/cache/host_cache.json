@@ -1,0 +1,13 @@
+{
+  "119.6610,7.9633": {
+    "name": "LEDA 1335495 (PGC 1335495)",
+    "ra": "07 58 38.4",
+    "dec": "+07 57 45",
+    "offset_arcsec": 4.7,
+    "offset_pa_deg": 51.1,
+    "offset_kpc": 3.27,
+    "offset_ang_str": "4.7\u2033 (PA 51\u00b0)",
+    "offset_kpc_str": "3.27 kpc",
+    "offset_combined": "4.7\u2033 (PA 51\u00b0) (~3.27 kpc)"
+  }
+}

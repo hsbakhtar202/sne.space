@@ -1,0 +1,102 @@
+{
+  "SN2025ahpa": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "SN2025ahpa",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/2025ahpa",
+        "alias": "1"
+      },
+      {
+        "name": "2025TNSTR5068....1S",
+        "bibcode": "2025TNSTR5068....1S",
+        "reference": "Taiga Sasaoka (The University of Tokyo)",
+        "alias": "2"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "3"
+      }
+    ],
+    "alias": [
+      {
+        "value": "2025ahpa",
+        "source": "1"
+      },
+      {
+        "value": "AT2025ahpa",
+        "source": "1"
+      },
+      {
+        "value": "ATLAS25pzt",
+        "source": "1"
+      },
+      {
+        "value": "SN2025ahpa",
+        "source": "1"
+      },
+      {
+        "value": "SN 2025ahpa",
+        "source": "1"
+      },
+      {
+        "value": "ZTF25acinunl",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "07:33:29.948",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "+57:42:03.22",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "claimedtype": [
+      {
+        "value": "Ia",
+        "source": "1"
+      }
+    ],
+    "redshift": [
+      {
+        "value": "0.032",
+        "kind": "spectroscopic",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "Taiga Sasaoka (The University of Tokyo), Reo Izumi (The University of Electro-Communications), Ichiro Takahashi (Institute of Science Tokyo), Shigeyuki Sako (The University of Tokyo), Nozomu Tominaga (National Astronomical Observatory of Japan)",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2025/12/16",
+        "source": "1"
+      }
+    ],
+    "photometry": [
+      {
+        "time": "61025.53133",
+        "magnitude": "19.32",
+        "band": "Clear",
+        "u_time": "MJD",
+        "source": "2",
+        "telescope": "Tomo-e Gozen"
+      }
+    ]
+  }
+}

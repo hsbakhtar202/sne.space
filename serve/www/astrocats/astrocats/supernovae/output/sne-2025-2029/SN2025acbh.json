@@ -1,0 +1,110 @@
+{
+  "SN2025acbh": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "SN2025acbh",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/2025acbh",
+        "alias": "1"
+      },
+      {
+        "name": "2025TNSTR4386....1S",
+        "bibcode": "2025TNSTR4386....1S",
+        "reference": "Jesper Sollerman (SU)",
+        "alias": "2"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "3"
+      }
+    ],
+    "alias": [
+      {
+        "value": "PS25ijd",
+        "source": "1"
+      },
+      {
+        "value": "2025acbh",
+        "source": "1"
+      },
+      {
+        "value": "GOTO25jsl",
+        "source": "1"
+      },
+      {
+        "value": "AT2025acbh",
+        "source": "1"
+      },
+      {
+        "value": "ATLAS25nnm",
+        "source": "1"
+      },
+      {
+        "value": "SN2025acbh",
+        "source": "1"
+      },
+      {
+        "value": "SN 2025acbh",
+        "source": "1"
+      },
+      {
+        "value": "ZTF25abzudli",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "08:59:02.380",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "-13:53:30.38",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "claimedtype": [
+      {
+        "value": "Ic",
+        "source": "1"
+      }
+    ],
+    "redshift": [
+      {
+        "value": "0.030354",
+        "kind": "spectroscopic",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "Jesper Sollerman (SU), Christoffer Fremling (Caltech), Daniel Perley (LJMU), Theophile du Laz (Caltech) on behalf of ZTF",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2025/10/24",
+        "source": "1"
+      }
+    ],
+    "photometry": [
+      {
+        "time": "60972.51782",
+        "magnitude": "19.24",
+        "band": "r",
+        "u_time": "MJD",
+        "source": "2",
+        "telescope": "ZTF"
+      }
+    ]
+  }
+}

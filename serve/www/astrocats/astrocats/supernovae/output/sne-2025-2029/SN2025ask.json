@@ -1,0 +1,110 @@
+{
+  "SN2025ask": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "SN2025ask",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/2025ask",
+        "alias": "1"
+      },
+      {
+        "name": "2025TNSTR.462....1B",
+        "bibcode": "2025TNSTR.462....1B",
+        "reference": "S. Belkin",
+        "alias": "2"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "3"
+      }
+    ],
+    "alias": [
+      {
+        "value": "PS25rg",
+        "source": "1"
+      },
+      {
+        "value": "2025ask",
+        "source": "1"
+      },
+      {
+        "value": "GOTO25zs",
+        "source": "1"
+      },
+      {
+        "value": "AT2025ask",
+        "source": "1"
+      },
+      {
+        "value": "SN2025ask",
+        "source": "1"
+      },
+      {
+        "value": "ATLAS25bfn",
+        "source": "1"
+      },
+      {
+        "value": "SN 2025ask",
+        "source": "1"
+      },
+      {
+        "value": "ZTF25aafjphe",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "14:12:48.844",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "+15:44:10.01",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "claimedtype": [
+      {
+        "value": "Ia",
+        "source": "1"
+      }
+    ],
+    "redshift": [
+      {
+        "value": "0.022681",
+        "kind": "spectroscopic",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "S. Belkin, G. Ramsay, K. Ackley, M. Dyer, F. Jim\u00e9nez-Ibarra, J. Lyman, K. Ulaczyk, D. Steeghs, D. Galloway, V. Dhillon, P. O'Brien, K. Noysena, R. Kotak, R. Breton, L. Nuttall, E. Pall\u00e9, D. Pollacco, T. Killestein, A. Kumar, D. O'Neill, on behalf of GOTO collaboration",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2025/02/03",
+        "source": "1"
+      }
+    ],
+    "photometry": [
+      {
+        "time": "60709.18319",
+        "magnitude": "17.19",
+        "band": "L",
+        "u_time": "MJD",
+        "source": "2",
+        "telescope": "GOTO"
+      }
+    ]
+  }
+}

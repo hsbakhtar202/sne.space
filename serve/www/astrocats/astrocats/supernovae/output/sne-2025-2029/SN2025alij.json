@@ -1,0 +1,97 @@
+{
+  "SN2025alij": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "SN2025alij",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/2025alij",
+        "alias": "1"
+      },
+      {
+        "name": "2026TNSTR..65....1W",
+        "bibcode": "2026TNSTR..65....1W",
+        "reference": "Alan M. Watson (UNAM)",
+        "alias": "2"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "3"
+      }
+    ],
+    "alias": [
+      {
+        "value": "2025alij",
+        "source": "1"
+      },
+      {
+        "value": "AT2025alij",
+        "source": "1"
+      },
+      {
+        "value": "SN2025alij",
+        "source": "1"
+      },
+      {
+        "value": "SN 2025alij",
+        "source": "1"
+      },
+      {
+        "value": "mystery source",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "06:57:45.530",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "+23:22:18.20",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "claimedtype": [
+      {
+        "value": "Ia",
+        "source": "1"
+      }
+    ],
+    "redshift": [
+      {
+        "value": "0.256",
+        "kind": "spectroscopic",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "Alan M. Watson (UNAM), Diego L\u00f3pez-C\u00e1mara (UNAM), Ny Avo Rakotondrainibe (LAM), No\u00e9mie Globus (UNAM), St\u00e9phane Basa (UAR Pytheas), William H. Lee (UNAM), Jean-Luc Atteia (IRAP), Camila Angulo (UNAM), Dalya Akl (NYUAD), Sarah Antier (IJCLAB), Rosa L. Becerra (UNAM), Nathaniel R. Butler (ASU), Damien Dornic (CPPM), Jean-Gr\u00e9goire Ducoin (CPPM), Francis Fortin (IRAP), Leonardo Garc\u00eda Garc\u00eda (UNAM), Ramandeep Gill (UNAM), Nikos Mandarakas (LAM), Kin Ocelotl L\u00f3pez (UNAM), Francesco Magnani (CPPM), Enrique Moreno M\u00e9ndez (UNAM), Margarita Pereyra (UNAM), Fredd S\u00e1nchez \u00c1lvarez (UNAM), Benjamin Schneider (LAM) and Antonio de Ugarte Postigo (LAM)",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2025/12/22",
+        "source": "1"
+      }
+    ],
+    "photometry": [
+      {
+        "time": "61031.12778",
+        "magnitude": "21.38",
+        "band": "r",
+        "u_time": "MJD",
+        "source": "2"
+      }
+    ]
+  }
+}

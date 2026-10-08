@@ -1,0 +1,105 @@
+{
+  "AT2025qmf": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "AT2025qmf",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/2025qmf",
+        "alias": "1"
+      },
+      {
+        "name": "2025TNSTR2582....1F",
+        "bibcode": "2025TNSTR2582....1F",
+        "reference": "R\u00f3bert Fidrich",
+        "alias": "2"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "3"
+      }
+    ],
+    "alias": [
+      {
+        "value": "Vend61",
+        "source": "1"
+      },
+      {
+        "value": "2025qmf",
+        "source": "1"
+      },
+      {
+        "value": "AT2025qmf",
+        "source": "1"
+      },
+      {
+        "value": "GOTO25fma",
+        "source": "1"
+      },
+      {
+        "value": "SN2025qmf",
+        "source": "1"
+      },
+      {
+        "value": "AT 2025qmf",
+        "source": "1"
+      },
+      {
+        "value": "ZTF25abbgzei",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "00:39:31.332",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "+41:11:28.08",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "claimedtype": [
+      {
+        "value": "Nova",
+        "source": "1"
+      }
+    ],
+    "redshift": [
+      {
+        "value": "-0.001004",
+        "kind": "spectroscopic",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "R\u00f3bert Fidrich",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2025/07/06",
+        "source": "1"
+      }
+    ],
+    "photometry": [
+      {
+        "time": "60862.35137",
+        "magnitude": "17.60",
+        "band": "Clear",
+        "u_time": "MJD",
+        "source": "2"
+      }
+    ]
+  }
+}

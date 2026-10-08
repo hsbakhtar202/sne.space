@@ -1,0 +1,106 @@
+{
+  "SN2026bbl": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "SN2026bbl",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/2026bbl",
+        "alias": "1"
+      },
+      {
+        "name": "2026TNSTR.291....1C",
+        "bibcode": "2026TNSTR.291....1C",
+        "reference": "K. C. Chambers",
+        "alias": "2"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "3"
+      }
+    ],
+    "alias": [
+      {
+        "value": "PS26jl",
+        "source": "1"
+      },
+      {
+        "value": "2026bbl",
+        "source": "1"
+      },
+      {
+        "value": "AT2026bbl",
+        "source": "1"
+      },
+      {
+        "value": "SN2026bbl",
+        "source": "1"
+      },
+      {
+        "value": "SN 2026bbl",
+        "source": "1"
+      },
+      {
+        "value": "C202511241002118p023737",
+        "source": "1"
+      },
+      {
+        "value": "LSST-P-DO-313853517428162578",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "10:02:11.842",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "+02:37:36.80",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "claimedtype": [
+      {
+        "value": "II",
+        "source": "1"
+      }
+    ],
+    "redshift": [
+      {
+        "value": "0.1139",
+        "kind": "spectroscopic",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "K. C. Chambers, T. de Boer, J. Fairlamb, M. Huber, C.-C. Lin, T. Lowe, E. Magnier, P. Minguez, G. Paek, A. Schultz, I. A. Smith, R. J. Wainscoat (IfA, University of Hawaii), S. J. Smartt, K. W. Smith (University of Oxford / Queen's University Belfast), S. Srivastav (University of Oxford), D. R. Young, M. Fulton, M. Nicholl, T. Moore, J. Weston, C. R. Angus, A. J. Smith (Queen's University Belfast)",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2026/01/20",
+        "source": "1"
+      }
+    ],
+    "photometry": [
+      {
+        "time": "61060.50383",
+        "magnitude": "22.61",
+        "band": "g",
+        "u_time": "MJD",
+        "source": "2",
+        "telescope": "Pan-STARRS"
+      }
+    ]
+  }
+}

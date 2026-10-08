@@ -1,0 +1,94 @@
+{
+  "TDE2025abqg": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "TDE2025abqg",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/2025abqg",
+        "alias": "1"
+      },
+      {
+        "name": "2025TNSTR4305....1S",
+        "bibcode": "2025TNSTR4305....1S",
+        "reference": "Jesper Sollerman (SU)",
+        "alias": "2"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "3"
+      }
+    ],
+    "alias": [
+      {
+        "value": "2025abqg",
+        "source": "1"
+      },
+      {
+        "value": "ATLAS25nzo",
+        "source": "1"
+      },
+      {
+        "value": "TDE2025abqg",
+        "source": "1"
+      },
+      {
+        "value": "ZTF25abwvuln",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "23:52:17.902",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "+07:34:00.73",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "claimedtype": [
+      {
+        "value": "TDE",
+        "source": "1"
+      }
+    ],
+    "redshift": [
+      {
+        "value": "0.0772",
+        "kind": "spectroscopic",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "Jesper Sollerman (SU), Christoffer Fremling (Caltech), Daniel Perley (LJMU), Theophile du Laz (Caltech) on behalf of ZTF",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2025/10/12",
+        "source": "1"
+      }
+    ],
+    "photometry": [
+      {
+        "time": "60960.25215",
+        "magnitude": "20.09",
+        "band": "g",
+        "u_time": "MJD",
+        "source": "2",
+        "telescope": "ZTF"
+      }
+    ]
+  }
+}

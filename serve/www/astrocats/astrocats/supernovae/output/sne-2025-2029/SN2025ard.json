@@ -1,0 +1,114 @@
+{
+  "SN2025ard": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "SN2025ard",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/2025ard",
+        "alias": "1"
+      },
+      {
+        "name": "2025TNSTR.447....1S",
+        "bibcode": "2025TNSTR.447....1S",
+        "reference": "F. Stoppa",
+        "alias": "2"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "3"
+      }
+    ],
+    "alias": [
+      {
+        "value": "2025ard",
+        "source": "1"
+      },
+      {
+        "value": "PS25chc",
+        "source": "1"
+      },
+      {
+        "value": "GOTO25zf",
+        "source": "1"
+      },
+      {
+        "value": "AT2025ard",
+        "source": "1"
+      },
+      {
+        "value": "SN2025ard",
+        "source": "1"
+      },
+      {
+        "value": "ATLAS25bhr",
+        "source": "1"
+      },
+      {
+        "value": "SN 2025ard",
+        "source": "1"
+      },
+      {
+        "value": "ZTF25aadkeon",
+        "source": "1"
+      },
+      {
+        "value": "BGEM J075703.53+223119.7",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "07:57:03.532",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "+22:31:19.98",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "claimedtype": [
+      {
+        "value": "Ia",
+        "source": "1"
+      }
+    ],
+    "redshift": [
+      {
+        "value": "0.0478",
+        "kind": "spectroscopic",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "F. Stoppa, H. Tranin, D. Pieterse, G. Ramsay, S. Faris, P. Groot, P. Vreeswijk, N. Blagorodnova, J. van Roestel, H. Wichern, S. Scaringi",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2025/02/02",
+        "source": "1"
+      }
+    ],
+    "photometry": [
+      {
+        "time": "60708.22378",
+        "magnitude": "18.84",
+        "band": "BG-q",
+        "u_time": "MJD",
+        "source": "2",
+        "telescope": "BlackGEM"
+      }
+    ]
+  }
+}

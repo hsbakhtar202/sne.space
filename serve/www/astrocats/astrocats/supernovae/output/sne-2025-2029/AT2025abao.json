@@ -1,0 +1,130 @@
+{
+  "AT2025abao": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "AT2025abao",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/2025abao",
+        "alias": "1"
+      },
+      {
+        "name": "2025TNSTR4205....1K",
+        "bibcode": "2025TNSTR4205....1K",
+        "reference": "Ya.Kechin",
+        "alias": "2"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "3"
+      }
+    ],
+    "alias": [
+      {
+        "value": "2025abao",
+        "source": "1"
+      },
+      {
+        "value": "AT2025abao",
+        "source": "1"
+      },
+      {
+        "value": "ATLAS25qne",
+        "source": "1"
+      },
+      {
+        "value": "SN2025abao",
+        "source": "1"
+      },
+      {
+        "value": "AT 2025abao",
+        "source": "1"
+      },
+      {
+        "value": "GEOTS-Balaji-2025-M31-1022",
+        "source": "1"
+      },
+      {
+        "value": "MASTER OT J003848.58+404608.4",
+        "source": "1"
+      },
+      {
+        "value": "MASTER OT J003848.61+404608.0",
+        "source": "1"
+      },
+      {
+        "value": "MASTER OT J003848.62+404607.6",
+        "source": "1"
+      },
+      {
+        "value": "MASTER OT J003848.62+404608.3",
+        "source": "1"
+      },
+      {
+        "value": "MASTER OT J003848.63+404608.4",
+        "source": "1"
+      },
+      {
+        "value": "MASTER OT J003848.65+404607.5",
+        "source": "1"
+      },
+      {
+        "value": "MASTER OT J003848.67+404607.6",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "00:38:48.558",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "+40:46:08.76",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "claimedtype": [
+      {
+        "value": "LRN",
+        "source": "1"
+      }
+    ],
+    "redshift": [
+      {
+        "value": "0",
+        "kind": "spectroscopic",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "Ya.Kechin, V.Lipunov, E.Gorbovskoy, A.Kuznetsov, K.Zhirkov, I.Panchenko, N.Tiurina, P.Balanutsa, V.Topolev, D.Vlasenko, G.Antipov, A.Sankovich, Yu.Tselik, V.Senik, A.Chasovnikov, K.Labsina, I. Gorbunov (Lomonosov MSU), O.Gress, N.Budnev (ISU), C.Francile, F. Podesta, R.Podesta, E. Gonzalez (Observatorio Astronomico Felix Aguilar (OAFA), A. Tlatov, D. Dormidontov (Kislovodsk Solar Station of the Pulkovo Observatory), A.Sosnovskij (CrAO), A. Gabovich, V.Yurkov (Blagoveschensk Educational StateUniversity), D.Buckley (SAAO), R.Rebolo (The Instituto de Astrofisica de Canarias), L.Carrasco, J.R.Valdes, V.Chavushyan, V.M.Patino Alvarez, J.Martinez, A.R.Corella, L.H.Rodriguez (INAOE, Guillermo Haro Astrophysics Observatory)",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2025/10/19",
+        "source": "1"
+      }
+    ],
+    "photometry": [
+      {
+        "time": "60967.84924",
+        "magnitude": "17.30",
+        "band": "Other",
+        "u_time": "MJD",
+        "source": "2",
+        "telescope": "MASTER"
+      }
+    ]
+  }
+}

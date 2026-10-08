@@ -1,0 +1,106 @@
+{
+  "SN2026efq": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "SN2026efq",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/2026efq",
+        "alias": "1"
+      },
+      {
+        "name": "2026TNSTR.757....1M",
+        "bibcode": "2026TNSTR.757....1M",
+        "reference": "Michele Mazzucato on behalf of SNHunt",
+        "alias": "2"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "3"
+      }
+    ],
+    "alias": [
+      {
+        "value": "2026efq",
+        "source": "1"
+      },
+      {
+        "value": "AT2026efq",
+        "source": "1"
+      },
+      {
+        "value": "GOTO26bmo",
+        "source": "1"
+      },
+      {
+        "value": "SN2026efq",
+        "source": "1"
+      },
+      {
+        "value": "ATLAS26ckz",
+        "source": "1"
+      },
+      {
+        "value": "SN 2026efq",
+        "source": "1"
+      },
+      {
+        "value": "ZTF26aahfrag",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "09:15:55.414",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "+10:08:09.33",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "claimedtype": [
+      {
+        "value": "Ia",
+        "source": "1"
+      }
+    ],
+    "redshift": [
+      {
+        "value": "0.031",
+        "kind": "spectroscopic",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "Michele Mazzucato on behalf of SNHunt",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2026/02/23",
+        "source": "1"
+      }
+    ],
+    "photometry": [
+      {
+        "time": "61094.20600",
+        "magnitude": "20.40",
+        "band": "V-crts",
+        "u_time": "MJD",
+        "source": "2",
+        "telescope": "SNHunt"
+      }
+    ]
+  }
+}

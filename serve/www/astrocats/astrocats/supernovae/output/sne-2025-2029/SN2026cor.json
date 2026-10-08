@@ -1,0 +1,110 @@
+{
+  "SN2026cor": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "SN2026cor",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/2026cor",
+        "alias": "1"
+      },
+      {
+        "name": "2026TNSTR.559....1X",
+        "bibcode": "2026TNSTR.559....1X",
+        "reference": "Jianlin Xu",
+        "alias": "2"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "3"
+      }
+    ],
+    "alias": [
+      {
+        "value": "2026cor",
+        "source": "1"
+      },
+      {
+        "value": "AT2026cor",
+        "source": "1"
+      },
+      {
+        "value": "GOTO26aqp",
+        "source": "1"
+      },
+      {
+        "value": "SN2026cor",
+        "source": "1"
+      },
+      {
+        "value": "ATLAS26bvt",
+        "source": "1"
+      },
+      {
+        "value": "KATS26C006",
+        "source": "1"
+      },
+      {
+        "value": "SN 2026cor",
+        "source": "1"
+      },
+      {
+        "value": "ZTF26aafkcnw",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "09:39:36.231",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "+00:01:07.72",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "claimedtype": [
+      {
+        "value": "Ia",
+        "source": "1"
+      }
+    ],
+    "redshift": [
+      {
+        "value": "0.0623",
+        "kind": "spectroscopic",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "Jianlin Xu, Mi Zhang, Guoyou Sun, Jiangao Ruan, Jingyuan Zhao, Wenjie Zhou, Yong Ma, Ye, Zhuoyang Chen (Xingming Obs.), Hanjie Tan (AUUK), Guangwei Wu (NAAA), Xing Gao, Ali Esamdin, Chunhai Bai, Yong Wang (XAO), on behalf of the KATS team",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2026/02/08",
+        "source": "1"
+      }
+    ],
+    "photometry": [
+      {
+        "time": "61079.87000",
+        "magnitude": "19.57",
+        "band": "Clear",
+        "u_time": "MJD",
+        "source": "2",
+        "telescope": "XOSS"
+      }
+    ]
+  }
+}

@@ -1,0 +1,105 @@
+{
+  "SN2025taj": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "SN2025taj",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/2025taj",
+        "alias": "1"
+      },
+      {
+        "name": "2025TNSTR3040....1C",
+        "bibcode": "2025TNSTR3040....1C",
+        "reference": "Giancarlo Cortini",
+        "alias": "2"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "3"
+      }
+    ],
+    "alias": [
+      {
+        "value": "2025taj",
+        "source": "1"
+      },
+      {
+        "value": "AT2025taj",
+        "source": "1"
+      },
+      {
+        "value": "GOTO25jlb",
+        "source": "1"
+      },
+      {
+        "value": "SN2025taj",
+        "source": "1"
+      },
+      {
+        "value": "ATLAS25moj",
+        "source": "1"
+      },
+      {
+        "value": "SN 2025taj",
+        "source": "1"
+      },
+      {
+        "value": "ZTF25abwlocm",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "10:31:14.983",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "+72:07:46.97",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "claimedtype": [
+      {
+        "value": "II",
+        "source": "1"
+      }
+    ],
+    "redshift": [
+      {
+        "value": "0.022183",
+        "kind": "spectroscopic",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "Giancarlo Cortini",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2025/08/02",
+        "source": "1"
+      }
+    ],
+    "photometry": [
+      {
+        "time": "60889.87847",
+        "magnitude": "18.00",
+        "band": "Clear",
+        "u_time": "MJD",
+        "source": "2"
+      }
+    ]
+  }
+}

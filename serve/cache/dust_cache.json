@@ -20,5 +20,16 @@
     "gal_l": 101.892,
     "gal_b": 59.768,
     "source": "Schlafly & Finkbeiner (2011)"
+  },
+  "119.6610,7.9633": {
+    "ebv": 0.0157,
+    "a_v": 0.049,
+    "a_b": 0.064,
+    "a_g": 0.06,
+    "a_r": 0.043,
+    "a_i": 0.033,
+    "gal_l": 213.369,
+    "gal_b": 18.539,
+    "source": "Schlafly & Finkbeiner (2011)"
   }
 }

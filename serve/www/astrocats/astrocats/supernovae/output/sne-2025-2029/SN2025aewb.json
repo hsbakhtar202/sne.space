@@ -1,0 +1,97 @@
+{
+  "SN2025aewb": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "SN2025aewb",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/2025aewb",
+        "alias": "1"
+      },
+      {
+        "name": "2025TNSTR4722....1M",
+        "bibcode": "2025TNSTR4722....1M",
+        "reference": "Ziyang Mai",
+        "alias": "2"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "3"
+      }
+    ],
+    "alias": [
+      {
+        "value": "2025aewb",
+        "source": "1"
+      },
+      {
+        "value": "AT2025aewb",
+        "source": "1"
+      },
+      {
+        "value": "SN2025aewb",
+        "source": "1"
+      },
+      {
+        "value": "SN 2025aewb",
+        "source": "1"
+      },
+      {
+        "value": "ZTF25aceicse",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "21:10:48.254",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "+43:40:45.96",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "claimedtype": [
+      {
+        "value": "IIP",
+        "source": "1"
+      }
+    ],
+    "redshift": [
+      {
+        "value": "0.012523",
+        "kind": "spectroscopic",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "Ziyang Mai, Bozhang Shi",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2025/11/24",
+        "source": "1"
+      }
+    ],
+    "photometry": [
+      {
+        "time": "61003.55932",
+        "magnitude": "18.05",
+        "band": "Clear",
+        "u_time": "MJD",
+        "source": "2"
+      }
+    ]
+  }
+}

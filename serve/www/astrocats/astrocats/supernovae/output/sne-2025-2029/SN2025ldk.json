@@ -1,0 +1,118 @@
+{
+  "SN2025ldk": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "SN2025ldk",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/2025ldk",
+        "alias": "1"
+      },
+      {
+        "name": "2025TNSTR1900....1X",
+        "bibcode": "2025TNSTR1900....1X",
+        "reference": "Zelin Xu",
+        "alias": "2"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "3"
+      }
+    ],
+    "alias": [
+      {
+        "value": "2025ldk",
+        "source": "1"
+      },
+      {
+        "value": "PS25dhr",
+        "source": "1"
+      },
+      {
+        "value": "AT2025ldk",
+        "source": "1"
+      },
+      {
+        "value": "GOTO25dbj",
+        "source": "1"
+      },
+      {
+        "value": "SN2025ldk",
+        "source": "1"
+      },
+      {
+        "value": "ATLAS25jaz",
+        "source": "1"
+      },
+      {
+        "value": "SN 2025ldk",
+        "source": "1"
+      },
+      {
+        "value": "WFST0608gxws",
+        "source": "1"
+      },
+      {
+        "value": "ZTF25aaqylva",
+        "source": "1"
+      },
+      {
+        "value": "BGEM J142231.24+045100.9",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "14:22:31.241",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "+04:51:00.80",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "claimedtype": [
+      {
+        "value": "Ia",
+        "source": "1"
+      }
+    ],
+    "redshift": [
+      {
+        "value": "0.055412",
+        "kind": "spectroscopic",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "Zelin Xu, Dezheng Meng, Ji-an Jiang, Weiyu Wu, Zhengyan Liu, Junhan Zhao, Ziqing Jia (USTC) on behalf of the WFST collaboration",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2025/05/17",
+        "source": "1"
+      }
+    ],
+    "photometry": [
+      {
+        "time": "60812.74266",
+        "magnitude": "21.81",
+        "band": "g",
+        "u_time": "MJD",
+        "source": "2",
+        "telescope": "WFST"
+      }
+    ]
+  }
+}

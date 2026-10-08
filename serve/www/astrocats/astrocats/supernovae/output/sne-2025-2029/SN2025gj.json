@@ -1,0 +1,118 @@
+{
+  "SN2025gj": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "SN2025gj",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/2025gj",
+        "alias": "1"
+      },
+      {
+        "name": "2025TNSTR.105....1L",
+        "bibcode": "2025TNSTR.105....1L",
+        "reference": "M. Lundquist",
+        "alias": "2"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "3"
+      }
+    ],
+    "alias": [
+      {
+        "value": "2025gj",
+        "source": "1"
+      },
+      {
+        "value": "DLT25a",
+        "source": "1"
+      },
+      {
+        "value": "PS25is",
+        "source": "1"
+      },
+      {
+        "value": "AT2025gj",
+        "source": "1"
+      },
+      {
+        "value": "GOTO25gp",
+        "source": "1"
+      },
+      {
+        "value": "SN2025gj",
+        "source": "1"
+      },
+      {
+        "value": "SN 2025gj",
+        "source": "1"
+      },
+      {
+        "value": "ATLAS25aim",
+        "source": "1"
+      },
+      {
+        "value": "ZTF25aabmhly",
+        "source": "1"
+      },
+      {
+        "value": "BGEM J094420.26-211622.8",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "09:44:20.256",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "-21:16:22.40",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "claimedtype": [
+      {
+        "value": "Ia",
+        "source": "1"
+      }
+    ],
+    "redshift": [
+      {
+        "value": "0.0077",
+        "kind": "spectroscopic",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "M. Lundquist, S. Valenti, D. J. Sand, J. E. Andrews, J. Pearson, D. Janzen, N. Meza, S. D. Wyatt, J. Jencson, M. Shrestha, E. Hoang, K. A. Bostroem, Y. Dong, G. Hosseinzadeh",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2025/01/08",
+        "source": "1"
+      }
+    ],
+    "photometry": [
+      {
+        "time": "60683.27569",
+        "magnitude": "17.91",
+        "band": "Clear",
+        "u_time": "MJD",
+        "source": "2",
+        "telescope": "DLT40"
+      }
+    ]
+  }
+}

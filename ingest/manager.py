@@ -313,7 +313,8 @@ def ingest_tns_batch(
         cname, event_dict = build_event_dict(
             row,
             enrich_alerce=enrich_brokers,
-            enrich_wiserep=enrich_brokers
+            enrich_wiserep=enrich_brokers,
+            enrich_tns_spectra=enrich_brokers,
         )
 
         if existing_path and existing_path.is_file():

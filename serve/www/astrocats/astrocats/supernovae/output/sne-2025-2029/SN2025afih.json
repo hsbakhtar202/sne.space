@@ -1,0 +1,114 @@
+{
+  "SN2025afih": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "SN2025afih",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/2025afih",
+        "alias": "1"
+      },
+      {
+        "name": "2025TNSTR4769....1M",
+        "bibcode": "2025TNSTR4769....1M",
+        "reference": "Dezheng Meng",
+        "alias": "2"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "3"
+      }
+    ],
+    "alias": [
+      {
+        "value": "PS25iqd",
+        "source": "1"
+      },
+      {
+        "value": "2025afih",
+        "source": "1"
+      },
+      {
+        "value": "GOTO25lae",
+        "source": "1"
+      },
+      {
+        "value": "AT2025afih",
+        "source": "1"
+      },
+      {
+        "value": "ATLAS25piw",
+        "source": "1"
+      },
+      {
+        "value": "SN2025afih",
+        "source": "1"
+      },
+      {
+        "value": "SN 2025afih",
+        "source": "1"
+      },
+      {
+        "value": "ZTF25acfkvbq",
+        "source": "1"
+      },
+      {
+        "value": "WFST251129euxe",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "02:03:03.912",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "+04:14:37.24",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "claimedtype": [
+      {
+        "value": "Ia",
+        "source": "1"
+      }
+    ],
+    "redshift": [
+      {
+        "value": "0.019",
+        "kind": "spectroscopic",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "Dezheng Meng, Zelin Xu, Weiyu Wu, Junhan Zhao, Zhengyan Liu, Ziqing Jia, Ji-an Jiang (USTC) on behalf of the WFST collaboration",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2025/11/29",
+        "source": "1"
+      }
+    ],
+    "photometry": [
+      {
+        "time": "61008.72640",
+        "magnitude": "20.83",
+        "band": "g",
+        "u_time": "MJD",
+        "source": "2",
+        "telescope": "WFST"
+      }
+    ]
+  }
+}

@@ -1,0 +1,91 @@
+{
+  "AT2025jpj": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "AT2025jpj",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/2025jpj",
+        "alias": "1"
+      },
+      {
+        "name": "2025TNSTR1665....1Z",
+        "bibcode": "2025TNSTR1665....1Z",
+        "reference": "Mi Zhang",
+        "alias": "2"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "3"
+      }
+    ],
+    "alias": [
+      {
+        "value": "2025jpj",
+        "source": "1"
+      },
+      {
+        "value": "AT2025jpj",
+        "source": "1"
+      },
+      {
+        "value": "SN2025jpj",
+        "source": "1"
+      },
+      {
+        "value": "AT 2025jpj",
+        "source": "1"
+      },
+      {
+        "value": "KATS25J001",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "18:47:34.990",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "+29:05:57.90",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "claimedtype": [
+      {
+        "value": "CV",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "Mi Zhang, Jianlin Xu, Guoyou Sun, Jiangao Ruan, Jingyuan Zhao, Wenjie Zhou, Yong Ma, Ye, Zhuoyang Chen (Xingming Obs.), Hanjie Tan (AUUK), Guangwei Wu (NAAA), Xing Gao, Ali Esamdin, Chunhai Bai, Yong Wang (XAO), on behalf of the KATS team",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2025/05/03",
+        "source": "1"
+      }
+    ],
+    "photometry": [
+      {
+        "time": "60798.79797",
+        "magnitude": "16.39",
+        "band": "Clear",
+        "u_time": "MJD",
+        "source": "2",
+        "telescope": "XOSS"
+      }
+    ]
+  }
+}

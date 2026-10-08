@@ -1,0 +1,89 @@
+{
+  "TDE2025alrm": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "TDE2025alrm",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/2025alrm",
+        "alias": "1"
+      },
+      {
+        "name": "2026TNSTR.470....1W",
+        "bibcode": "2026TNSTR.470....1W",
+        "reference": "Mingxin Wu (USTC)",
+        "alias": "2"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "3"
+      }
+    ],
+    "alias": [
+      {
+        "value": "2025alrm",
+        "source": "1"
+      },
+      {
+        "value": "TDE2025alrm",
+        "source": "1"
+      },
+      {
+        "value": "WFST J081300.60+210910.1",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "08:13:00.600",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "+21:09:10.08",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "claimedtype": [
+      {
+        "value": "TDE-H-He",
+        "source": "1"
+      }
+    ],
+    "redshift": [
+      {
+        "value": "0.179",
+        "kind": "spectroscopic",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "Mingxin Wu (USTC), Ning Jiang (USTC), Shifeng Huang (USTC), Yibo Wang (USTC), Tinggui Wang (USTC), Chengyi Wang (USTC), Jiazheng Zhu (USTC) on behalf of the WFST collaboration",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2025/11/19",
+        "source": "1"
+      }
+    ],
+    "photometry": [
+      {
+        "time": "60998.92250",
+        "magnitude": "21.99",
+        "band": "g",
+        "u_time": "MJD",
+        "source": "2"
+      }
+    ]
+  }
+}

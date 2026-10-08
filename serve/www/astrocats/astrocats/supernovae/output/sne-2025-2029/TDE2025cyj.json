@@ -1,0 +1,90 @@
+{
+  "TDE2025cyj": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "TDE2025cyj",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/2025cyj",
+        "alias": "1"
+      },
+      {
+        "name": "2025TNSTR.831....1P",
+        "bibcode": "2025TNSTR.831....1P",
+        "reference": "Daniel Perley (LJMU)",
+        "alias": "2"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "3"
+      }
+    ],
+    "alias": [
+      {
+        "value": "2025cyj",
+        "source": "1"
+      },
+      {
+        "value": "TDE2025cyj",
+        "source": "1"
+      },
+      {
+        "value": "ZTF25aagfhmz",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "09:25:19.826",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "+23:30:09.54",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "claimedtype": [
+      {
+        "value": "TDE-featureless",
+        "source": "1"
+      }
+    ],
+    "redshift": [
+      {
+        "value": "0.144",
+        "kind": "spectroscopic",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "Daniel Perley (LJMU), Christoffer Fremling (Caltech), Theophile du Laz (Caltech) on behalf of ZTF",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2025/02/16",
+        "source": "1"
+      }
+    ],
+    "photometry": [
+      {
+        "time": "60722.27514",
+        "magnitude": "20.01",
+        "band": "g",
+        "u_time": "MJD",
+        "source": "2",
+        "telescope": "ZTF"
+      }
+    ]
+  }
+}

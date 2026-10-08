@@ -1,0 +1,114 @@
+{
+  "SN2025hjz": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "SN2025hjz",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/2025hjz",
+        "alias": "1"
+      },
+      {
+        "name": "2025TNSTR1381....1K",
+        "bibcode": "2025TNSTR1381....1K",
+        "reference": "T. Killestein",
+        "alias": "2"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "3"
+      }
+    ],
+    "alias": [
+      {
+        "value": "2025hjz",
+        "source": "1"
+      },
+      {
+        "value": "AT2025hjz",
+        "source": "1"
+      },
+      {
+        "value": "GOTO25buy",
+        "source": "1"
+      },
+      {
+        "value": "SN2025hjz",
+        "source": "1"
+      },
+      {
+        "value": "ATLAS25dxr",
+        "source": "1"
+      },
+      {
+        "value": "SN 2025hjz",
+        "source": "1"
+      },
+      {
+        "value": "ZTF23absjbyu",
+        "source": "1"
+      },
+      {
+        "value": "ZTF25aapwiux",
+        "source": "1"
+      },
+      {
+        "value": "BGEM J104407.21-162808.8",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "10:44:07.195",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "-16:28:08.92",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "claimedtype": [
+      {
+        "value": "Ia",
+        "source": "1"
+      }
+    ],
+    "redshift": [
+      {
+        "value": "0.0288",
+        "kind": "spectroscopic",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "T. Killestein, D. O'Neill, K. Ackley, M. Dyer, J. Lyman, K. Ulaczyk, D. Steeghs, D. Galloway, V. Dhillon, P. O'Brien, G. Ramsay, K. Noysena, R. Kotak, R. Breton, J. Casares, L. Nuttall, B. Godson, A. Kumar, M. Pursiainen, on behalf of GOTO collaboration",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2025/04/14",
+        "source": "1"
+      }
+    ],
+    "photometry": [
+      {
+        "time": "60779.49336",
+        "magnitude": "17.33",
+        "band": "L",
+        "u_time": "MJD",
+        "source": "2",
+        "telescope": "GOTO"
+      }
+    ]
+  }
+}

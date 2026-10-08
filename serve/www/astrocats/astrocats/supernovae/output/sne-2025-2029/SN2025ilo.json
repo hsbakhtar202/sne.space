@@ -1,0 +1,97 @@
+{
+  "SN2025ilo": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "SN2025ilo",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/2025ilo",
+        "alias": "1"
+      },
+      {
+        "name": "2025TNSTR1543....1H",
+        "bibcode": "2025TNSTR1543....1H",
+        "reference": "A. Horti-David",
+        "alias": "2"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "3"
+      }
+    ],
+    "alias": [
+      {
+        "value": "2025ilo",
+        "source": "1"
+      },
+      {
+        "value": "PS25cpg",
+        "source": "1"
+      },
+      {
+        "value": "AT2025ilo",
+        "source": "1"
+      },
+      {
+        "value": "SN2025ilo",
+        "source": "1"
+      },
+      {
+        "value": "SN 2025ilo",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "12:59:35.054",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "+27:56:58.52",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "claimedtype": [
+      {
+        "value": "Ib",
+        "source": "1"
+      }
+    ],
+    "redshift": [
+      {
+        "value": "0.023",
+        "kind": "spectroscopic",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "A. Horti-David, K. Sarneczky, J. Vinko",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2025/04/26",
+        "source": "1"
+      }
+    ],
+    "photometry": [
+      {
+        "time": "60791.85156",
+        "magnitude": "20.60",
+        "band": "w",
+        "u_time": "MJD",
+        "source": "2"
+      }
+    ]
+  }
+}

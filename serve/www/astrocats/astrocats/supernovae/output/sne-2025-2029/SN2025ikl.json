@@ -1,0 +1,98 @@
+{
+  "SN2025ikl": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "SN2025ikl",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/2025ikl",
+        "alias": "1"
+      },
+      {
+        "name": "2025TNSTR1544....1C",
+        "bibcode": "2025TNSTR1544....1C",
+        "reference": "K. C. Chambers",
+        "alias": "2"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "3"
+      }
+    ],
+    "alias": [
+      {
+        "value": "2025ikl",
+        "source": "1"
+      },
+      {
+        "value": "PS25bqw",
+        "source": "1"
+      },
+      {
+        "value": "AT2025ikl",
+        "source": "1"
+      },
+      {
+        "value": "SN2025ikl",
+        "source": "1"
+      },
+      {
+        "value": "SN 2025ikl",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "15:48:57.061",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "+07:13:21.46",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "claimedtype": [
+      {
+        "value": "Ib",
+        "source": "1"
+      }
+    ],
+    "redshift": [
+      {
+        "value": "0.01409",
+        "kind": "spectroscopic",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "K. C. Chambers, T. de Boer, J. Fairlamb, M. Huber, C.-C. Lin, T. Lowe, E. Magnier, A. Schultz, R. J. Wainscoat, G. Paek, P. Minguez (IfA, University of Hawaii), S. J. Smartt, K. W. Smith (University of Oxford / Queen's University Belfast), S. Srivastav (University of Oxford), D. R. Young, M. Fulton, M. Nicholl, T. Moore, J. Weston, C. R. Angus, S. Sim (Queen's University Belfast)",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2025/04/23",
+        "source": "1"
+      }
+    ],
+    "photometry": [
+      {
+        "time": "60788.56936",
+        "magnitude": "20.03",
+        "band": "w",
+        "u_time": "MJD",
+        "source": "2",
+        "telescope": "Pan-STARRS"
+      }
+    ]
+  }
+}

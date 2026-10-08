@@ -1,0 +1,73 @@
+{
+  "FRB20250613A": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "FRB20250613A",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/20250613A",
+        "alias": "1"
+      },
+      {
+        "name": "2026TNSFR...4....1S",
+        "bibcode": "2026TNSFR...4....1S",
+        "reference": "R. M. Shannon (Swinburne University of Technology)",
+        "alias": "2"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "3"
+      }
+    ],
+    "alias": [
+      {
+        "value": "20250613A",
+        "source": "1"
+      },
+      {
+        "value": "FRB250613",
+        "source": "1"
+      },
+      {
+        "value": "FRB20250613A",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "04:36:33.000",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "-44:31:58.60",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "claimedtype": [
+      {
+        "value": "FRB",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "R. M. Shannon (Swinburne University of Technology)",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2025/06/13",
+        "source": "1"
+      }
+    ]
+  }
+}

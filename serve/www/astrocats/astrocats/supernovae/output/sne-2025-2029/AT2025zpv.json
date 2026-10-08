@@ -1,0 +1,98 @@
+{
+  "AT2025zpv": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "AT2025zpv",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/2025zpv",
+        "alias": "1"
+      },
+      {
+        "name": "2025TNSTR4020....1K",
+        "bibcode": "2025TNSTR4020....1K",
+        "reference": "Balaji Kumar",
+        "alias": "2"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "3"
+      }
+    ],
+    "alias": [
+      {
+        "value": "2025zpv",
+        "source": "1"
+      },
+      {
+        "value": "AT2025zpv",
+        "source": "1"
+      },
+      {
+        "value": "SN2025zpv",
+        "source": "1"
+      },
+      {
+        "value": "AT 2025zpv",
+        "source": "1"
+      },
+      {
+        "value": "GEOTS-Balaji-2025-10",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "02:45:17.240",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "+33:31:25.90",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "claimedtype": [
+      {
+        "value": "CV",
+        "source": "1"
+      }
+    ],
+    "redshift": [
+      {
+        "value": "0",
+        "kind": "spectroscopic",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "Balaji Kumar",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2025/10/06",
+        "source": "1"
+      }
+    ],
+    "photometry": [
+      {
+        "time": "60954.20750",
+        "magnitude": "15.60",
+        "band": "Clear",
+        "u_time": "MJD",
+        "source": "2",
+        "telescope": "GEOTS"
+      }
+    ]
+  }
+}

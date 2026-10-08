@@ -1,0 +1,91 @@
+{
+  "AT2026bzi": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "AT2026bzi",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/2026bzi",
+        "alias": "1"
+      },
+      {
+        "name": "2026TNSTR.439....1M",
+        "bibcode": "2026TNSTR.439....1M",
+        "reference": "T.Migal",
+        "alias": "2"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "3"
+      }
+    ],
+    "alias": [
+      {
+        "value": "2026bzi",
+        "source": "1"
+      },
+      {
+        "value": "AT2026bzi",
+        "source": "1"
+      },
+      {
+        "value": "SN2026bzi",
+        "source": "1"
+      },
+      {
+        "value": "AT 2026bzi",
+        "source": "1"
+      },
+      {
+        "value": "MASTER OT J084233.31-234134.6",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "08:42:33.310",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "-23:41:34.60",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "claimedtype": [
+      {
+        "value": "CV",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "T.Migal, V.Lipunov, E.Gorbovskoy, A.Kuznetsov, K.Zhirkov, I.Panchenko, N.Tiurina, P.Balanutsa, V.Topolev, D.Vlasenko, G.Antipov, A.Sankovich, Yu.Tselik, Ya.Kechin, V.Senik, A.Chasovnikov, K.Labsina, I. Gorbunov (Lomonosov MSU), O.Gress, N.Budnev (ISU), C.Francile, F. Podesta, R.Podesta, E. Gonzalez (Observatorio Astronomico Felix Aguilar (OAFA), A. Tlatov, D. Dormidontov (Kislovodsk Solar Station of the Pulkovo Observatory), A.Sosnovskij (CrAO), A. Gabovich, V.Yurkov (Blagoveschensk Educational StateUniversity), D.Buckley (SAAO), R.Rebolo (The Instituto de Astrofisica de Canarias), L.Carrasco, J.R.Valdes, V.Chavushyan, V.M.Patino Alvarez, J.Martinez, A.R.Corella, L.H.Rodriguez (INAOE, Guillermo Haro Astrophysics Observatory)",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2026/02/01",
+        "source": "1"
+      }
+    ],
+    "photometry": [
+      {
+        "time": "61072.98926",
+        "magnitude": "17.80",
+        "band": "Other",
+        "u_time": "MJD",
+        "source": "2",
+        "telescope": "MASTER"
+      }
+    ]
+  }
+}

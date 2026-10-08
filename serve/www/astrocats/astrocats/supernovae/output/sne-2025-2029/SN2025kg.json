@@ -1,0 +1,101 @@
+{
+  "SN2025kg": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "SN2025kg",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/2025kg",
+        "alias": "1"
+      },
+      {
+        "name": "2025TNSTR.151....1E",
+        "bibcode": "2025TNSTR.151....1E",
+        "reference": "Rob Eyles-Ferris",
+        "alias": "2"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "3"
+      }
+    ],
+    "alias": [
+      {
+        "value": "2025kg",
+        "source": "1"
+      },
+      {
+        "value": "PS25ch",
+        "source": "1"
+      },
+      {
+        "value": "AT2025kg",
+        "source": "1"
+      },
+      {
+        "value": "SN2025kg",
+        "source": "1"
+      },
+      {
+        "value": "SN 2025kg",
+        "source": "1"
+      },
+      {
+        "value": "BGEM J034228.38-223021.3",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "03:42:28.389",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "-22:30:21.28",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "claimedtype": [
+      {
+        "value": "Ic-BL",
+        "source": "1"
+      }
+    ],
+    "redshift": [
+      {
+        "value": "0.176",
+        "kind": "spectroscopic",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "Rob Eyles-Ferris",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2025/01/09",
+        "source": "1"
+      }
+    ],
+    "photometry": [
+      {
+        "time": "60684.83273",
+        "magnitude": "20.79",
+        "band": "g",
+        "u_time": "MJD",
+        "source": "2"
+      }
+    ]
+  }
+}

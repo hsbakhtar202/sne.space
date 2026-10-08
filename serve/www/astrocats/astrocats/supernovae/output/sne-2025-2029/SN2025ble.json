@@ -1,0 +1,102 @@
+{
+  "SN2025ble": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "SN2025ble",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/2025ble",
+        "alias": "1"
+      },
+      {
+        "name": "2025TNSTR.597....1X",
+        "bibcode": "2025TNSTR.597....1X",
+        "reference": "Zelin Xu",
+        "alias": "2"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "3"
+      }
+    ],
+    "alias": [
+      {
+        "value": "2025ble",
+        "source": "1"
+      },
+      {
+        "value": "AT2025ble",
+        "source": "1"
+      },
+      {
+        "value": "SN2025ble",
+        "source": "1"
+      },
+      {
+        "value": "SN 2025ble",
+        "source": "1"
+      },
+      {
+        "value": "WFST0496dkhg",
+        "source": "1"
+      },
+      {
+        "value": "ZTF25aadhrbs",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "02:11:59.926",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "+08:29:34.66",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "claimedtype": [
+      {
+        "value": "Ia",
+        "source": "1"
+      }
+    ],
+    "redshift": [
+      {
+        "value": "0.105",
+        "kind": "spectroscopic",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "Zelin Xu, Dezheng Meng, Ji-an Jiang, Weiyu Wu, Zhengyan Liu, Junhan Zhao, Ziqing Jia (USTC) on behalf of the WFST collaboration",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2025/01/25",
+        "source": "1"
+      }
+    ],
+    "photometry": [
+      {
+        "time": "60700.56899",
+        "magnitude": "21.43",
+        "band": "g",
+        "u_time": "MJD",
+        "source": "2",
+        "telescope": "WFST"
+      }
+    ]
+  }
+}

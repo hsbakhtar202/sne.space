@@ -1,0 +1,98 @@
+{
+  "SN2025umb": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "SN2025umb",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/2025umb",
+        "alias": "1"
+      },
+      {
+        "name": "2025TNSTR3263....1R",
+        "bibcode": "2025TNSTR3263....1R",
+        "reference": "Nabeel Rehemtulla (CIERA",
+        "alias": "2"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "3"
+      }
+    ],
+    "alias": [
+      {
+        "value": "2025umb",
+        "source": "1"
+      },
+      {
+        "value": "AT2025umb",
+        "source": "1"
+      },
+      {
+        "value": "SN2025umb",
+        "source": "1"
+      },
+      {
+        "value": "SN 2025umb",
+        "source": "1"
+      },
+      {
+        "value": "ZTF25abjmidx",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "12:23:08.037",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "+31:03:07.76",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "claimedtype": [
+      {
+        "value": "Ia",
+        "source": "1"
+      }
+    ],
+    "redshift": [
+      {
+        "value": "0.028246",
+        "kind": "spectroscopic",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "Nabeel Rehemtulla (CIERA, NU), Kaustav Kashyap Das (Caltech), Mansi Kasliwal (Caltech), Theophile Du Laz (Caltech) on behalf of ZTF",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2025/08/14",
+        "source": "1"
+      }
+    ],
+    "photometry": [
+      {
+        "time": "60901.19455",
+        "magnitude": "18.96",
+        "band": "r",
+        "u_time": "MJD",
+        "source": "2",
+        "telescope": "ZTF"
+      }
+    ]
+  }
+}

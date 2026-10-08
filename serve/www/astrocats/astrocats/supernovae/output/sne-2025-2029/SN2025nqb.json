@@ -1,0 +1,106 @@
+{
+  "SN2025nqb": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "SN2025nqb",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/2025nqb",
+        "alias": "1"
+      },
+      {
+        "name": "2025TNSTR2235....1P",
+        "bibcode": "2025TNSTR2235....1P",
+        "reference": "I. P\u00e9rez-Fournon (IAC and ULL)",
+        "alias": "2"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "3"
+      }
+    ],
+    "alias": [
+      {
+        "value": "2025nqb",
+        "source": "1"
+      },
+      {
+        "value": "AT2025nqb",
+        "source": "1"
+      },
+      {
+        "value": "GOTO25dov",
+        "source": "1"
+      },
+      {
+        "value": "SN2025nqb",
+        "source": "1"
+      },
+      {
+        "value": "ATLAS25gfc",
+        "source": "1"
+      },
+      {
+        "value": "SN 2025nqb",
+        "source": "1"
+      },
+      {
+        "value": "ZTF25aavgfqk",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "12:31:40.351",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "+03:55:37.49",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "claimedtype": [
+      {
+        "value": "Ib",
+        "source": "1"
+      }
+    ],
+    "redshift": [
+      {
+        "value": "0.015109",
+        "kind": "spectroscopic",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "I. P\u00e9rez-Fournon (IAC and ULL), D. Cano-Morales, I. Correa-Plasencia, A.E. Hern\u00e1ndez-D\u00edaz (ULL), F. Poidevin (IAC and ULL), C. Jim\u00e9nez \u00c1ngel (GRANTECAN), R. Shirley (MPE), R. Marques-Chaves (Univ. of Geneva), and S. Geier (GRANTECAN & IAC) on behalf of SGLF",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2025/06/16",
+        "source": "1"
+      }
+    ],
+    "photometry": [
+      {
+        "time": "60842.19586",
+        "magnitude": "18.87",
+        "band": "r",
+        "u_time": "MJD",
+        "source": "2",
+        "telescope": "SGLF"
+      }
+    ]
+  }
+}

@@ -1,0 +1,110 @@
+{
+  "SN2025rmb": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "SN2025rmb",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/2025rmb",
+        "alias": "1"
+      },
+      {
+        "name": "2025TNSTR2769....1K",
+        "bibcode": "2025TNSTR2769....1K",
+        "reference": "A. Kumar",
+        "alias": "2"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "3"
+      }
+    ],
+    "alias": [
+      {
+        "value": "2025rmb",
+        "source": "1"
+      },
+      {
+        "value": "PS25kpq",
+        "source": "1"
+      },
+      {
+        "value": "AT2025rmb",
+        "source": "1"
+      },
+      {
+        "value": "GOTO25faz",
+        "source": "1"
+      },
+      {
+        "value": "SN2025rmb",
+        "source": "1"
+      },
+      {
+        "value": "ATLAS25iaz",
+        "source": "1"
+      },
+      {
+        "value": "SN 2025rmb",
+        "source": "1"
+      },
+      {
+        "value": "ZTF25abdhnor",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "22:44:58.716",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "-20:33:33.36",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "claimedtype": [
+      {
+        "value": "II",
+        "source": "1"
+      }
+    ],
+    "redshift": [
+      {
+        "value": "0.032596",
+        "kind": "spectroscopic",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "A. Kumar, D. O'Neill, K. Ackley, M. Dyer, J. Lyman, K. Ulaczyk, D. Steeghs, D. Galloway, V. Dhillon, P. O'Brien, G. Ramsay, K. Noysena, R. Kotak, R. Breton, J. Casares, L. Nuttall, B. Godson, T. Killestein, M. Pursiainen, on behalf of GOTO collaboration",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2025/07/18",
+        "source": "1"
+      }
+    ],
+    "photometry": [
+      {
+        "time": "60874.65781",
+        "magnitude": "19.05",
+        "band": "L",
+        "u_time": "MJD",
+        "source": "2",
+        "telescope": "GOTO"
+      }
+    ]
+  }
+}

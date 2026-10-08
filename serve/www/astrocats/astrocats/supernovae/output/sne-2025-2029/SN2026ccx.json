@@ -1,0 +1,110 @@
+{
+  "SN2026ccx": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "SN2026ccx",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/2026ccx",
+        "alias": "1"
+      },
+      {
+        "name": "2026TNSTR.469....1K",
+        "bibcode": "2026TNSTR.469....1K",
+        "reference": "M. Kennedy",
+        "alias": "2"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "3"
+      }
+    ],
+    "alias": [
+      {
+        "value": "2026ccx",
+        "source": "1"
+      },
+      {
+        "value": "PS26ady",
+        "source": "1"
+      },
+      {
+        "value": "AT2026ccx",
+        "source": "1"
+      },
+      {
+        "value": "GOTO26alh",
+        "source": "1"
+      },
+      {
+        "value": "SN2026ccx",
+        "source": "1"
+      },
+      {
+        "value": "ATLAS26bka",
+        "source": "1"
+      },
+      {
+        "value": "SN 2026ccx",
+        "source": "1"
+      },
+      {
+        "value": "ZTF26aaeuqwl",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "08:38:00.960",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "+09:18:22.39",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "claimedtype": [
+      {
+        "value": "Ia",
+        "source": "1"
+      }
+    ],
+    "redshift": [
+      {
+        "value": "0.064145",
+        "kind": "spectroscopic",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "M. Kennedy, D. O'Neill, K. Ackley, M. Dyer, J. Lyman, K. Ulaczyk, D. Steeghs, D. Galloway, V. Dhillon, P. O'Brien, G. Ramsay, K. Noysena, R. Kotak, R. Breton, J. Casares, L. Nuttall, R. Starling, B. Gompertz, B. Godson, T. Killestein, A. Kumar, M. Pursiainen, on behalf of GOTO collaboration",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2026/02/04",
+        "source": "1"
+      }
+    ],
+    "photometry": [
+      {
+        "time": "61075.53248",
+        "magnitude": "19.10",
+        "band": "L",
+        "u_time": "MJD",
+        "source": "2",
+        "telescope": "GOTO"
+      }
+    ]
+  }
+}

@@ -1,0 +1,106 @@
+{
+  "SN2025rwz": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "SN2025rwz",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/2025rwz",
+        "alias": "1"
+      },
+      {
+        "name": "2025TNSTR2855....1P",
+        "bibcode": "2025TNSTR2855....1P",
+        "reference": "Daniel Perley (LJMU)",
+        "alias": "2"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "3"
+      }
+    ],
+    "alias": [
+      {
+        "value": "2025rwz",
+        "source": "1"
+      },
+      {
+        "value": "AT2025rwz",
+        "source": "1"
+      },
+      {
+        "value": "GOTO25fpm",
+        "source": "1"
+      },
+      {
+        "value": "SN2025rwz",
+        "source": "1"
+      },
+      {
+        "value": "ATLAS25igd",
+        "source": "1"
+      },
+      {
+        "value": "SN 2025rwz",
+        "source": "1"
+      },
+      {
+        "value": "ZTF25abbzctu",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "20:30:40.609",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "+26:03:34.59",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "claimedtype": [
+      {
+        "value": "Ia",
+        "source": "1"
+      }
+    ],
+    "redshift": [
+      {
+        "value": "0.066",
+        "kind": "spectroscopic",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "Daniel Perley (LJMU), Christoffer Fremling (Caltech), Theophile du Laz (Caltech) on behalf of ZTF",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2025/07/19",
+        "source": "1"
+      }
+    ],
+    "photometry": [
+      {
+        "time": "60875.35019",
+        "magnitude": "19.96",
+        "band": "r",
+        "u_time": "MJD",
+        "source": "2",
+        "telescope": "ZTF"
+      }
+    ]
+  }
+}

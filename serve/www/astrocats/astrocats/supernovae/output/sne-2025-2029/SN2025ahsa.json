@@ -1,0 +1,114 @@
+{
+  "SN2025ahsa": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "SN2025ahsa",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/2025ahsa",
+        "alias": "1"
+      },
+      {
+        "name": "2025TNSTR5093....1R",
+        "bibcode": "2025TNSTR5093....1R",
+        "reference": "Nabeel Rehemtulla (CIERA",
+        "alias": "2"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "3"
+      }
+    ],
+    "alias": [
+      {
+        "value": "PS26agk",
+        "source": "1"
+      },
+      {
+        "value": "2025ahsa",
+        "source": "1"
+      },
+      {
+        "value": "GOTO26br",
+        "source": "1"
+      },
+      {
+        "value": "AT2025ahsa",
+        "source": "1"
+      },
+      {
+        "value": "ATLAS25qjm",
+        "source": "1"
+      },
+      {
+        "value": "SN2025ahsa",
+        "source": "1"
+      },
+      {
+        "value": "SN 2025ahsa",
+        "source": "1"
+      },
+      {
+        "value": "ZTF25acjpvvr",
+        "source": "1"
+      },
+      {
+        "value": "WFST260102rwhg",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "14:35:00.210",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "+00:59:10.38",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "claimedtype": [
+      {
+        "value": "Ia",
+        "source": "1"
+      }
+    ],
+    "redshift": [
+      {
+        "value": "0.015",
+        "kind": "spectroscopic",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "Nabeel Rehemtulla (CIERA, NU), Wynn Jacobson-Gal\u00e1n (Caltech), Theophile du Laz (Caltech) on behalf of ZTF",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2025/12/20",
+        "source": "1"
+      }
+    ],
+    "photometry": [
+      {
+        "time": "61029.50438",
+        "magnitude": "14.93",
+        "band": "g",
+        "u_time": "MJD",
+        "source": "2",
+        "telescope": "ZTF"
+      }
+    ]
+  }
+}

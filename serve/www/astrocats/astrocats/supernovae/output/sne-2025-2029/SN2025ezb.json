@@ -1,0 +1,114 @@
+{
+  "SN2025ezb": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "SN2025ezb",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/2025ezb",
+        "alias": "1"
+      },
+      {
+        "name": "2025TNSTR1062....1X",
+        "bibcode": "2025TNSTR1062....1X",
+        "reference": "Zelin Xu",
+        "alias": "2"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "3"
+      }
+    ],
+    "alias": [
+      {
+        "value": "2025ezb",
+        "source": "1"
+      },
+      {
+        "value": "PS25bzb",
+        "source": "1"
+      },
+      {
+        "value": "AT2025ezb",
+        "source": "1"
+      },
+      {
+        "value": "GOTO25bfg",
+        "source": "1"
+      },
+      {
+        "value": "SN2025ezb",
+        "source": "1"
+      },
+      {
+        "value": "ATLAS25cwv",
+        "source": "1"
+      },
+      {
+        "value": "SN 2025ezb",
+        "source": "1"
+      },
+      {
+        "value": "WFST0547cguo",
+        "source": "1"
+      },
+      {
+        "value": "ZTF25aajqkss",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "11:09:10.152",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "+01:58:06.44",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "claimedtype": [
+      {
+        "value": "Ia",
+        "source": "1"
+      }
+    ],
+    "redshift": [
+      {
+        "value": "0.062",
+        "kind": "spectroscopic",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "Zelin Xu, Dezheng Meng, Ji-an Jiang, Weiyu Wu, Zhengyan Liu, Junhan Zhao, Ziqing Jia (USTC) on behalf of the WFST collaboration",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2025/03/17",
+        "source": "1"
+      }
+    ],
+    "photometry": [
+      {
+        "time": "60751.66032",
+        "magnitude": "21.13",
+        "band": "g",
+        "u_time": "MJD",
+        "source": "2",
+        "telescope": "WFST"
+      }
+    ]
+  }
+}

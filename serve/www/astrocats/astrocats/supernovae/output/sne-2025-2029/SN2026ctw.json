@@ -1,0 +1,114 @@
+{
+  "SN2026ctw": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "SN2026ctw",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/2026ctw",
+        "alias": "1"
+      },
+      {
+        "name": "2026TNSTR.571....1H",
+        "bibcode": "2026TNSTR.571....1H",
+        "reference": "Xander J. Hall (Carnegie Mellon U.)",
+        "alias": "2"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "3"
+      }
+    ],
+    "alias": [
+      {
+        "value": "2026ctw",
+        "source": "1"
+      },
+      {
+        "value": "PS26aga",
+        "source": "1"
+      },
+      {
+        "value": "AT2026ctw",
+        "source": "1"
+      },
+      {
+        "value": "GOTO26auz",
+        "source": "1"
+      },
+      {
+        "value": "SN2026ctw",
+        "source": "1"
+      },
+      {
+        "value": "SN 2026ctw",
+        "source": "1"
+      },
+      {
+        "value": "ZTF26aagmisy",
+        "source": "1"
+      },
+      {
+        "value": "T202602071006577p015538",
+        "source": "1"
+      },
+      {
+        "value": "LSST-P-DO-170019717277810735",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "10:06:57.670",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "+01:55:37.43",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "claimedtype": [
+      {
+        "value": "Ia",
+        "source": "1"
+      }
+    ],
+    "redshift": [
+      {
+        "value": "0.15",
+        "kind": "spectroscopic",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "Xander J. Hall (Carnegie Mellon U.), Lei Hu (Carnegie Mellon U.), Antonella Palmese (Carnegie Mellon U.), Brendan O'Connor (Carnegie Mellon U.), Yuhan Chen (UC Berkeley), Aidan Catalano (Carnegie Mellon U.), Xingzhuo Chen (Texas A&M U.), Lifan Wang (Texas A&M U.), Tom\u00e1s Cabrera (Carnegie Mellon U.), Keerthi Kunnumkai (Carnegie Mellon U.) on behalf of the DECam DESI Transients Survey team",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2026/02/07",
+        "source": "1"
+      }
+    ],
+    "photometry": [
+      {
+        "time": "61078.30688",
+        "magnitude": "20.71",
+        "band": "r",
+        "u_time": "MJD",
+        "source": "2",
+        "telescope": "DESIRT"
+      }
+    ]
+  }
+}

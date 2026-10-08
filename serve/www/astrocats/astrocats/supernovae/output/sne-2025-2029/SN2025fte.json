@@ -1,0 +1,98 @@
+{
+  "SN2025fte": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "SN2025fte",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/2025fte",
+        "alias": "1"
+      },
+      {
+        "name": "2025TNSTR1126....1H",
+        "bibcode": "2025TNSTR1126....1H",
+        "reference": "Xander J. Hall (Carnegie Mellon U.)",
+        "alias": "2"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "3"
+      }
+    ],
+    "alias": [
+      {
+        "value": "2025fte",
+        "source": "1"
+      },
+      {
+        "value": "AT2025fte",
+        "source": "1"
+      },
+      {
+        "value": "SN2025fte",
+        "source": "1"
+      },
+      {
+        "value": "SN 2025fte",
+        "source": "1"
+      },
+      {
+        "value": "T202503021001146p015741",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "10:01:14.614",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "+01:57:41.45",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "claimedtype": [
+      {
+        "value": "Ia",
+        "source": "1"
+      }
+    ],
+    "redshift": [
+      {
+        "value": "0.06",
+        "kind": "spectroscopic",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "Xander J. Hall (Carnegie Mellon U.), Lei Hu (Carnegie Mellon U.), Antonella Palmese (Carnegie Mellon U.), Brendan O'Connor (Carnegie Mellon U.), Yuhan Chen (UC Berkeley), Aidan Catalano (Carnegie Mellon U.), Xingzhuo Chen (Texas A&M U.), Lifan Wang (Texas A&M U.), Tom\u00e1s Cabrera (Carnegie Mellon U.), Keerthi Kunnumkai (Carnegie Mellon U.) on behalf of the DECam DESI Transients Survey team",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2025/03/02",
+        "source": "1"
+      }
+    ],
+    "photometry": [
+      {
+        "time": "60736.18678",
+        "magnitude": "20.25",
+        "band": "g",
+        "u_time": "MJD",
+        "source": "2",
+        "telescope": "DESIRT"
+      }
+    ]
+  }
+}

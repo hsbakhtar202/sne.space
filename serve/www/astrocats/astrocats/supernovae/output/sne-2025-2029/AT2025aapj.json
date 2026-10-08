@@ -1,0 +1,118 @@
+{
+  "AT2025aapj": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "AT2025aapj",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/2025aapj",
+        "alias": "1"
+      },
+      {
+        "name": "2025TNSTR4146....1M",
+        "bibcode": "2025TNSTR4146....1M",
+        "reference": "E. Mej\u00eda-Mart\u00ednez",
+        "alias": "2"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "3"
+      }
+    ],
+    "alias": [
+      {
+        "value": "2025aapj",
+        "source": "1"
+      },
+      {
+        "value": "GOTO25ivy",
+        "source": "1"
+      },
+      {
+        "value": "AT2025aapj",
+        "source": "1"
+      },
+      {
+        "value": "SN2025aapj",
+        "source": "1"
+      },
+      {
+        "value": "AT 2025aapj",
+        "source": "1"
+      },
+      {
+        "value": "ZTF25abxdetz",
+        "source": "1"
+      },
+      {
+        "value": "ULL-ASTRO-MASTER-7",
+        "source": "1"
+      },
+      {
+        "value": "MASTER OT J004005.99+404855.3",
+        "source": "1"
+      },
+      {
+        "value": "MASTER OT J004006.05+404853.2",
+        "source": "1"
+      },
+      {
+        "value": "MASTER OT J004006.11+404854.7",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "00:40:06.064",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "+40:48:54.96",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "claimedtype": [
+      {
+        "value": "Nova",
+        "source": "1"
+      }
+    ],
+    "redshift": [
+      {
+        "value": "0",
+        "kind": "spectroscopic",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "E. Mej\u00eda-Mart\u00ednez, J. Basurto Merino, P.G. Berdayes, A. Caballero-Almagro, A. Cer\u00f3n, M. Contreras, F. D\u00edaz-Segado, T. Ferrer-Lavi\u00f1a, B. Gandolfi, V. Ghiraldo, J. Hern\u00e1ndez Fung, L. Juli\u00e1-Maroto,  E. Lekaroz-Urriza, M. Manzano Garc\u00eda,  J. Prieto Polo, M. Pulido-Torres, M. Quintana-Ansaldo, A. Schenone-Zanuzzi, A. Selezneva, T. Tundidor Rodr\u00edguez,  E. Urquijo-Rodr\u00edguez (all ULL), M. Abdul-Masih (IAC and ULL), and I. P\u00e9rez-Fournon (IAC and ULL)",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2025/10/16",
+        "source": "1"
+      }
+    ],
+    "photometry": [
+      {
+        "time": "60964.30179",
+        "magnitude": "17.88",
+        "band": "g",
+        "u_time": "MJD",
+        "source": "2",
+        "telescope": "ULL-ASTRO-MASTER"
+      }
+    ]
+  }
+}

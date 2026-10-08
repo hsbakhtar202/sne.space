@@ -1,0 +1,98 @@
+{
+  "AT2025axj": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "AT2025axj",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/2025axj",
+        "alias": "1"
+      },
+      {
+        "name": "2025TNSTR.477....1I",
+        "bibcode": "2025TNSTR.477....1I",
+        "reference": "Koichi Itagaki",
+        "alias": "2"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "3"
+      }
+    ],
+    "alias": [
+      {
+        "value": "2025axj",
+        "source": "1"
+      },
+      {
+        "value": "AT2025axj",
+        "source": "1"
+      },
+      {
+        "value": "SN2025axj",
+        "source": "1"
+      },
+      {
+        "value": "AT 2025axj",
+        "source": "1"
+      },
+      {
+        "value": "TCP J06483349+0656228",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "06:48:33.490",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "+06:56:22.80",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "claimedtype": [
+      {
+        "value": "CV",
+        "source": "1"
+      }
+    ],
+    "redshift": [
+      {
+        "value": "0",
+        "kind": "spectroscopic",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "Koichi Itagaki",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2025/02/04",
+        "source": "1"
+      }
+    ],
+    "photometry": [
+      {
+        "time": "60710.47032",
+        "magnitude": "12.40",
+        "band": "Clear",
+        "u_time": "MJD",
+        "source": "2",
+        "telescope": "Padova-Asiago"
+      }
+    ]
+  }
+}

@@ -1,0 +1,106 @@
+{
+  "SN2025cm": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "SN2025cm",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/2025cm",
+        "alias": "1"
+      },
+      {
+        "name": "2025TNSTR..60....1J",
+        "bibcode": "2025TNSTR..60....1J",
+        "reference": "D. O. Jones (UC Santa Cruz)",
+        "alias": "2"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "3"
+      }
+    ],
+    "alias": [
+      {
+        "value": "2025cm",
+        "source": "1"
+      },
+      {
+        "value": "PS25an",
+        "source": "1"
+      },
+      {
+        "value": "AT2025cm",
+        "source": "1"
+      },
+      {
+        "value": "SN2025cm",
+        "source": "1"
+      },
+      {
+        "value": "SN 2025cm",
+        "source": "1"
+      },
+      {
+        "value": "ATLAS25auz",
+        "source": "1"
+      },
+      {
+        "value": "BGEM J032915.10-043230.1",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "03:29:15.109",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "-04:32:29.87",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "claimedtype": [
+      {
+        "value": "II",
+        "source": "1"
+      }
+    ],
+    "redshift": [
+      {
+        "value": "0.03",
+        "kind": "spectroscopic",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "D. O. Jones (UC Santa Cruz), K. D. French (Carnegie, Illinois), A. Agnello, C. R. Angus, Z. Ansari, N. Arendse, C. Gall, C. Grillo, S. H. Bruun, C. Hede, J. Hjorth, L. Izzo, H. Korhonen, S. Raimundo, D. Kodi Ramanah, A. Sarangi, R. Wojtak, H. Pfister (DARK, U Copenhagen), K. Auchettl (DARK, UC Santa Cruz, U Melbourne), K. C. Chambers, M. E. Huber, E. A. Magnier, T. J. L. de Boer, J. R. Fairlamb, C. C. Lin, R. J. Wainscoat, T. Lowe, H. Gao, A. S. B. Schultz, P. Minguez (IfA, Hawaii), A. Engel, A. Gagliano, G. Narayan, M. Soraisam (Illinois), Q. Wang (JHU), A. Rest (JHU, STScI), S. J. Smartt, K. W. Smith (Queen's University Belfast), K. Alexander, P. Blanchard, L. DeMarchi, A. Hajela, W. Jacobson-Galan, R. Margutti, D. Matthews, C. Stauffer, M. Stroh, G. Terreran (Northwestern), M. Drout (U Toronto), D. A. Coulter, G. Dimitriadis, R. J. Foley, T. Hung, C. D. Kilpatrick, C. Rojas-Bravo, M. R. Siebert (UC Santa Cruz), E. Ramirez-Ruiz (UC Santa Cruz, DARK)",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2025/01/05",
+        "source": "1"
+      }
+    ],
+    "photometry": [
+      {
+        "time": "60680.31754",
+        "magnitude": "19.75",
+        "band": "g",
+        "u_time": "MJD",
+        "source": "2",
+        "telescope": "YSE"
+      }
+    ]
+  }
+}

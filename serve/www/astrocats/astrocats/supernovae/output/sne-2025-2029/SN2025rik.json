@@ -1,0 +1,110 @@
+{
+  "SN2025rik": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "SN2025rik",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/2025rik",
+        "alias": "1"
+      },
+      {
+        "name": "2025TNSTR2739....1T",
+        "bibcode": "2025TNSTR2739....1T",
+        "reference": "J. Tonry",
+        "alias": "2"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "3"
+      }
+    ],
+    "alias": [
+      {
+        "value": "2025rik",
+        "source": "1"
+      },
+      {
+        "value": "PS25fgn",
+        "source": "1"
+      },
+      {
+        "value": "AT2025rik",
+        "source": "1"
+      },
+      {
+        "value": "GOTO25fkz",
+        "source": "1"
+      },
+      {
+        "value": "SN2025rik",
+        "source": "1"
+      },
+      {
+        "value": "ATLAS25hsv",
+        "source": "1"
+      },
+      {
+        "value": "SN 2025rik",
+        "source": "1"
+      },
+      {
+        "value": "ZTF18aawdllh",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "14:31:38.573",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "+36:32:20.44",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "claimedtype": [
+      {
+        "value": "Iax[02cx-like]",
+        "source": "1"
+      }
+    ],
+    "redshift": [
+      {
+        "value": "0.029176",
+        "kind": "spectroscopic",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "J. Tonry, L. Denneau, H. Weiland, R. Siverd (IfA, University of Hawaii), N. Erasmus, W. Koorts (South African Astronomical Observatory), A. Jordan, V. Suc (UAI, Obstech), M. R. Alarc\u00f3n, J. Licandro, P. Nichita (IAC), S. J. Smartt, K. W. Smith (Oxford/QUB), D. R. Young, M. Nicholl, M. Fulton, M. McCollum, T. Moore, J. Weston, X. Sheng, C. R. Angus, A. Wilson, A. Aamer, D. Magill (QUB), P. Ramsden (Birmingham/QUB), L. Shingles (GSI/QUB), S. Srivastav, J. H. Gillanders, H. Stevance, A. J. Cooper, F. Stoppa, J. Tweddle (Oxford), L. Rhodes (TSI/McGill), A. Rest (STScI), T.-W. Chen (NCU), C. Stubbs (Harvard), J. S. Sommer (LMU), B. P. Schmidt (ANU)",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2025/07/16",
+        "source": "1"
+      }
+    ],
+    "photometry": [
+      {
+        "time": "60872.35184",
+        "magnitude": "18.80",
+        "band": "orange",
+        "u_time": "MJD",
+        "source": "2",
+        "telescope": "ATLAS"
+      }
+    ]
+  }
+}

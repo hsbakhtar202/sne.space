@@ -1,0 +1,122 @@
+{
+  "SN2025fov": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "SN2025fov",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/2025fov",
+        "alias": "1"
+      },
+      {
+        "name": "2025TNSTR1104....1P",
+        "bibcode": "2025TNSTR1104....1P",
+        "reference": "Daniel Perley (LJMU)",
+        "alias": "2"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "3"
+      }
+    ],
+    "alias": [
+      {
+        "value": "2025fov",
+        "source": "1"
+      },
+      {
+        "value": "PS25dlw",
+        "source": "1"
+      },
+      {
+        "value": "AT2025fov",
+        "source": "1"
+      },
+      {
+        "value": "GOTO25bod",
+        "source": "1"
+      },
+      {
+        "value": "SN2025fov",
+        "source": "1"
+      },
+      {
+        "value": "ATLAS25dhc",
+        "source": "1"
+      },
+      {
+        "value": "SN 2025fov",
+        "source": "1"
+      },
+      {
+        "value": "ZTF25aakhihh",
+        "source": "1"
+      },
+      {
+        "value": "ZTF25aamxnbm",
+        "source": "1"
+      },
+      {
+        "value": "MASTER OT J153751.63+083325.9",
+        "source": "1"
+      },
+      {
+        "value": "MASTER OT J153751.65+083325.7",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "15:37:51.622",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "+08:33:26.02",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "claimedtype": [
+      {
+        "value": "Ia",
+        "source": "1"
+      }
+    ],
+    "redshift": [
+      {
+        "value": "0.071",
+        "kind": "spectroscopic",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "Daniel Perley (LJMU), Christoffer Fremling (Caltech), Theophile du Laz (Caltech) on behalf of ZTF",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2025/03/21",
+        "source": "1"
+      }
+    ],
+    "photometry": [
+      {
+        "time": "60755.37978",
+        "magnitude": "20.02",
+        "band": "g",
+        "u_time": "MJD",
+        "source": "2",
+        "telescope": "ZTF"
+      }
+    ]
+  }
+}

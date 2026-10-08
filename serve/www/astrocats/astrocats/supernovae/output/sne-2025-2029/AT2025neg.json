@@ -1,0 +1,98 @@
+{
+  "AT2025neg": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "AT2025neg",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/2025neg",
+        "alias": "1"
+      },
+      {
+        "name": "2025TNSTR2154....1T",
+        "bibcode": "2025TNSTR2154....1T",
+        "reference": "N.Tiurina",
+        "alias": "2"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "3"
+      }
+    ],
+    "alias": [
+      {
+        "value": "2025neg",
+        "source": "1"
+      },
+      {
+        "value": "AT2025neg",
+        "source": "1"
+      },
+      {
+        "value": "SN2025neg",
+        "source": "1"
+      },
+      {
+        "value": "AT 2025neg",
+        "source": "1"
+      },
+      {
+        "value": "MASTER OT J123453.52-483804.6",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "12:34:53.520",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "-48:38:04.60",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "claimedtype": [
+      {
+        "value": "CV",
+        "source": "1"
+      }
+    ],
+    "redshift": [
+      {
+        "value": "0",
+        "kind": "spectroscopic",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "N.Tiurina, V.Lipunov, E.Gorbovskoy, A.Kuznetsov, K.Zhirkov, I.Panchenko, P.Balanutsa, V.Topolev, D.Vlasenko, G.Antipov, A.Sankovich, Yu.Tselik, Ya.Kechin, V.Senik, A.Chasovnikov, K.Labsina, I. Gorbunov (Lomonosov MSU), O.Gress, N.Budnev (ISU), C.Francile, F. Podesta, R.Podesta, E. Gonzalez (Observatorio Astronomico Felix Aguilar (OAFA), A. Tlatov, D. Dormidontov (Kislovodsk Solar Station of the Pulkovo Observatory), A.Sosnovskij (CrAO), A. Gabovich, V.Yurkov (Blagoveschensk Educational StateUniversity), D.Buckley (SAAO), R.Rebolo (The Instituto de Astrofisica de Canarias), L.Carrasco, J.R.Valdes, V.Chavushyan, V.M.Patino Alvarez, J.Martinez, A.R.Corella, L.H.Rodriguez (INAOE, Guillermo Haro Astrophysics Observatory)",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2025/06/06",
+        "source": "1"
+      }
+    ],
+    "photometry": [
+      {
+        "time": "60832.14569",
+        "magnitude": "16.10",
+        "band": "Other",
+        "u_time": "MJD",
+        "source": "2",
+        "telescope": "MASTER"
+      }
+    ]
+  }
+}

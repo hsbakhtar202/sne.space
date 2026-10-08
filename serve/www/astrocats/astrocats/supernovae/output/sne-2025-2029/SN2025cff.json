@@ -1,0 +1,114 @@
+{
+  "SN2025cff": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "SN2025cff",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/2025cff",
+        "alias": "1"
+      },
+      {
+        "name": "2025TNSTR.704....1X",
+        "bibcode": "2025TNSTR.704....1X",
+        "reference": "Jianlin Xu",
+        "alias": "2"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "3"
+      }
+    ],
+    "alias": [
+      {
+        "value": "2025cff",
+        "source": "1"
+      },
+      {
+        "value": "PS25bdu",
+        "source": "1"
+      },
+      {
+        "value": "AT2025cff",
+        "source": "1"
+      },
+      {
+        "value": "GOTO25bee",
+        "source": "1"
+      },
+      {
+        "value": "SN2025cff",
+        "source": "1"
+      },
+      {
+        "value": "ATLAS25bvx",
+        "source": "1"
+      },
+      {
+        "value": "KATS25D006",
+        "source": "1"
+      },
+      {
+        "value": "SN 2025cff",
+        "source": "1"
+      },
+      {
+        "value": "ZTF25aagbtlp",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "18:04:54.502",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "+39:40:50.16",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "claimedtype": [
+      {
+        "value": "Ia",
+        "source": "1"
+      }
+    ],
+    "redshift": [
+      {
+        "value": "0.041",
+        "kind": "spectroscopic",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "Jianlin Xu, Mi Zhang, Guoyou Sun, Jiangao Ruan, Jingyuan Zhao, Wenjie Zhou, Yong Ma, Ye, Zhuoyang Chen (Xingming Obs.), Hanjie Tan (AUUK), Guangwei Wu (NAAA), Xing Gao, Ali Esamdin, Chunhai Bai, Yong Wang (XAO), on behalf of the KATS team",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2025/02/19",
+        "source": "1"
+      }
+    ],
+    "photometry": [
+      {
+        "time": "60725.97598",
+        "magnitude": "18.83",
+        "band": "Clear",
+        "u_time": "MJD",
+        "source": "2",
+        "telescope": "XOSS"
+      }
+    ]
+  }
+}

@@ -1,0 +1,114 @@
+{
+  "SN2026cli": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "SN2026cli",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/2026cli",
+        "alias": "1"
+      },
+      {
+        "name": "2026TNSTR.540....1X",
+        "bibcode": "2026TNSTR.540....1X",
+        "reference": "Zelin Xu",
+        "alias": "2"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "3"
+      }
+    ],
+    "alias": [
+      {
+        "value": "2026cli",
+        "source": "1"
+      },
+      {
+        "value": "PS26ajq",
+        "source": "1"
+      },
+      {
+        "value": "AT2026cli",
+        "source": "1"
+      },
+      {
+        "value": "GOTO26arv",
+        "source": "1"
+      },
+      {
+        "value": "SN2026cli",
+        "source": "1"
+      },
+      {
+        "value": "ATLAS26bvp",
+        "source": "1"
+      },
+      {
+        "value": "SN 2026cli",
+        "source": "1"
+      },
+      {
+        "value": "ZTF26aafqpqd",
+        "source": "1"
+      },
+      {
+        "value": "WFST260206dnbi",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "10:40:33.442",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "+02:29:21.58",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "claimedtype": [
+      {
+        "value": "Ia",
+        "source": "1"
+      }
+    ],
+    "redshift": [
+      {
+        "value": "0.08154",
+        "kind": "spectroscopic",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "Zelin Xu, Dezheng Meng, Ji-an Jiang, Weiyu Wu, Zhengyan Liu, Junhan Zhao, Ziqing Jia (USTC) on behalf of the WFST collaboration",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2026/02/06",
+        "source": "1"
+      }
+    ],
+    "photometry": [
+      {
+        "time": "61077.88133",
+        "magnitude": "20.95",
+        "band": "g",
+        "u_time": "MJD",
+        "source": "2",
+        "telescope": "WFST"
+      }
+    ]
+  }
+}

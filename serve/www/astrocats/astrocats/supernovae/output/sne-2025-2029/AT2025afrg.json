@@ -1,0 +1,97 @@
+{
+  "AT2025afrg": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "AT2025afrg",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/2025afrg",
+        "alias": "1"
+      },
+      {
+        "name": "2025TNSTR4784....1F",
+        "bibcode": "2025TNSTR4784....1F",
+        "reference": "R\u00f3bert Fidrich",
+        "alias": "2"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "3"
+      }
+    ],
+    "alias": [
+      {
+        "value": "2025afrg",
+        "source": "1"
+      },
+      {
+        "value": "GOTO25mfc",
+        "source": "1"
+      },
+      {
+        "value": "AT2025afrg",
+        "source": "1"
+      },
+      {
+        "value": "SN2025afrg",
+        "source": "1"
+      },
+      {
+        "value": "AT 2025afrg",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "00:42:42.909",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "+41:17:34.73",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "claimedtype": [
+      {
+        "value": "Nova",
+        "source": "1"
+      }
+    ],
+    "redshift": [
+      {
+        "value": "0",
+        "kind": "spectroscopic",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "R\u00f3bert Fidrich",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2025/12/01",
+        "source": "1"
+      }
+    ],
+    "photometry": [
+      {
+        "time": "61010.10750",
+        "magnitude": "18.20",
+        "band": "Clear",
+        "u_time": "MJD",
+        "source": "2"
+      }
+    ]
+  }
+}

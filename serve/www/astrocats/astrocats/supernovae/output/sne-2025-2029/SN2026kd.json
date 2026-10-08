@@ -1,0 +1,106 @@
+{
+  "SN2026kd": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "SN2026kd",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/2026kd",
+        "alias": "1"
+      },
+      {
+        "name": "2026TNSTR..90....1O",
+        "bibcode": "2026TNSTR..90....1O",
+        "reference": "D. O'Neill",
+        "alias": "2"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "3"
+      }
+    ],
+    "alias": [
+      {
+        "value": "2026kd",
+        "source": "1"
+      },
+      {
+        "value": "AT2026kd",
+        "source": "1"
+      },
+      {
+        "value": "GOTO26dn",
+        "source": "1"
+      },
+      {
+        "value": "SN2026kd",
+        "source": "1"
+      },
+      {
+        "value": "SN 2026kd",
+        "source": "1"
+      },
+      {
+        "value": "ATLAS26afe",
+        "source": "1"
+      },
+      {
+        "value": "ZTF26aaabipd",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "03:54:16.027",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "+15:55:38.10",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "claimedtype": [
+      {
+        "value": "Ib",
+        "source": "1"
+      }
+    ],
+    "redshift": [
+      {
+        "value": "0.022222",
+        "kind": "spectroscopic",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "D. O'Neill, K. Ackley, M. Dyer, J. Lyman, K. Ulaczyk, D. Steeghs, D. Galloway, V. Dhillon, P. O'Brien, G. Ramsay, K. Noysena, R. Kotak, R. Breton, J. Casares, L. Nuttall, R. Starling, B. Gompertz, B. Godson, T. Killestein, A. Kumar, M. Pursiainen, on behalf of GOTO collaboration",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2026/01/09",
+        "source": "1"
+      }
+    ],
+    "photometry": [
+      {
+        "time": "61049.86213",
+        "magnitude": "19.48",
+        "band": "L",
+        "u_time": "MJD",
+        "source": "2",
+        "telescope": "GOTO"
+      }
+    ]
+  }
+}

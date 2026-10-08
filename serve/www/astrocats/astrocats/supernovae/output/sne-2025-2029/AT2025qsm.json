@@ -1,0 +1,106 @@
+{
+  "AT2025qsm": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "AT2025qsm",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/2025qsm",
+        "alias": "1"
+      },
+      {
+        "name": "2025TNSTR2640....1Z",
+        "bibcode": "2025TNSTR2640....1Z",
+        "reference": "Jingyuan Zhao",
+        "alias": "2"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "3"
+      }
+    ],
+    "alias": [
+      {
+        "value": "2025qsm",
+        "source": "1"
+      },
+      {
+        "value": "AT2025qsm",
+        "source": "1"
+      },
+      {
+        "value": "GOTO25evz",
+        "source": "1"
+      },
+      {
+        "value": "SN2025qsm",
+        "source": "1"
+      },
+      {
+        "value": "AT 2025qsm",
+        "source": "1"
+      },
+      {
+        "value": "ATLAS25hqv",
+        "source": "1"
+      },
+      {
+        "value": "ZTF25abbgzpf",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "00:42:48.636",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "+41:13:51.14",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "claimedtype": [
+      {
+        "value": "Nova",
+        "source": "1"
+      }
+    ],
+    "redshift": [
+      {
+        "value": "0",
+        "kind": "spectroscopic",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "Jingyuan Zhao",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2025/07/10",
+        "source": "1"
+      }
+    ],
+    "photometry": [
+      {
+        "time": "60866.13443",
+        "magnitude": "17.99",
+        "band": "Clear",
+        "u_time": "MJD",
+        "source": "2",
+        "telescope": "ROTS"
+      }
+    ]
+  }
+}

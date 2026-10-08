@@ -1,0 +1,114 @@
+{
+  "SN2025jgq": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "SN2025jgq",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/2025jgq",
+        "alias": "1"
+      },
+      {
+        "name": "2025TNSTR1645....1X",
+        "bibcode": "2025TNSTR1645....1X",
+        "reference": "Zelin Xu",
+        "alias": "2"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "3"
+      }
+    ],
+    "alias": [
+      {
+        "value": "2025jgq",
+        "source": "1"
+      },
+      {
+        "value": "AT2025jgq",
+        "source": "1"
+      },
+      {
+        "value": "GOTO25czz",
+        "source": "1"
+      },
+      {
+        "value": "SN2025jgq",
+        "source": "1"
+      },
+      {
+        "value": "ATLAS25gev",
+        "source": "1"
+      },
+      {
+        "value": "SN 2025jgq",
+        "source": "1"
+      },
+      {
+        "value": "WFST0578rekw",
+        "source": "1"
+      },
+      {
+        "value": "ZTF25aardatq",
+        "source": "1"
+      },
+      {
+        "value": "T202505201344129m012855",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "13:44:12.935",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "-01:28:54.77",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "claimedtype": [
+      {
+        "value": "IIn",
+        "source": "1"
+      }
+    ],
+    "redshift": [
+      {
+        "value": "0.04667",
+        "kind": "spectroscopic",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "Zelin Xu, Dezheng Meng, Ji-an Jiang, Weiyu Wu, Zhengyan Liu, Junhan Zhao, Ziqing Jia (USTC) on behalf of the WFST collaboration",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2025/04/17",
+        "source": "1"
+      }
+    ],
+    "photometry": [
+      {
+        "time": "60782.74000",
+        "magnitude": "21.36",
+        "band": "g",
+        "u_time": "MJD",
+        "source": "2",
+        "telescope": "WFST"
+      }
+    ]
+  }
+}

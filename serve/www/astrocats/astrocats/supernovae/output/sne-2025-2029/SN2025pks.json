@@ -1,0 +1,110 @@
+{
+  "SN2025pks": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "SN2025pks",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/2025pks",
+        "alias": "1"
+      },
+      {
+        "name": "2025TNSTR2497....1S",
+        "bibcode": "2025TNSTR2497....1S",
+        "reference": "Jesper Sollerman (SU)",
+        "alias": "2"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "3"
+      }
+    ],
+    "alias": [
+      {
+        "value": "2025pks",
+        "source": "1"
+      },
+      {
+        "value": "PS25ewi",
+        "source": "1"
+      },
+      {
+        "value": "AT2025pks",
+        "source": "1"
+      },
+      {
+        "value": "GOTO25fcz",
+        "source": "1"
+      },
+      {
+        "value": "SN2025pks",
+        "source": "1"
+      },
+      {
+        "value": "ATLAS25gul",
+        "source": "1"
+      },
+      {
+        "value": "SN 2025pks",
+        "source": "1"
+      },
+      {
+        "value": "ZTF25aaylqqq",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "21:25:30.617",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "+20:30:14.64",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "claimedtype": [
+      {
+        "value": "Ia",
+        "source": "1"
+      }
+    ],
+    "redshift": [
+      {
+        "value": "0.036",
+        "kind": "spectroscopic",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "Jesper Sollerman (SU), Christoffer Fremling (Caltech), Daniel Perley (LJMU), Theophile du Laz (Caltech) on behalf of ZTF",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2025/06/27",
+        "source": "1"
+      }
+    ],
+    "photometry": [
+      {
+        "time": "60853.43152",
+        "magnitude": "20.62",
+        "band": "r",
+        "u_time": "MJD",
+        "source": "2",
+        "telescope": "ZTF"
+      }
+    ]
+  }
+}

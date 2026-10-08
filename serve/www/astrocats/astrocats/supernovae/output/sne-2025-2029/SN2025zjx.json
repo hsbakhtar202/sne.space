@@ -1,0 +1,114 @@
+{
+  "SN2025zjx": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "SN2025zjx",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/2025zjx",
+        "alias": "1"
+      },
+      {
+        "name": "2025TNSTR3948....1C",
+        "bibcode": "2025TNSTR3948....1C",
+        "reference": "K. C. Chambers",
+        "alias": "2"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "3"
+      }
+    ],
+    "alias": [
+      {
+        "value": "2025zjx",
+        "source": "1"
+      },
+      {
+        "value": "PS25hrz",
+        "source": "1"
+      },
+      {
+        "value": "AT2025zjx",
+        "source": "1"
+      },
+      {
+        "value": "GOTO25ies",
+        "source": "1"
+      },
+      {
+        "value": "SN2025zjx",
+        "source": "1"
+      },
+      {
+        "value": "ATLAS25mhp",
+        "source": "1"
+      },
+      {
+        "value": "SN 2025zjx",
+        "source": "1"
+      },
+      {
+        "value": "ZTF25abwhivl",
+        "source": "1"
+      },
+      {
+        "value": "BGEM J012433.53+034710.9",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "01:24:33.515",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "+03:47:11.12",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "claimedtype": [
+      {
+        "value": "II",
+        "source": "1"
+      }
+    ],
+    "redshift": [
+      {
+        "value": "0.0078",
+        "kind": "spectroscopic",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "K. C. Chambers, T. de Boer, J. Fairlamb, M. Huber, C.-C. Lin, T. Lowe, E. Magnier, P. Minguez, G. Paek, A. Schultz, I. A. Smith, R. J. Wainscoat (IfA, University of Hawaii), S. J. Smartt, K. W. Smith (University of Oxford / Queen's University Belfast), S. Srivastav (University of Oxford), D. R. Young, M. Fulton, M. Nicholl, T. Moore, J. Weston, C. R. Angus (Queen's University Belfast)",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2025/09/29",
+        "source": "1"
+      }
+    ],
+    "photometry": [
+      {
+        "time": "60947.42096",
+        "magnitude": "21.68",
+        "band": "w",
+        "u_time": "MJD",
+        "source": "2",
+        "telescope": "Pan-STARRS"
+      }
+    ]
+  }
+}

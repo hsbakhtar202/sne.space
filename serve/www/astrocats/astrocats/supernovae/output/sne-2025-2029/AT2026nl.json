@@ -1,0 +1,98 @@
+{
+  "AT2026nl": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "AT2026nl",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/2026nl",
+        "alias": "1"
+      },
+      {
+        "name": "2026TNSTR.110....1X",
+        "bibcode": "2026TNSTR.110....1X",
+        "reference": "Jianlin Xu",
+        "alias": "2"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "3"
+      }
+    ],
+    "alias": [
+      {
+        "value": "2026nl",
+        "source": "1"
+      },
+      {
+        "value": "AT2026nl",
+        "source": "1"
+      },
+      {
+        "value": "SN2026nl",
+        "source": "1"
+      },
+      {
+        "value": "AT 2026nl",
+        "source": "1"
+      },
+      {
+        "value": "KATS26A003",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "02:50:07.720",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "-16:37:02.30",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "claimedtype": [
+      {
+        "value": "CV",
+        "source": "1"
+      }
+    ],
+    "redshift": [
+      {
+        "value": "0",
+        "kind": "spectroscopic",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "Jianlin Xu, Ziyang Mai, Mi Zhang, Guoyou Sun, Jiangao Ruan, Jingyuan Zhao, Wenjie Zhou, Yong Ma, Ye, Zhuoyang Chen (Xingming Obs.), Hanjie Tan (AUUK), Guangwei Wu (NAAA), Xing Gao, Ali Esamdin, Chunhai Bai, Yong Wang (XAO), on behalf of the KATS team",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2026/01/06",
+        "source": "1"
+      }
+    ],
+    "photometry": [
+      {
+        "time": "61046.67514",
+        "magnitude": "14.53",
+        "band": "Clear",
+        "u_time": "MJD",
+        "source": "2",
+        "telescope": "XOSS"
+      }
+    ]
+  }
+}

@@ -1,0 +1,110 @@
+{
+  "SN2025fdq": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "SN2025fdq",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/2025fdq",
+        "alias": "1"
+      },
+      {
+        "name": "2025TNSTR1087....1P",
+        "bibcode": "2025TNSTR1087....1P",
+        "reference": "I. P\u00e9rez-Fournon (IAC and ULL)",
+        "alias": "2"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "3"
+      }
+    ],
+    "alias": [
+      {
+        "value": "2025fdq",
+        "source": "1"
+      },
+      {
+        "value": "PS25avp",
+        "source": "1"
+      },
+      {
+        "value": "AT2025fdq",
+        "source": "1"
+      },
+      {
+        "value": "GOTO25brt",
+        "source": "1"
+      },
+      {
+        "value": "SN2025fdq",
+        "source": "1"
+      },
+      {
+        "value": "ATLAS25cys",
+        "source": "1"
+      },
+      {
+        "value": "SN 2025fdq",
+        "source": "1"
+      },
+      {
+        "value": "ZTF25aajygin",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "13:41:00.427",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "+39:03:29.44",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "claimedtype": [
+      {
+        "value": "II",
+        "source": "1"
+      }
+    ],
+    "redshift": [
+      {
+        "value": "0.02",
+        "kind": "spectroscopic",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "I. P\u00e9rez-Fournon (IAC and ULL), D. Cano-Morales, I. Correa-Plasencia, A.E. Hern\u00e1ndez-D\u00edaz, C. Ja\u00e9n-Mart\u00edn (ULL), F. Poidevin (IAC and ULL), E. Hatziminaoglou (ESO and IAC), C. Jim\u00e9nez \u00c1ngel (GRANTECAN), Z. Delgado-Gonz\u00e1lez (ULL), R. Shirley (MPE), R. Marques-Chaves (Univ. of Geneva), and S. Geier (GRANTECAN & IAC) on behalf of SGLF",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2025/03/22",
+        "source": "1"
+      }
+    ],
+    "photometry": [
+      {
+        "time": "60756.41353",
+        "magnitude": "19.25",
+        "band": "g",
+        "u_time": "MJD",
+        "source": "2",
+        "telescope": "SGLF"
+      }
+    ]
+  }
+}

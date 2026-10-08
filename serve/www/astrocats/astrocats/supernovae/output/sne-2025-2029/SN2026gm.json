@@ -1,0 +1,110 @@
+{
+  "SN2026gm": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "SN2026gm",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/2026gm",
+        "alias": "1"
+      },
+      {
+        "name": "2026TNSTR..80....1L",
+        "bibcode": "2026TNSTR..80....1L",
+        "reference": "Huixuan Lin",
+        "alias": "2"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "3"
+      }
+    ],
+    "alias": [
+      {
+        "value": "2026gm",
+        "source": "1"
+      },
+      {
+        "value": "PSP26B",
+        "source": "1"
+      },
+      {
+        "value": "AT2026gm",
+        "source": "1"
+      },
+      {
+        "value": "GOTO26cp",
+        "source": "1"
+      },
+      {
+        "value": "SN2026gm",
+        "source": "1"
+      },
+      {
+        "value": "SN 2026gm",
+        "source": "1"
+      },
+      {
+        "value": "ATLAS26aff",
+        "source": "1"
+      },
+      {
+        "value": "MASTER OT J042437.37+335144.2",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "04:24:37.413",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "+33:51:43.60",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "claimedtype": [
+      {
+        "value": "Ia",
+        "source": "1"
+      }
+    ],
+    "redshift": [
+      {
+        "value": "0.0185",
+        "kind": "spectroscopic",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "Huixuan Lin, Yanxi Li, Jianlin Xu, Mi Zhang, Hualin Li, Ziyang Mai, Leiming Tang, Wenjie Zhou, Jingyuan Zhao, Guoyou Sun, Jiangao Ruan, Xing Gao, on behalf of the PSP team",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2026/01/08",
+        "source": "1"
+      }
+    ],
+    "photometry": [
+      {
+        "time": "61048.80275",
+        "magnitude": "18.08",
+        "band": "Clear",
+        "u_time": "MJD",
+        "source": "2",
+        "telescope": "XOSS"
+      }
+    ]
+  }
+}

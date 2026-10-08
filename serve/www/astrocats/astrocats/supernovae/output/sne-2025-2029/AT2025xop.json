@@ -1,0 +1,94 @@
+{
+  "AT2025xop": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "AT2025xop",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/2025xop",
+        "alias": "1"
+      },
+      {
+        "name": "2025TNSTR3708....1O",
+        "bibcode": "2025TNSTR3708....1O",
+        "reference": "E. O. Ofek (WIS)",
+        "alias": "2"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "3"
+      }
+    ],
+    "alias": [
+      {
+        "value": "2025xop",
+        "source": "1"
+      },
+      {
+        "value": "AT2025xop",
+        "source": "1"
+      },
+      {
+        "value": "SN2025xop",
+        "source": "1"
+      },
+      {
+        "value": "AT 2025xop",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "19:43:43.348",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "-18:41:46.84",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "claimedtype": [
+      {
+        "value": "CV",
+        "source": "1"
+      }
+    ],
+    "redshift": [
+      {
+        "value": "0",
+        "kind": "spectroscopic",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "E. O. Ofek (WIS), R. Konno (WIS), E. A. Zimmerman (WIS), A. Horowicz (WIS), S. Garrappa (WIS), S. Ben-Ami (WIS), D. Polishook (WIS), O. Yaron (WIS), P. Chen (WIS), A. Krassilchtchikov (WIS), Y. M. Shani (WIS), E. Segre (WIS), A. Gal-Yam (WIS), S. Spitzer (WIS), and K. Rybicki (WIS) on behalf of the LAST Collaboration",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2025/09/14",
+        "source": "1"
+      }
+    ],
+    "photometry": [
+      {
+        "time": "60932.87871",
+        "magnitude": "16.51",
+        "band": "Clear",
+        "u_time": "MJD",
+        "source": "2",
+        "telescope": "LAST"
+      }
+    ]
+  }
+}

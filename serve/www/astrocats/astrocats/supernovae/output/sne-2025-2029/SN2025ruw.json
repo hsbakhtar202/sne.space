@@ -1,0 +1,106 @@
+{
+  "SN2025ruw": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "SN2025ruw",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/2025ruw",
+        "alias": "1"
+      },
+      {
+        "name": "2025TNSTR2833....1X",
+        "bibcode": "2025TNSTR2833....1X",
+        "reference": "Jianlin Xu",
+        "alias": "2"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "3"
+      }
+    ],
+    "alias": [
+      {
+        "value": "2025ruw",
+        "source": "1"
+      },
+      {
+        "value": "AT2025ruw",
+        "source": "1"
+      },
+      {
+        "value": "GOTO25fpi",
+        "source": "1"
+      },
+      {
+        "value": "SN2025ruw",
+        "source": "1"
+      },
+      {
+        "value": "KATS25O010",
+        "source": "1"
+      },
+      {
+        "value": "SN 2025ruw",
+        "source": "1"
+      },
+      {
+        "value": "ZTF25abbzcps",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "20:45:09.312",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "+23:23:53.20",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "claimedtype": [
+      {
+        "value": "IIn",
+        "source": "1"
+      }
+    ],
+    "redshift": [
+      {
+        "value": "0.072",
+        "kind": "spectroscopic",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "Jianlin Xu, Mi Zhang, Guoyou Sun, Jiangao Ruan, Jingyuan Zhao, Wenjie Zhou, Yong Ma, Ye, Zhuoyang Chen (Xingming Obs.), Hanjie Tan (AUUK), Guangwei Wu (NAAA), Xing Gao, Ali Esamdin, Chunhai Bai, Yong Wang (XAO), on behalf of the KATS team",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2025/07/21",
+        "source": "1"
+      }
+    ],
+    "photometry": [
+      {
+        "time": "60877.79840",
+        "magnitude": "19.19",
+        "band": "Clear",
+        "u_time": "MJD",
+        "source": "2",
+        "telescope": "XOSS"
+      }
+    ]
+  }
+}

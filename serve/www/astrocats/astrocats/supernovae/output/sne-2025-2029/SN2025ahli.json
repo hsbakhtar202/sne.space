@@ -1,0 +1,114 @@
+{
+  "SN2025ahli": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "SN2025ahli",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/2025ahli",
+        "alias": "1"
+      },
+      {
+        "name": "2025TNSTR5046....1S",
+        "bibcode": "2025TNSTR5046....1S",
+        "reference": "Jesper Sollerman (SU)",
+        "alias": "2"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "3"
+      }
+    ],
+    "alias": [
+      {
+        "value": "PS26gn",
+        "source": "1"
+      },
+      {
+        "value": "2025ahli",
+        "source": "1"
+      },
+      {
+        "value": "GOTO25mco",
+        "source": "1"
+      },
+      {
+        "value": "AT2025ahli",
+        "source": "1"
+      },
+      {
+        "value": "ATLAS25qdp",
+        "source": "1"
+      },
+      {
+        "value": "SN2025ahli",
+        "source": "1"
+      },
+      {
+        "value": "SN 2025ahli",
+        "source": "1"
+      },
+      {
+        "value": "ZTF25aciofxo",
+        "source": "1"
+      },
+      {
+        "value": "BGEM J111831.27-040117.9",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "11:18:31.274",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "-04:01:17.63",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "claimedtype": [
+      {
+        "value": "Ia",
+        "source": "1"
+      }
+    ],
+    "redshift": [
+      {
+        "value": "0.063",
+        "kind": "spectroscopic",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "Jesper Sollerman (SU), Christoffer Fremling (Caltech), Daniel Perley (LJMU), Theophile du Laz (Caltech) on behalf of ZTF",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2025/12/17",
+        "source": "1"
+      }
+    ],
+    "photometry": [
+      {
+        "time": "61026.53678",
+        "magnitude": "19.36",
+        "band": "r",
+        "u_time": "MJD",
+        "source": "2",
+        "telescope": "ZTF"
+      }
+    ]
+  }
+}

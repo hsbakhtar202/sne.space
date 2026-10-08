@@ -1,0 +1,106 @@
+{
+  "SN2025asn": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "SN2025asn",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/2025asn",
+        "alias": "1"
+      },
+      {
+        "name": "2025TNSTR.459....1K",
+        "bibcode": "2025TNSTR.459....1K",
+        "reference": "A. Kumar",
+        "alias": "2"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "3"
+      }
+    ],
+    "alias": [
+      {
+        "value": "2025asn",
+        "source": "1"
+      },
+      {
+        "value": "GOTO25zy",
+        "source": "1"
+      },
+      {
+        "value": "AT2025asn",
+        "source": "1"
+      },
+      {
+        "value": "SN2025asn",
+        "source": "1"
+      },
+      {
+        "value": "ATLAS25bkm",
+        "source": "1"
+      },
+      {
+        "value": "SN 2025asn",
+        "source": "1"
+      },
+      {
+        "value": "ZTF25aafdwph",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "16:56:55.259",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "+64:01:01.56",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "claimedtype": [
+      {
+        "value": "Ia",
+        "source": "1"
+      }
+    ],
+    "redshift": [
+      {
+        "value": "0.060335",
+        "kind": "spectroscopic",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "A. Kumar, D. O'Neill, K. Ackley, M. Dyer, F. Jim\u00e9nez-Ibarra, J. Lyman, K. Ulaczyk, D. Steeghs, D. Galloway, V. Dhillon, P. O'Brien, G. Ramsay, K. Noysena, R. Kotak, R. Breton, L. Nuttall, E. Pall\u00e9, D. Pollacco, T. Killestein, on behalf of GOTO collaboration",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2025/02/03",
+        "source": "1"
+      }
+    ],
+    "photometry": [
+      {
+        "time": "60709.24746",
+        "magnitude": "19.17",
+        "band": "L",
+        "u_time": "MJD",
+        "source": "2",
+        "telescope": "GOTO"
+      }
+    ]
+  }
+}

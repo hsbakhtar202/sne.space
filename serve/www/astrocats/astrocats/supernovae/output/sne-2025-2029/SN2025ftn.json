@@ -1,0 +1,114 @@
+{
+  "SN2025ftn": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "SN2025ftn",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/2025ftn",
+        "alias": "1"
+      },
+      {
+        "name": "2025TNSTR1135....1R",
+        "bibcode": "2025TNSTR1135....1R",
+        "reference": "Nabeel Rehemtulla (CIERA",
+        "alias": "2"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "3"
+      }
+    ],
+    "alias": [
+      {
+        "value": "2025ftn",
+        "source": "1"
+      },
+      {
+        "value": "PS25bds",
+        "source": "1"
+      },
+      {
+        "value": "AT2025ftn",
+        "source": "1"
+      },
+      {
+        "value": "GOTO25bhs",
+        "source": "1"
+      },
+      {
+        "value": "SN2025ftn",
+        "source": "1"
+      },
+      {
+        "value": "ATLAS25dhd",
+        "source": "1"
+      },
+      {
+        "value": "SN 2025ftn",
+        "source": "1"
+      },
+      {
+        "value": "ZTF25aakrsbo",
+        "source": "1"
+      },
+      {
+        "value": "T202503261359071m034949",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "13:59:07.077",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "-03:49:48.89",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "claimedtype": [
+      {
+        "value": "Ia",
+        "source": "1"
+      }
+    ],
+    "redshift": [
+      {
+        "value": "0.051",
+        "kind": "spectroscopic",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "Nabeel Rehemtulla (CIERA, NU), Christoffer Fremling (Caltech), Daniel Perley (LJMU), Theophile du Laz (Caltech) on behalf of ZTF",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2025/03/23",
+        "source": "1"
+      }
+    ],
+    "photometry": [
+      {
+        "time": "60757.37791",
+        "magnitude": "20.58",
+        "band": "g",
+        "u_time": "MJD",
+        "source": "2",
+        "telescope": "ZTF"
+      }
+    ]
+  }
+}

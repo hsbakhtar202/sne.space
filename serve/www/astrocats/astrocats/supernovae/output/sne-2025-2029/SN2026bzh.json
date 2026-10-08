@@ -1,0 +1,114 @@
+{
+  "SN2026bzh": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "SN2026bzh",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/2026bzh",
+        "alias": "1"
+      },
+      {
+        "name": "2026TNSTR.444....1R",
+        "bibcode": "2026TNSTR.444....1R",
+        "reference": "Nabeel Rehemtulla (CIERA",
+        "alias": "2"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "3"
+      }
+    ],
+    "alias": [
+      {
+        "value": "2026bzh",
+        "source": "1"
+      },
+      {
+        "value": "AT2026bzh",
+        "source": "1"
+      },
+      {
+        "value": "GOTO26aky",
+        "source": "1"
+      },
+      {
+        "value": "SN2026bzh",
+        "source": "1"
+      },
+      {
+        "value": "ATLAS26bnz",
+        "source": "1"
+      },
+      {
+        "value": "SN 2026bzh",
+        "source": "1"
+      },
+      {
+        "value": "ZTF26aaervms",
+        "source": "1"
+      },
+      {
+        "value": "MASTER OT J130107.06-112517.3",
+        "source": "1"
+      },
+      {
+        "value": "MASTER OT J130107.08-112517.4",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "13:01:07.067",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "-11:25:16.70",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "claimedtype": [
+      {
+        "value": "II",
+        "source": "1"
+      }
+    ],
+    "redshift": [
+      {
+        "value": "0.02",
+        "kind": "spectroscopic",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "Nabeel Rehemtulla (CIERA, NU), Wynn Jacobson-Gal\u00e1n (Caltech), Theophile du Laz (Caltech) on behalf of ZTF",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2026/02/02",
+        "source": "1"
+      }
+    ],
+    "photometry": [
+      {
+        "time": "61073.40331",
+        "magnitude": "18.02",
+        "band": "g",
+        "u_time": "MJD",
+        "source": "2",
+        "telescope": "ZTF"
+      }
+    ]
+  }
+}

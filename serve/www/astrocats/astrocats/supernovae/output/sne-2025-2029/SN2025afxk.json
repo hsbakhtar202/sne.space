@@ -1,0 +1,102 @@
+{
+  "SN2025afxk": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "SN2025afxk",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/2025afxk",
+        "alias": "1"
+      },
+      {
+        "name": "2025TNSTR4866....1R",
+        "bibcode": "2025TNSTR4866....1R",
+        "reference": "Nabeel Rehemtulla (CIERA",
+        "alias": "2"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "3"
+      }
+    ],
+    "alias": [
+      {
+        "value": "2025afxk",
+        "source": "1"
+      },
+      {
+        "value": "AT2025afxk",
+        "source": "1"
+      },
+      {
+        "value": "ATLAS25pjy",
+        "source": "1"
+      },
+      {
+        "value": "SN2025afxk",
+        "source": "1"
+      },
+      {
+        "value": "SN 2025afxk",
+        "source": "1"
+      },
+      {
+        "value": "ZTF25acfwyhj",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "08:02:50.770",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "+80:02:18.04",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "claimedtype": [
+      {
+        "value": "Ia",
+        "source": "1"
+      }
+    ],
+    "redshift": [
+      {
+        "value": "0.056",
+        "kind": "spectroscopic",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "Nabeel Rehemtulla (CIERA, NU), Wynn Jacobson-Gal\u00e1n (Caltech), Theophile du Laz (Caltech) on behalf of ZTF",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2025/11/30",
+        "source": "1"
+      }
+    ],
+    "photometry": [
+      {
+        "time": "61009.45084",
+        "magnitude": "20.45",
+        "band": "r",
+        "u_time": "MJD",
+        "source": "2",
+        "telescope": "ZTF"
+      }
+    ]
+  }
+}

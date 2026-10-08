@@ -1,0 +1,106 @@
+{
+  "SN2025gmc": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "SN2025gmc",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/2025gmc",
+        "alias": "1"
+      },
+      {
+        "name": "2025TNSTR1244....1J",
+        "bibcode": "2025TNSTR1244....1J",
+        "reference": "Zhangwei Jin",
+        "alias": "2"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "3"
+      }
+    ],
+    "alias": [
+      {
+        "value": "2025gmc",
+        "source": "1"
+      },
+      {
+        "value": "AT2025gmc",
+        "source": "1"
+      },
+      {
+        "value": "SN2025gmc",
+        "source": "1"
+      },
+      {
+        "value": "ATLAS25dmk",
+        "source": "1"
+      },
+      {
+        "value": "SN 2025gmc",
+        "source": "1"
+      },
+      {
+        "value": "ZTF25aalthwc",
+        "source": "1"
+      },
+      {
+        "value": "BGEM J073155.76+181948.2",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "07:31:55.762",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "+18:19:48.25",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "claimedtype": [
+      {
+        "value": "Ia",
+        "source": "1"
+      }
+    ],
+    "redshift": [
+      {
+        "value": "0.023",
+        "kind": "spectroscopic",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "Zhangwei Jin, Tao Chen, Jie-Lin Yang , Yu-Hsing Lee , Hung-Yi Yeh, Po-Liang Cheng, Winson Tsai",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2025/04/01",
+        "source": "1"
+      }
+    ],
+    "photometry": [
+      {
+        "time": "60766.63774",
+        "magnitude": "19.40",
+        "band": "L",
+        "u_time": "MJD",
+        "source": "2",
+        "telescope": "JIST"
+      }
+    ]
+  }
+}

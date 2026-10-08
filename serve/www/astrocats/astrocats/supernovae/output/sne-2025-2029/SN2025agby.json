@@ -1,0 +1,102 @@
+{
+  "SN2025agby": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "SN2025agby",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/2025agby",
+        "alias": "1"
+      },
+      {
+        "name": "2025TNSTR4879....1M",
+        "bibcode": "2025TNSTR4879....1M",
+        "reference": "Michele Mazzucato on behalf of SNHunt",
+        "alias": "2"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "3"
+      }
+    ],
+    "alias": [
+      {
+        "value": "PS25inw",
+        "source": "1"
+      },
+      {
+        "value": "2025agby",
+        "source": "1"
+      },
+      {
+        "value": "AT2025agby",
+        "source": "1"
+      },
+      {
+        "value": "SN2025agby",
+        "source": "1"
+      },
+      {
+        "value": "SN 2025agby",
+        "source": "1"
+      },
+      {
+        "value": "ZTF25acgibks",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "02:25:43.241",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "+37:14:18.69",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "claimedtype": [
+      {
+        "value": "IIn",
+        "source": "1"
+      }
+    ],
+    "redshift": [
+      {
+        "value": "0.036902",
+        "kind": "spectroscopic",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "Michele Mazzucato on behalf of SNHunt",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2025/12/08",
+        "source": "1"
+      }
+    ],
+    "photometry": [
+      {
+        "time": "61017.33749",
+        "magnitude": "19.50",
+        "band": "V-crts",
+        "u_time": "MJD",
+        "source": "2",
+        "telescope": "SNHunt"
+      }
+    ]
+  }
+}

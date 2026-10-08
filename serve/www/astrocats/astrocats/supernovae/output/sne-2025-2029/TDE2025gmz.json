@@ -1,0 +1,94 @@
+{
+  "TDE2025gmz": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "TDE2025gmz",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/2025gmz",
+        "alias": "1"
+      },
+      {
+        "name": "2025TNSTR1248....1S",
+        "bibcode": "2025TNSTR1248....1S",
+        "reference": "Robert Stein (UMD) on behalf of ZTF",
+        "alias": "2"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "3"
+      }
+    ],
+    "alias": [
+      {
+        "value": "2025gmz",
+        "source": "1"
+      },
+      {
+        "value": "PS25cre",
+        "source": "1"
+      },
+      {
+        "value": "TDE2025gmz",
+        "source": "1"
+      },
+      {
+        "value": "ZTF25aagrecw",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "16:09:38.669",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "+44:35:01.28",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "claimedtype": [
+      {
+        "value": "TDE-featureless",
+        "source": "1"
+      }
+    ],
+    "redshift": [
+      {
+        "value": "0.459",
+        "kind": "spectroscopic",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "Robert Stein (UMD) on behalf of ZTF",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2025/02/19",
+        "source": "1"
+      }
+    ],
+    "photometry": [
+      {
+        "time": "60725.52112",
+        "magnitude": "20.71",
+        "band": "r",
+        "u_time": "MJD",
+        "source": "2",
+        "telescope": "ZTF"
+      }
+    ]
+  }
+}

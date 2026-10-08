@@ -1,0 +1,107 @@
+{
+  "SN2025pht": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "SN2025pht",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/2025pht",
+        "alias": "1"
+      },
+      {
+        "name": "2025TNSTR2462....1S",
+        "bibcode": "2025TNSTR2462....1S",
+        "reference": "K. Z. Stanek",
+        "alias": "2"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "3"
+      }
+    ],
+    "alias": [
+      {
+        "value": "2025pht",
+        "source": "1"
+      },
+      {
+        "value": "AT2025pht",
+        "source": "1"
+      },
+      {
+        "value": "GOTO24ker",
+        "source": "1"
+      },
+      {
+        "value": "SN2025pht",
+        "source": "1"
+      },
+      {
+        "value": "ATLAS25qmv",
+        "source": "1"
+      },
+      {
+        "value": "SN 2025pht",
+        "source": "1"
+      },
+      {
+        "value": "ASASSN-25cw",
+        "source": "1"
+      },
+      {
+        "value": "ZTF25abjlnnh",
+        "source": "1"
+      },
+      {
+        "value": "BGEM J044128.86-025155.6",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "04:41:28.861",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "-02:51:55.61",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "claimedtype": [
+      {
+        "value": "IIP",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "K. Z. Stanek, for the ASAS-SN team",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2025/06/29",
+        "source": "1"
+      }
+    ],
+    "photometry": [
+      {
+        "time": "60855.43000",
+        "magnitude": "13.30",
+        "band": "g",
+        "u_time": "MJD",
+        "source": "2",
+        "telescope": "ASAS-SN"
+      }
+    ]
+  }
+}

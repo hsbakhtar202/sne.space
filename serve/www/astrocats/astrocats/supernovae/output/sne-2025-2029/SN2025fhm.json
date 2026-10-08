@@ -1,0 +1,94 @@
+{
+  "SN2025fhm": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "SN2025fhm",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/2025fhm",
+        "alias": "1"
+      },
+      {
+        "name": "2025TNSTR1097....1M",
+        "bibcode": "2025TNSTR1097....1M",
+        "reference": "A. Martin-Carrillo (UCD)",
+        "alias": "2"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "3"
+      }
+    ],
+    "alias": [
+      {
+        "value": "2025fhm",
+        "source": "1"
+      },
+      {
+        "value": "AT2025fhm",
+        "source": "1"
+      },
+      {
+        "value": "SN2025fhm",
+        "source": "1"
+      },
+      {
+        "value": "SN 2025fhm",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "13:53:34.680",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "-42:48:16.71",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "claimedtype": [
+      {
+        "value": "Ic-BL",
+        "source": "1"
+      }
+    ],
+    "redshift": [
+      {
+        "value": "0.2",
+        "kind": "spectroscopic",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "A. Martin-Carrillo (UCD), D. B. Malesani (Radboud and DAWN/NBI), L. Izzo (INAF-OACN and DARK/NBI), Z. P. Zhu (NAOC), D. Xu (NAOC), A. Saccardi (CEA/Irfu), B. Schneider (LAM), A. J. Levan (Radboud and Warwick), P. G.Jonker (Radboud Univ.), L. Cotter (UCD), J. van Dalen (Radboud Univ.), G. Corcoran (UCD), K. Wiersema (Herts), F. E. Bauer (PUC), report on behalf of a larger collaboration",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2025/03/04",
+        "source": "1"
+      }
+    ],
+    "photometry": [
+      {
+        "time": "60738.09640",
+        "magnitude": "20.97",
+        "band": "r",
+        "u_time": "MJD",
+        "source": "2",
+        "telescope": "STARGATE"
+      }
+    ]
+  }
+}

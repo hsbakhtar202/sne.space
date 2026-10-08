@@ -1,0 +1,79 @@
+{
+  "FRB20250726A": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "FRB20250726A",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/20250726A",
+        "alias": "1"
+      },
+      {
+        "name": "2025TNSFR3703....1A",
+        "bibcode": "2025TNSFR3703....1A",
+        "reference": "Shion Andrew",
+        "alias": "2"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "3"
+      }
+    ],
+    "alias": [
+      {
+        "value": "20250726A",
+        "source": "1"
+      },
+      {
+        "value": "FRB20250726A",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "01:30:25.043",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "+63:02:15.39",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "claimedtype": [
+      {
+        "value": "FRB",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "Shion Andrew",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2025/07/26",
+        "source": "1"
+      }
+    ],
+    "photometry": [
+      {
+        "time": "60882.57622",
+        "magnitude": "0.00",
+        "band": "Other",
+        "u_time": "MJD",
+        "source": "2",
+        "telescope": "CHIMEFRB"
+      }
+    ]
+  }
+}

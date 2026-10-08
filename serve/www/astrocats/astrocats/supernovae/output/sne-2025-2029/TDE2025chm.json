@@ -1,0 +1,98 @@
+{
+  "TDE2025chm": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "TDE2025chm",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/2025chm",
+        "alias": "1"
+      },
+      {
+        "name": "2025TNSTR.725....1S",
+        "bibcode": "2025TNSTR.725....1S",
+        "reference": "Jesper Sollerman (SU)",
+        "alias": "2"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "3"
+      }
+    ],
+    "alias": [
+      {
+        "value": "2025chm",
+        "source": "1"
+      },
+      {
+        "value": "GOTO25asg",
+        "source": "1"
+      },
+      {
+        "value": "ATLAS25bzy",
+        "source": "1"
+      },
+      {
+        "value": "TDE2025chm",
+        "source": "1"
+      },
+      {
+        "value": "ZTF25aagevje",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "07:40:59.037",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "+16:31:53.62",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "claimedtype": [
+      {
+        "value": "TDE",
+        "source": "1"
+      }
+    ],
+    "redshift": [
+      {
+        "value": "0.101",
+        "kind": "spectroscopic",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "Jesper Sollerman (SU), Christoffer Fremling (Caltech), Daniel Perley (LJMU), Theophile du Laz (Caltech) on behalf of ZTF",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2025/02/20",
+        "source": "1"
+      }
+    ],
+    "photometry": [
+      {
+        "time": "60726.40192",
+        "magnitude": "19.52",
+        "band": "g",
+        "u_time": "MJD",
+        "source": "2",
+        "telescope": "ZTF"
+      }
+    ]
+  }
+}

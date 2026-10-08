@@ -1,0 +1,98 @@
+{
+  "AT2025kwj": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "AT2025kwj",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/2025kwj",
+        "alias": "1"
+      },
+      {
+        "name": "2025TNSTR1847....1H",
+        "bibcode": "2025TNSTR1847....1H",
+        "reference": "Xander J. Hall (Carnegie Mellon U.)",
+        "alias": "2"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "3"
+      }
+    ],
+    "alias": [
+      {
+        "value": "2025kwj",
+        "source": "1"
+      },
+      {
+        "value": "AT2025kwj",
+        "source": "1"
+      },
+      {
+        "value": "SN2025kwj",
+        "source": "1"
+      },
+      {
+        "value": "AT 2025kwj",
+        "source": "1"
+      },
+      {
+        "value": "T202505171246001m123615",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "12:46:00.134",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "-12:36:15.04",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "claimedtype": [
+      {
+        "value": "CV",
+        "source": "1"
+      }
+    ],
+    "redshift": [
+      {
+        "value": "0",
+        "kind": "spectroscopic",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "Xander J. Hall (Carnegie Mellon U.), Tom\u00e1s Ahumada (Caltech), Lei Hu (Carnegie Mellon U.), Antonella Palmese (Carnegie Mellon U.), Brendan O'Connor (Carnegie Mellon U.), Tom\u00e1s Cabrera (Carnegie Mellon U.), Keerthi Kunnumkai (Carnegie Mellon U.) on behalf of 2DTS/ZTF",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2025/05/17",
+        "source": "1"
+      }
+    ],
+    "photometry": [
+      {
+        "time": "60812.12736",
+        "magnitude": "15.89",
+        "band": "r",
+        "u_time": "MJD",
+        "source": "2",
+        "telescope": "DESIRT"
+      }
+    ]
+  }
+}

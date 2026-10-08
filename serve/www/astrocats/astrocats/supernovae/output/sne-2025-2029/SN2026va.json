@@ -1,0 +1,106 @@
+{
+  "SN2026va": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "SN2026va",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/2026va",
+        "alias": "1"
+      },
+      {
+        "name": "2026TNSTR.119....1M",
+        "bibcode": "2026TNSTR.119....1M",
+        "reference": "A. Munoz-Arancibia",
+        "alias": "2"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "3"
+      }
+    ],
+    "alias": [
+      {
+        "value": "2026va",
+        "source": "1"
+      },
+      {
+        "value": "AT2026va",
+        "source": "1"
+      },
+      {
+        "value": "GOTO26jj",
+        "source": "1"
+      },
+      {
+        "value": "SN2026va",
+        "source": "1"
+      },
+      {
+        "value": "SN 2026va",
+        "source": "1"
+      },
+      {
+        "value": "ATLAS26anh",
+        "source": "1"
+      },
+      {
+        "value": "ZTF26aaaqeak",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "13:56:18.282",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "+20:06:07.44",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "claimedtype": [
+      {
+        "value": "Ia-91T-like",
+        "source": "1"
+      }
+    ],
+    "redshift": [
+      {
+        "value": "0.0633",
+        "kind": "spectroscopic",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "A. Munoz-Arancibia, G. Pignata, F.E. Bauer, F. Forster, A. Mourao, J. Correa-Orellana, H. Kumar, S. Jurado, L. Hernandez-Garcia, L. Galbany, J. Silva-Farfan, R. Dastidar, J.P. Brandt, A. Alvarez, F. Andrades, G. Cabrera-Vives, R. Carrasco-Davis, P.A. Estevez, P. Huijse, H. Larranaga, C. Mansilla, K. Medina, D. Moreno, E. Munoz, I. Reyes, P. Sanchez-Saez, D. Rodriguez-Mancini, M. Catelan, S. Eyheramendy, M.J. Graham on behalf of the ALeRCE broker",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2026/01/12",
+        "source": "1"
+      }
+    ],
+    "photometry": [
+      {
+        "time": "61052.57401",
+        "magnitude": "19.09",
+        "band": "g",
+        "u_time": "MJD",
+        "source": "2",
+        "telescope": "ALeRCE"
+      }
+    ]
+  }
+}

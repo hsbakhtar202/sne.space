@@ -1,0 +1,94 @@
+{
+  "TDE2026dmt": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "TDE2026dmt",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/2026dmt",
+        "alias": "1"
+      },
+      {
+        "name": "2026TNSTR.683....1H",
+        "bibcode": "2026TNSTR.683....1H",
+        "reference": "Erica Hammerstein (Berkeley)",
+        "alias": "2"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "3"
+      }
+    ],
+    "alias": [
+      {
+        "value": "2026dmt",
+        "source": "1"
+      },
+      {
+        "value": "GOTO26bha",
+        "source": "1"
+      },
+      {
+        "value": "TDE2026dmt",
+        "source": "1"
+      },
+      {
+        "value": "ZTF26aafpwna",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "08:28:51.635",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "+39:04:54.31",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "claimedtype": [
+      {
+        "value": "TDE-He",
+        "source": "1"
+      }
+    ],
+    "redshift": [
+      {
+        "value": "0.147",
+        "kind": "spectroscopic",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "Erica Hammerstein (Berkeley), Robert Stein (UMD) on behalf of the ZTF AGN/TDE working group",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2026/02/05",
+        "source": "1"
+      }
+    ],
+    "photometry": [
+      {
+        "time": "61076.22809",
+        "magnitude": "20.22",
+        "band": "g",
+        "u_time": "MJD",
+        "source": "2",
+        "telescope": "ZTF"
+      }
+    ]
+  }
+}

@@ -1,0 +1,102 @@
+{
+  "SN2025bag": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "SN2025bag",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/2025bag",
+        "alias": "1"
+      },
+      {
+        "name": "2025TNSTR.521....1C",
+        "bibcode": "2025TNSTR.521....1C",
+        "reference": "K. C. Chambers",
+        "alias": "2"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "3"
+      }
+    ],
+    "alias": [
+      {
+        "value": "PS25ny",
+        "source": "1"
+      },
+      {
+        "value": "2025bag",
+        "source": "1"
+      },
+      {
+        "value": "AT2025bag",
+        "source": "1"
+      },
+      {
+        "value": "SN2025bag",
+        "source": "1"
+      },
+      {
+        "value": "SN 2025bag",
+        "source": "1"
+      },
+      {
+        "value": "ZTF25aafhecq",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "10:18:27.296",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "-26:43:58.46",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "claimedtype": [
+      {
+        "value": "Ia",
+        "source": "1"
+      }
+    ],
+    "redshift": [
+      {
+        "value": "0.032",
+        "kind": "spectroscopic",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "K. C. Chambers, T. de Boer, J. Herman, J. Fairlamb, M. Huber, C.-C. Lin, T. Lowe, E. Magnier, A. Schultz, R. J. Wainscoat, H. Gao, P. Minguez (IfA, University of Hawaii), K. W. Smith, D. R. Young, S. Srivastav, M. Fulton, S. J. Smartt, M. Nicholl, T. Moore, J. Weston, C. R. Angus, S. Sim (Queen's University Belfast), D. E. Wright (University of Minnesota)",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2025/02/07",
+        "source": "1"
+      }
+    ],
+    "photometry": [
+      {
+        "time": "60713.41717",
+        "magnitude": "17.51",
+        "band": "r",
+        "u_time": "MJD",
+        "source": "2",
+        "telescope": "Pan-STARRS"
+      }
+    ]
+  }
+}

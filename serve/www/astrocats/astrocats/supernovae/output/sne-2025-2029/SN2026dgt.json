@@ -1,0 +1,114 @@
+{
+  "SN2026dgt": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "SN2026dgt",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/2026dgt",
+        "alias": "1"
+      },
+      {
+        "name": "2026TNSTR.646....1M",
+        "bibcode": "2026TNSTR.646....1M",
+        "reference": "Michele Mazzucato on behalf of SNHunt",
+        "alias": "2"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "3"
+      }
+    ],
+    "alias": [
+      {
+        "value": "2026dgt",
+        "source": "1"
+      },
+      {
+        "value": "PS26ahi",
+        "source": "1"
+      },
+      {
+        "value": "AT2026dgt",
+        "source": "1"
+      },
+      {
+        "value": "GOTO26bfw",
+        "source": "1"
+      },
+      {
+        "value": "SN2026dgt",
+        "source": "1"
+      },
+      {
+        "value": "SNhunt479",
+        "source": "1"
+      },
+      {
+        "value": "ATLAS26cgs",
+        "source": "1"
+      },
+      {
+        "value": "SN 2026dgt",
+        "source": "1"
+      },
+      {
+        "value": "ZTF26aahaesb",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "08:49:25.479",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "+29:30:38.05",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "claimedtype": [
+      {
+        "value": "II",
+        "source": "1"
+      }
+    ],
+    "redshift": [
+      {
+        "value": "0.02728",
+        "kind": "spectroscopic",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "Michele Mazzucato on behalf of SNHunt",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2026/02/15",
+        "source": "1"
+      }
+    ],
+    "photometry": [
+      {
+        "time": "61086.32623",
+        "magnitude": "20.50",
+        "band": "V-crts",
+        "u_time": "MJD",
+        "source": "2",
+        "telescope": "SNHunt"
+      }
+    ]
+  }
+}

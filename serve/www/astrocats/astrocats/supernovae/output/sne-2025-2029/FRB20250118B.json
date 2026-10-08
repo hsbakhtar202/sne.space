@@ -1,0 +1,73 @@
+{
+  "FRB20250118B": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "FRB20250118B",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/20250118B",
+        "alias": "1"
+      },
+      {
+        "name": "2026TNSFR.652....1C",
+        "bibcode": "2026TNSFR.652....1C",
+        "reference": "CHIME/FRB Collaboration",
+        "alias": "2"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "3"
+      }
+    ],
+    "alias": [
+      {
+        "value": "20250118B",
+        "source": "1"
+      },
+      {
+        "value": "FRB20250118B",
+        "source": "1"
+      },
+      {
+        "value": "chimefrb_434511329",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "02:52:07.200",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "+78:21:00.00",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "claimedtype": [
+      {
+        "value": "FRB",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "CHIME/FRB Collaboration",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2025/01/18",
+        "source": "1"
+      }
+    ]
+  }
+}

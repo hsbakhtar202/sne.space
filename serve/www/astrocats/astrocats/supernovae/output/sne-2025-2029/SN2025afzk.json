@@ -1,0 +1,110 @@
+{
+  "SN2025afzk": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "SN2025afzk",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/2025afzk",
+        "alias": "1"
+      },
+      {
+        "name": "2025TNSTR4879....1M",
+        "bibcode": "2025TNSTR4879....1M",
+        "reference": "Michele Mazzucato on behalf of SNHunt",
+        "alias": "2"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "3"
+      }
+    ],
+    "alias": [
+      {
+        "value": "PS25irb",
+        "source": "1"
+      },
+      {
+        "value": "2025afzk",
+        "source": "1"
+      },
+      {
+        "value": "GOTO25lhh",
+        "source": "1"
+      },
+      {
+        "value": "AT2025afzk",
+        "source": "1"
+      },
+      {
+        "value": "ATLAS25pkb",
+        "source": "1"
+      },
+      {
+        "value": "SN2025afzk",
+        "source": "1"
+      },
+      {
+        "value": "SN 2025afzk",
+        "source": "1"
+      },
+      {
+        "value": "ZTF25acgndab",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "23:14:43.352",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "+31:19:09.60",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "claimedtype": [
+      {
+        "value": "IIb",
+        "source": "1"
+      }
+    ],
+    "redshift": [
+      {
+        "value": "0.02339",
+        "kind": "spectroscopic",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "Michele Mazzucato on behalf of SNHunt",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2025/12/08",
+        "source": "1"
+      }
+    ],
+    "photometry": [
+      {
+        "time": "61017.16524",
+        "magnitude": "18.60",
+        "band": "V-crts",
+        "u_time": "MJD",
+        "source": "2",
+        "telescope": "SNHunt"
+      }
+    ]
+  }
+}

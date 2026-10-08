@@ -1,0 +1,106 @@
+{
+  "SN2025hpl": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "SN2025hpl",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/2025hpl",
+        "alias": "1"
+      },
+      {
+        "name": "2025TNSTR1437....1K",
+        "bibcode": "2025TNSTR1437....1K",
+        "reference": "R. Konno (WIS)",
+        "alias": "2"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "3"
+      }
+    ],
+    "alias": [
+      {
+        "value": "2025hpl",
+        "source": "1"
+      },
+      {
+        "value": "PS25dky",
+        "source": "1"
+      },
+      {
+        "value": "AT2025hpl",
+        "source": "1"
+      },
+      {
+        "value": "SN2025hpl",
+        "source": "1"
+      },
+      {
+        "value": "ATLAS25dyv",
+        "source": "1"
+      },
+      {
+        "value": "SN 2025hpl",
+        "source": "1"
+      },
+      {
+        "value": "ZTF25aamqhpc",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "18:31:28.407",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "+42:47:22.37",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "claimedtype": [
+      {
+        "value": "Ia",
+        "source": "1"
+      }
+    ],
+    "redshift": [
+      {
+        "value": "0.06",
+        "kind": "spectroscopic",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "R. Konno (WIS), E. A. Zimmerman (WIS), A. Horowicz (WIS), S. Garrappa (WIS), E. O. Ofek (WIS), S. Ben-Ami (WIS), D. Polishook (WIS), O. Yaron (WIS), P. Chen (WIS), A. Krassilchtchikov (WIS), Y. M. Shani (WIS), E. Segre (WIS), A. Gal-Yam (WIS), S. Spitzer (WIS), and K. Rybicki (WIS) on behalf of the LAST Collaboration",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2025/04/18",
+        "source": "1"
+      }
+    ],
+    "photometry": [
+      {
+        "time": "60784.00018",
+        "magnitude": "19.28",
+        "band": "Clear",
+        "u_time": "MJD",
+        "source": "2",
+        "telescope": "LAST"
+      }
+    ]
+  }
+}

@@ -1,0 +1,106 @@
+{
+  "SN2025adgq": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "SN2025adgq",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/2025adgq",
+        "alias": "1"
+      },
+      {
+        "name": "2025TNSTR4560....1G",
+        "bibcode": "2025TNSTR4560....1G",
+        "reference": "Paul Groot (Radboud/UCT/SAAO)",
+        "alias": "2"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "3"
+      }
+    ],
+    "alias": [
+      {
+        "value": "2025adgq",
+        "source": "1"
+      },
+      {
+        "value": "GOTO25jyp",
+        "source": "1"
+      },
+      {
+        "value": "AT2025adgq",
+        "source": "1"
+      },
+      {
+        "value": "ATLAS25ofd",
+        "source": "1"
+      },
+      {
+        "value": "SN2025adgq",
+        "source": "1"
+      },
+      {
+        "value": "SN 2025adgq",
+        "source": "1"
+      },
+      {
+        "value": "BGEM J002931.78-393051.6",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "00:29:31.781",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "-39:30:51.62",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "claimedtype": [
+      {
+        "value": "Ib",
+        "source": "1"
+      }
+    ],
+    "redshift": [
+      {
+        "value": "0.0643",
+        "kind": "spectroscopic",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "Paul Groot (Radboud/UCT/SAAO), H. Tranin (Barcelona), P. Vreeswijk (Radboud), D. Pieterse (Radboud), S. Bloemen (Radboud), G. Leloudas (DTU Space), N. Blagorodnova (Barcelona), S. Scaringi (Durham)",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2025/11/13",
+        "source": "1"
+      }
+    ],
+    "photometry": [
+      {
+        "time": "60992.00252",
+        "magnitude": "19.28",
+        "band": "BG-q",
+        "u_time": "MJD",
+        "source": "2",
+        "telescope": "MeerLICHT"
+      }
+    ]
+  }
+}

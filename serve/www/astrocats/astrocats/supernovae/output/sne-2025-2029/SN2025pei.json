@@ -1,0 +1,98 @@
+{
+  "SN2025pei": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "SN2025pei",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/2025pei",
+        "alias": "1"
+      },
+      {
+        "name": "2025TNSTR2446....1K",
+        "bibcode": "2025TNSTR2446....1K",
+        "reference": "A. Kumar",
+        "alias": "2"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "3"
+      }
+    ],
+    "alias": [
+      {
+        "value": "2025pei",
+        "source": "1"
+      },
+      {
+        "value": "AT2025pei",
+        "source": "1"
+      },
+      {
+        "value": "GOTO25ekj",
+        "source": "1"
+      },
+      {
+        "value": "SN2025pei",
+        "source": "1"
+      },
+      {
+        "value": "SN 2025pei",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "19:30:53.707",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "+55:47:40.05",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "claimedtype": [
+      {
+        "value": "Ia",
+        "source": "1"
+      }
+    ],
+    "redshift": [
+      {
+        "value": "0.064894",
+        "kind": "spectroscopic",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "A. Kumar, D. O'Neill, K. Ackley, M. Dyer, J. Lyman, K. Ulaczyk, D. Steeghs, D. Galloway, V. Dhillon, P. O'Brien, G. Ramsay, K. Noysena, R. Kotak, R. Breton, J. Casares, L. Nuttall, B. Godson, T. Killestein, M. Pursiainen, on behalf of GOTO collaboration",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2025/06/28",
+        "source": "1"
+      }
+    ],
+    "photometry": [
+      {
+        "time": "60854.05309",
+        "magnitude": "18.48",
+        "band": "L",
+        "u_time": "MJD",
+        "source": "2",
+        "telescope": "GOTO"
+      }
+    ]
+  }
+}

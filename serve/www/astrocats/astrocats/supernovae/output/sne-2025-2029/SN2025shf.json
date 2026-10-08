@@ -1,0 +1,110 @@
+{
+  "SN2025shf": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "SN2025shf",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/2025shf",
+        "alias": "1"
+      },
+      {
+        "name": "2025TNSTR2908....1F",
+        "bibcode": "2025TNSTR2908....1F",
+        "reference": "F. Forster",
+        "alias": "2"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "3"
+      }
+    ],
+    "alias": [
+      {
+        "value": "2025shf",
+        "source": "1"
+      },
+      {
+        "value": "PS25git",
+        "source": "1"
+      },
+      {
+        "value": "AT2025shf",
+        "source": "1"
+      },
+      {
+        "value": "GOTO25frq",
+        "source": "1"
+      },
+      {
+        "value": "SN2025shf",
+        "source": "1"
+      },
+      {
+        "value": "ATLAS25iog",
+        "source": "1"
+      },
+      {
+        "value": "SN 2025shf",
+        "source": "1"
+      },
+      {
+        "value": "ZTF25abecvml",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "23:10:06.714",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "+03:09:12.14",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "claimedtype": [
+      {
+        "value": "Ic-BL",
+        "source": "1"
+      }
+    ],
+    "redshift": [
+      {
+        "value": "0.0353",
+        "kind": "spectroscopic",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "F. Forster, F.E. Bauer, G. Pignata, A. Munoz-Arancibia, A. Mourao, L. Hernandez-Garcia, L. Galbany, J. Silva-Farfan, R. Dastidar, J.P. Brandt, A. Alvarez, G. Cabrera-Vives, R. Carrasco-Davis, P.A. Estevez, B. Gamboa, P. Huijse, H. Larranaga, C. Mansilla, K. Medina, D. Moreno, E. Munoz, E. Pizarro, I. Reyes, P. Sanchez-Saez, D. Rodriguez-Mancini, M. Catelan, S. Eyheramendy, M.J. Graham on behalf of the ALeRCE broker",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2025/07/26",
+        "source": "1"
+      }
+    ],
+    "photometry": [
+      {
+        "time": "60882.42375",
+        "magnitude": "20.39",
+        "band": "g",
+        "u_time": "MJD",
+        "source": "2",
+        "telescope": "ALeRCE"
+      }
+    ]
+  }
+}

@@ -1,0 +1,110 @@
+{
+  "SN2025tqu": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "SN2025tqu",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/2025tqu",
+        "alias": "1"
+      },
+      {
+        "name": "2025TNSTR3157....1S",
+        "bibcode": "2025TNSTR3157....1S",
+        "reference": "F. Stoppa",
+        "alias": "2"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "3"
+      }
+    ],
+    "alias": [
+      {
+        "value": "2025tqu",
+        "source": "1"
+      },
+      {
+        "value": "PS25lzm",
+        "source": "1"
+      },
+      {
+        "value": "AT2025tqu",
+        "source": "1"
+      },
+      {
+        "value": "GOTO25fta",
+        "source": "1"
+      },
+      {
+        "value": "SN2025tqu",
+        "source": "1"
+      },
+      {
+        "value": "SN 2025tqu",
+        "source": "1"
+      },
+      {
+        "value": "ZTF25abikqrb",
+        "source": "1"
+      },
+      {
+        "value": "BGEM J034718.11-082659.8",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "03:47:18.120",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "-08:26:59.89",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "claimedtype": [
+      {
+        "value": "II",
+        "source": "1"
+      }
+    ],
+    "redshift": [
+      {
+        "value": "0.03339",
+        "kind": "spectroscopic",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "F. Stoppa, H. Tranin, D. Pieterse, G. Ramsay, S. Faris, P. Groot, P. Vreeswijk, N. Blagorodnova, J. van Roestel, H. Wichern, S. Scaringi",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2025/08/12",
+        "source": "1"
+      }
+    ],
+    "photometry": [
+      {
+        "time": "60899.33191",
+        "magnitude": "18.83",
+        "band": "BG-q",
+        "u_time": "MJD",
+        "source": "2",
+        "telescope": "BlackGEM"
+      }
+    ]
+  }
+}

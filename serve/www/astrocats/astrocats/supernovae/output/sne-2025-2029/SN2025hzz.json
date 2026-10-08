@@ -1,0 +1,110 @@
+{
+  "SN2025hzz": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "SN2025hzz",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/2025hzz",
+        "alias": "1"
+      },
+      {
+        "name": "2025TNSTR1486....1R",
+        "bibcode": "2025TNSTR1486....1R",
+        "reference": "G. Ramsay",
+        "alias": "2"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "3"
+      }
+    ],
+    "alias": [
+      {
+        "value": "2025hzz",
+        "source": "1"
+      },
+      {
+        "value": "PS25dla",
+        "source": "1"
+      },
+      {
+        "value": "AT2025hzz",
+        "source": "1"
+      },
+      {
+        "value": "GOTO25cbc",
+        "source": "1"
+      },
+      {
+        "value": "SN2025hzz",
+        "source": "1"
+      },
+      {
+        "value": "ATLAS25edx",
+        "source": "1"
+      },
+      {
+        "value": "SN 2025hzz",
+        "source": "1"
+      },
+      {
+        "value": "ZTF25aaodumi",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "15:41:55.598",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "+27:07:54.98",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "claimedtype": [
+      {
+        "value": "Ia",
+        "source": "1"
+      }
+    ],
+    "redshift": [
+      {
+        "value": "0.068481",
+        "kind": "spectroscopic",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "G. Ramsay, D. O'Neill, K. Ackley, M. Dyer, J. Lyman, K. Ulaczyk, D. Steeghs, D. Galloway, V. Dhillon, P. O'Brien, K. Noysena, R. Kotak, R. Breton, J. Casares, L. Nuttall, B. Godson, T. Killestein, A. Kumar, M. Pursiainen, on behalf of GOTO collaboration",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2025/04/19",
+        "source": "1"
+      }
+    ],
+    "photometry": [
+      {
+        "time": "60784.04604",
+        "magnitude": "18.60",
+        "band": "L",
+        "u_time": "MJD",
+        "source": "2",
+        "telescope": "GOTO"
+      }
+    ]
+  }
+}

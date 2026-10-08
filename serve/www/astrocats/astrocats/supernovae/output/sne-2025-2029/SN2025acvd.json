@@ -1,0 +1,98 @@
+{
+  "SN2025acvd": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "SN2025acvd",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/2025acvd",
+        "alias": "1"
+      },
+      {
+        "name": "2025TNSTR4489....1S",
+        "bibcode": "2025TNSTR4489....1S",
+        "reference": "K. Z. Stanek",
+        "alias": "2"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "3"
+      }
+    ],
+    "alias": [
+      {
+        "value": "2025acvd",
+        "source": "1"
+      },
+      {
+        "value": "AT2025acvd",
+        "source": "1"
+      },
+      {
+        "value": "SN2025acvd",
+        "source": "1"
+      },
+      {
+        "value": "ASASSN-25eo",
+        "source": "1"
+      },
+      {
+        "value": "SN 2025acvd",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "19:22:07.478",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "-30:23:00.53",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "claimedtype": [
+      {
+        "value": "Ia",
+        "source": "1"
+      }
+    ],
+    "redshift": [
+      {
+        "value": "0.01969",
+        "kind": "spectroscopic",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "K. Z. Stanek, for the ASAS-SN team",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2025/11/09",
+        "source": "1"
+      }
+    ],
+    "photometry": [
+      {
+        "time": "60988.02000",
+        "magnitude": "16.80",
+        "band": "g",
+        "u_time": "MJD",
+        "source": "2",
+        "telescope": "ASAS-SN"
+      }
+    ]
+  }
+}

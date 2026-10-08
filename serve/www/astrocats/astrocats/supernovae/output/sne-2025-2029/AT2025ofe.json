@@ -1,0 +1,102 @@
+{
+  "AT2025ofe": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "AT2025ofe",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/2025ofe",
+        "alias": "1"
+      },
+      {
+        "name": "2025TNSTR2318....1Z",
+        "bibcode": "2025TNSTR2318....1Z",
+        "reference": "Mi Zhang",
+        "alias": "2"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "3"
+      }
+    ],
+    "alias": [
+      {
+        "value": "PSP25K",
+        "source": "1"
+      },
+      {
+        "value": "2025ofe",
+        "source": "1"
+      },
+      {
+        "value": "AT2025ofe",
+        "source": "1"
+      },
+      {
+        "value": "SN2025ofe",
+        "source": "1"
+      },
+      {
+        "value": "AT 2025ofe",
+        "source": "1"
+      },
+      {
+        "value": "ATLAS25gje",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "01:34:28.007",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "+31:05:18.92",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "claimedtype": [
+      {
+        "value": "Nova",
+        "source": "1"
+      }
+    ],
+    "redshift": [
+      {
+        "value": "0",
+        "kind": "spectroscopic",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "Mi Zhang, Jianlin Xu, Yanxi Li, Leiming Tang, Wenjie Zhou, Jingyuan Zhao, Guoyou Sun, Jiangao Ruan, Xing Gao, on behalf of the PSP team",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2025/06/17",
+        "source": "1"
+      }
+    ],
+    "photometry": [
+      {
+        "time": "60843.88018",
+        "magnitude": "16.67",
+        "band": "Clear",
+        "u_time": "MJD",
+        "source": "2",
+        "telescope": "XOSS"
+      }
+    ]
+  }
+}

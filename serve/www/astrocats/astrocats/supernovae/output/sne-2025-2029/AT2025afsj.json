@@ -1,0 +1,102 @@
+{
+  "AT2025afsj": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "AT2025afsj",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/2025afsj",
+        "alias": "1"
+      },
+      {
+        "name": "2025TNSTR4795....1L",
+        "bibcode": "2025TNSTR4795....1L",
+        "reference": "Miguel Llamas Lanza (IRAP)",
+        "alias": "2"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "3"
+      }
+    ],
+    "alias": [
+      {
+        "value": "2025afsj",
+        "source": "1"
+      },
+      {
+        "value": "GOTO25koh",
+        "source": "1"
+      },
+      {
+        "value": "AT2025afsj",
+        "source": "1"
+      },
+      {
+        "value": "SN2025afsj",
+        "source": "1"
+      },
+      {
+        "value": "AT 2025afsj",
+        "source": "1"
+      },
+      {
+        "value": "ZTF18aaxqitv",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "12:55:07.057",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "+34:08:46.95",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "claimedtype": [
+      {
+        "value": "AGN",
+        "source": "1"
+      }
+    ],
+    "redshift": [
+      {
+        "value": "0.1654",
+        "kind": "spectroscopic",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "Miguel Llamas Lanza (IRAP), Erwan Quintin (ESA), Etienne Russeil (Stockholm U), Sergey Karpov (FZU), Emille Ishida (LPC)",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2025/11/23",
+        "source": "1"
+      }
+    ],
+    "photometry": [
+      {
+        "time": "61002.53537",
+        "magnitude": "19.19",
+        "band": "g",
+        "u_time": "MJD",
+        "source": "2",
+        "telescope": "Fink"
+      }
+    ]
+  }
+}

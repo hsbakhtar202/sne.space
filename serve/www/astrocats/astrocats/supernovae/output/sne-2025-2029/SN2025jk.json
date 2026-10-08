@@ -1,0 +1,114 @@
+{
+  "SN2025jk": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "SN2025jk",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/2025jk",
+        "alias": "1"
+      },
+      {
+        "name": "2025TNSTR.136....1H",
+        "bibcode": "2025TNSTR.136....1H",
+        "reference": "S.T. Hodgkin",
+        "alias": "2"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "3"
+      }
+    ],
+    "alias": [
+      {
+        "value": "2025jk",
+        "source": "1"
+      },
+      {
+        "value": "PS25it",
+        "source": "1"
+      },
+      {
+        "value": "AT2025jk",
+        "source": "1"
+      },
+      {
+        "value": "SN2025jk",
+        "source": "1"
+      },
+      {
+        "value": "GOTO25ach",
+        "source": "1"
+      },
+      {
+        "value": "Gaia25aco",
+        "source": "1"
+      },
+      {
+        "value": "SN 2025jk",
+        "source": "1"
+      },
+      {
+        "value": "ATLAS25ang",
+        "source": "1"
+      },
+      {
+        "value": "ZTF25aachhhw",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "10:46:17.440",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "+29:21:36.18",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "claimedtype": [
+      {
+        "value": "II",
+        "source": "1"
+      }
+    ],
+    "redshift": [
+      {
+        "value": "0.04697",
+        "kind": "spectroscopic",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "S.T. Hodgkin, E. Breedt, A. Delgado, D.L. Harrison, M. van Leeuwen, G. Rixon, T. Wevers, A. Yoldas (IoA Cambridge), N. Ihanec, K. Kruszy\u0144ska, K.A. Rybicki, \u0141. Wyrzykowski (Warsaw University Astronomical Observatory), Z. Kostrzewa-Rutkowska (Leiden Observatory), D. Eappachen (SRON/RU), G. Marton (Konkoly Observatory), on behalf of the Gaia Alerts team",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2025/01/09",
+        "source": "1"
+      }
+    ],
+    "photometry": [
+      {
+        "time": "60684.13133",
+        "magnitude": "18.96",
+        "band": "G",
+        "u_time": "MJD",
+        "source": "2",
+        "telescope": "GaiaAlerts"
+      }
+    ]
+  }
+}

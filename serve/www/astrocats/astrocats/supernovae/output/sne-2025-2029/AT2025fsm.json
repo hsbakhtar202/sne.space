@@ -1,0 +1,102 @@
+{
+  "AT2025fsm": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "AT2025fsm",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/2025fsm",
+        "alias": "1"
+      },
+      {
+        "name": "2025TNSTR1117....1C",
+        "bibcode": "2025TNSTR1117....1C",
+        "reference": "K. C. Chambers",
+        "alias": "2"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "3"
+      }
+    ],
+    "alias": [
+      {
+        "value": "2025fsm",
+        "source": "1"
+      },
+      {
+        "value": "PS25avf",
+        "source": "1"
+      },
+      {
+        "value": "AT2025fsm",
+        "source": "1"
+      },
+      {
+        "value": "SN2025fsm",
+        "source": "1"
+      },
+      {
+        "value": "AT 2025fsm",
+        "source": "1"
+      },
+      {
+        "value": "ZTF25aakeysx",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "14:03:23.447",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "+09:26:19.39",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "claimedtype": [
+      {
+        "value": "Gap",
+        "source": "1"
+      }
+    ],
+    "redshift": [
+      {
+        "value": "0.015",
+        "kind": "spectroscopic",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "K. C. Chambers, T. de Boer, J. Fairlamb, M. Huber, C.-C. Lin, T. Lowe, E. Magnier, A. Schultz, R. J. Wainscoat, G. Paek, P. Minguez (IfA, University of Hawaii), S. J. Smartt, K. W. Smith (University of Oxford / Queen's University Belfast), S. Srivastav (University of Oxford), D. R. Young, M. Fulton, M. Nicholl, T. Moore, J. Weston, C. R. Angus, S. Sim (Queen's University Belfast)",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2025/03/23",
+        "source": "1"
+      }
+    ],
+    "photometry": [
+      {
+        "time": "60757.49293",
+        "magnitude": "20.34",
+        "band": "w",
+        "u_time": "MJD",
+        "source": "2",
+        "telescope": "Pan-STARRS"
+      }
+    ]
+  }
+}

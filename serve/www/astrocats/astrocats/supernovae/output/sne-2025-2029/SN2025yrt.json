@@ -1,0 +1,102 @@
+{
+  "SN2025yrt": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "SN2025yrt",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/2025yrt",
+        "alias": "1"
+      },
+      {
+        "name": "2025TNSTR3873....1S",
+        "bibcode": "2025TNSTR3873....1S",
+        "reference": "K. Z. Stanek",
+        "alias": "2"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "3"
+      }
+    ],
+    "alias": [
+      {
+        "value": "2025yrt",
+        "source": "1"
+      },
+      {
+        "value": "AT2025yrt",
+        "source": "1"
+      },
+      {
+        "value": "GOTO24kgc",
+        "source": "1"
+      },
+      {
+        "value": "SN2025yrt",
+        "source": "1"
+      },
+      {
+        "value": "SN 2025yrt",
+        "source": "1"
+      },
+      {
+        "value": "ASASSN-25dw",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "05:07:55.164",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "-18:11:23.86",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "claimedtype": [
+      {
+        "value": "II",
+        "source": "1"
+      }
+    ],
+    "redshift": [
+      {
+        "value": "0.017",
+        "kind": "spectroscopic",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "K. Z. Stanek, for the ASAS-SN team",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2025/09/26",
+        "source": "1"
+      }
+    ],
+    "photometry": [
+      {
+        "time": "60944.40000",
+        "magnitude": "16.10",
+        "band": "g",
+        "u_time": "MJD",
+        "source": "2",
+        "telescope": "ASAS-SN"
+      }
+    ]
+  }
+}

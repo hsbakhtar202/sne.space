@@ -1,0 +1,86 @@
+{
+  "AT2025tzw": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "AT2025tzw",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/2025tzw",
+        "alias": "1"
+      },
+      {
+        "name": "2025TNSTR3229....1N",
+        "bibcode": "2025TNSTR3229....1N",
+        "reference": "Yuji Nakamura",
+        "alias": "2"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "3"
+      }
+    ],
+    "alias": [
+      {
+        "value": "2025tzw",
+        "source": "1"
+      },
+      {
+        "value": "AT2025tzw",
+        "source": "1"
+      },
+      {
+        "value": "SN2025tzw",
+        "source": "1"
+      },
+      {
+        "value": "AT 2025tzw",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "21:09:26.060",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "+35:48:41.60",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "claimedtype": [
+      {
+        "value": "CV",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "Yuji Nakamura",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2025/08/15",
+        "source": "1"
+      }
+    ],
+    "photometry": [
+      {
+        "time": "60902.54899",
+        "magnitude": "15.60",
+        "band": "Clear",
+        "u_time": "MJD",
+        "source": "2"
+      }
+    ]
+  }
+}
