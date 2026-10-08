@@ -21,6 +21,26 @@
         "secondary": true,
         "url": "https://sne.space",
         "alias": "3"
+      },
+      {
+        "name": "ALeRCE / ZTF",
+        "alias": "4",
+        "url": "https://alerce.online/object/ZTF26abueptz",
+        "secondary": true
+      },
+      {
+        "name": "Planck 2015",
+        "alias": "5",
+        "bibcode": "2016A&A...594A..13P",
+        "reference": "Planck Collaboration (2016)",
+        "secondary": true
+      },
+      {
+        "name": "Schlafly & Finkbeiner (2011)",
+        "alias": "6",
+        "bibcode": "2011ApJ...737..103S",
+        "reference": "Schlafly & Finkbeiner (2011)",
+        "secondary": true
       }
     ],
     "alias": [
@@ -43,6 +63,10 @@
       {
         "value": "SN 2026abvg",
         "source": "1"
+      },
+      {
+        "value": "ZTF26abueptz",
+        "source": "ALeRCE Cone Match"
       }
     ],
     "ra": [
@@ -86,12 +110,362 @@
     ],
     "photometry": [
       {
+        "time": "61296.38987",
+        "magnitude": "20.4242",
+        "band": "g",
+        "telescope": "ZTF",
+        "instrument": "ZTF",
+        "u_time": "MJD",
+        "source": "4",
+        "e_magnitude": "0.1613"
+      },
+      {
+        "time": "61296.46309",
+        "magnitude": "20.4511",
+        "band": "r",
+        "telescope": "ZTF",
+        "instrument": "ZTF",
+        "u_time": "MJD",
+        "source": "4",
+        "e_magnitude": "0.2349"
+      },
+      {
+        "time": "61297.44262",
+        "magnitude": "20.1538",
+        "band": "g",
+        "telescope": "ZTF",
+        "instrument": "ZTF",
+        "u_time": "MJD",
+        "source": "4",
+        "e_magnitude": "0.1749"
+      },
+      {
+        "time": "61298.41014",
+        "magnitude": "19.7874",
+        "band": "g",
+        "telescope": "ZTF",
+        "instrument": "ZTF",
+        "u_time": "MJD",
+        "source": "4",
+        "e_magnitude": "0.1583"
+      },
+      {
         "time": "61298.91871",
         "magnitude": "19.38",
         "band": "Clear-",
         "u_time": "MJD",
         "source": "2",
         "telescope": "XOSS, ZTF, ATLAS, LAST"
+      },
+      {
+        "time": "61299.42351",
+        "magnitude": "19.5661",
+        "band": "g",
+        "telescope": "ZTF",
+        "instrument": "ZTF",
+        "u_time": "MJD",
+        "source": "4",
+        "e_magnitude": "0.0861"
+      },
+      {
+        "time": "61299.47367",
+        "magnitude": "19.5166",
+        "band": "r",
+        "telescope": "ZTF",
+        "instrument": "ZTF",
+        "u_time": "MJD",
+        "source": "4",
+        "e_magnitude": "0.1104"
+      },
+      {
+        "time": "61300.43795",
+        "magnitude": "19.4007",
+        "band": "r",
+        "telescope": "ZTF",
+        "instrument": "ZTF",
+        "u_time": "MJD",
+        "source": "4",
+        "e_magnitude": "0.1127"
+      },
+      {
+        "time": "61300.45728",
+        "magnitude": "19.2868",
+        "band": "g",
+        "telescope": "ZTF",
+        "instrument": "ZTF",
+        "u_time": "MJD",
+        "source": "4",
+        "e_magnitude": "0.0927"
+      },
+      {
+        "time": "61301.41628",
+        "magnitude": "19.1510",
+        "band": "r",
+        "telescope": "ZTF",
+        "instrument": "ZTF",
+        "u_time": "MJD",
+        "source": "4",
+        "e_magnitude": "0.1007"
+      },
+      {
+        "time": "61301.46374",
+        "magnitude": "19.1980",
+        "band": "g",
+        "telescope": "ZTF",
+        "instrument": "ZTF",
+        "u_time": "MJD",
+        "source": "4",
+        "e_magnitude": "0.0890"
+      },
+      {
+        "time": "61302.36304",
+        "magnitude": "18.9502",
+        "band": "g",
+        "telescope": "ZTF",
+        "instrument": "ZTF",
+        "u_time": "MJD",
+        "source": "4",
+        "e_magnitude": "0.0796"
+      },
+      {
+        "time": "61302.40154",
+        "magnitude": "19.0433",
+        "band": "r",
+        "telescope": "ZTF",
+        "instrument": "ZTF",
+        "u_time": "MJD",
+        "source": "4",
+        "e_magnitude": "0.0916"
+      },
+      {
+        "time": "61303.40354",
+        "magnitude": "18.8741",
+        "band": "g",
+        "telescope": "ZTF",
+        "instrument": "ZTF",
+        "u_time": "MJD",
+        "source": "4",
+        "e_magnitude": "0.1052"
+      },
+      {
+        "time": "61305.32911",
+        "magnitude": "18.7953",
+        "band": "r",
+        "telescope": "ZTF",
+        "instrument": "ZTF",
+        "u_time": "MJD",
+        "source": "4",
+        "e_magnitude": "0.1142"
+      },
+      {
+        "time": "61305.39521",
+        "magnitude": "18.7635",
+        "band": "g",
+        "telescope": "ZTF",
+        "instrument": "ZTF",
+        "u_time": "MJD",
+        "source": "4",
+        "e_magnitude": "0.0700"
+      },
+      {
+        "time": "61306.35185",
+        "magnitude": "18.8165",
+        "band": "r",
+        "telescope": "ZTF",
+        "instrument": "ZTF",
+        "u_time": "MJD",
+        "source": "4",
+        "e_magnitude": "0.1228"
+      },
+      {
+        "time": "61307.39851",
+        "magnitude": "18.7378",
+        "band": "r",
+        "telescope": "ZTF",
+        "instrument": "ZTF",
+        "u_time": "MJD",
+        "source": "4",
+        "e_magnitude": "0.1068"
+      },
+      {
+        "time": "61308.32944",
+        "magnitude": "18.6813",
+        "band": "g",
+        "telescope": "ZTF",
+        "instrument": "ZTF",
+        "u_time": "MJD",
+        "source": "4",
+        "e_magnitude": "0.1131"
+      },
+      {
+        "time": "61308.44571",
+        "magnitude": "18.6403",
+        "band": "r",
+        "telescope": "ZTF",
+        "instrument": "ZTF",
+        "u_time": "MJD",
+        "source": "4",
+        "e_magnitude": "0.1021"
+      },
+      {
+        "time": "61309.37727",
+        "magnitude": "18.4459",
+        "band": "g",
+        "telescope": "ZTF",
+        "instrument": "ZTF",
+        "u_time": "MJD",
+        "source": "4",
+        "e_magnitude": "0.1280"
+      },
+      {
+        "time": "61309.44374",
+        "magnitude": "18.7004",
+        "band": "r",
+        "telescope": "ZTF",
+        "instrument": "ZTF",
+        "u_time": "MJD",
+        "source": "4",
+        "e_magnitude": "0.1070"
+      },
+      {
+        "time": "61314.45748",
+        "magnitude": "18.7846",
+        "band": "r",
+        "telescope": "ZTF",
+        "instrument": "ZTF",
+        "u_time": "MJD",
+        "source": "4",
+        "e_magnitude": "0.0908"
+      },
+      {
+        "time": "61314.48890",
+        "magnitude": "18.6936",
+        "band": "g",
+        "telescope": "ZTF",
+        "instrument": "ZTF",
+        "u_time": "MJD",
+        "source": "4",
+        "e_magnitude": "0.1086"
+      },
+      {
+        "time": "61315.37980",
+        "magnitude": "18.6978",
+        "band": "g",
+        "telescope": "ZTF",
+        "instrument": "ZTF",
+        "u_time": "MJD",
+        "source": "4",
+        "e_magnitude": "0.0818"
+      },
+      {
+        "time": "61315.46133",
+        "magnitude": "18.7074",
+        "band": "r",
+        "telescope": "ZTF",
+        "instrument": "ZTF",
+        "u_time": "MJD",
+        "source": "4",
+        "e_magnitude": "0.1054"
+      },
+      {
+        "time": "61316.32470",
+        "magnitude": "18.8962",
+        "band": "g",
+        "telescope": "ZTF",
+        "instrument": "ZTF",
+        "u_time": "MJD",
+        "source": "4",
+        "e_magnitude": "0.0856"
+      },
+      {
+        "time": "61316.44205",
+        "magnitude": "18.7118",
+        "band": "r",
+        "telescope": "ZTF",
+        "instrument": "ZTF",
+        "u_time": "MJD",
+        "source": "4",
+        "e_magnitude": "0.0849"
+      },
+      {
+        "time": "61317.35810",
+        "magnitude": "18.8083",
+        "band": "g",
+        "telescope": "ZTF",
+        "instrument": "ZTF",
+        "u_time": "MJD",
+        "source": "4",
+        "e_magnitude": "0.1112"
+      },
+      {
+        "time": "61317.47725",
+        "magnitude": "18.8219",
+        "band": "r",
+        "telescope": "ZTF",
+        "instrument": "ZTF",
+        "u_time": "MJD",
+        "source": "4",
+        "e_magnitude": "0.0856"
+      },
+      {
+        "time": "61318.36610",
+        "magnitude": "18.9597",
+        "band": "g",
+        "telescope": "ZTF",
+        "instrument": "ZTF",
+        "u_time": "MJD",
+        "source": "4",
+        "e_magnitude": "0.0832"
+      },
+      {
+        "time": "61318.46772",
+        "magnitude": "18.8658",
+        "band": "r",
+        "telescope": "ZTF",
+        "instrument": "ZTF",
+        "u_time": "MJD",
+        "source": "4",
+        "e_magnitude": "0.0891"
+      },
+      {
+        "time": "61319.32022",
+        "magnitude": "18.9602",
+        "band": "g",
+        "telescope": "ZTF",
+        "instrument": "ZTF",
+        "u_time": "MJD",
+        "source": "4",
+        "e_magnitude": "0.0912"
+      },
+      {
+        "time": "61319.46145",
+        "magnitude": "18.9197",
+        "band": "r",
+        "telescope": "ZTF",
+        "instrument": "ZTF",
+        "u_time": "MJD",
+        "source": "4",
+        "e_magnitude": "0.1018"
+      },
+      {
+        "time": "61320.36376",
+        "magnitude": "19.0483",
+        "band": "g",
+        "telescope": "ZTF",
+        "instrument": "ZTF",
+        "u_time": "MJD",
+        "source": "4",
+        "e_magnitude": "0.0920"
+      },
+      {
+        "time": "61320.44140",
+        "magnitude": "18.9665",
+        "band": "r",
+        "telescope": "ZTF",
+        "instrument": "ZTF",
+        "u_time": "MJD",
+        "source": "4",
+        "e_magnitude": "0.0767"
       }
     ],
     "spectra": [
@@ -18774,6 +19148,94 @@
             "-3.51950e+00"
           ]
         ]
+      }
+    ],
+    "lumdist": [
+      {
+        "value": "369.933",
+        "derived": true,
+        "u_value": "Mpc",
+        "source": "5"
+      }
+    ],
+    "comovingdist": [
+      {
+        "value": "342.848",
+        "derived": true,
+        "u_value": "Mpc",
+        "source": "5"
+      }
+    ],
+    "velocity": [
+      {
+        "value": "22750.8",
+        "derived": true,
+        "u_value": "km/s",
+        "source": "5"
+      }
+    ],
+    "ebv": [
+      {
+        "value": "0.0649",
+        "derived": true,
+        "source": "6",
+        "e_value": "0.0017"
+      }
+    ],
+    "maxappmag": [
+      {
+        "value": "18.45",
+        "derived": true,
+        "source": "4"
+      }
+    ],
+    "maxdate": [
+      {
+        "value": "2026/09/26",
+        "derived": true,
+        "source": "4"
+      }
+    ],
+    "maxband": [
+      {
+        "value": "g",
+        "derived": true,
+        "source": "4"
+      }
+    ],
+    "maxabsmag": [
+      {
+        "value": "-19.31",
+        "derived": true,
+        "source": "4"
+      }
+    ],
+    "maxvisualappmag": [
+      {
+        "value": "18.45",
+        "derived": true,
+        "source": "4"
+      }
+    ],
+    "maxvisualdate": [
+      {
+        "value": "2026/09/26",
+        "derived": true,
+        "source": "4"
+      }
+    ],
+    "maxvisualband": [
+      {
+        "value": "g",
+        "derived": true,
+        "source": "4"
+      }
+    ],
+    "maxvisualabsmag": [
+      {
+        "value": "-19.31",
+        "derived": true,
+        "source": "4"
       }
     ]
   }

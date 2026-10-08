@@ -8,7 +8,11 @@ import zipfile
 from pathlib import Path
 from typing import Any, Dict, Generator, List, Optional, Set, Tuple
 
-from ingest.alerce import convert_alerce_to_astrocats_photometry, get_alerce_lightcurve
+from ingest.alerce import (
+    convert_alerce_to_astrocats_photometry,
+    find_ztf_object_by_coords,
+    get_alerce_lightcurve,
+)
 from ingest.coordinates import deg_to_ra_dec, parse_float_safe, parse_iso_datetime
 from ingest.tns_spectra import convert_tns_to_astrocats_spectra, is_duplicate_spectrum, search_tns_spectra
 from ingest.wiserep import convert_wiserep_to_astrocats_spectra, search_wiserep_spectra
@@ -235,6 +239,12 @@ def build_event_dict(
             if a.startswith("ZTF") and len(a) >= 12:
                 ztf_oid = a
                 break
+
+        if not ztf_oid and ra_val is not None and dec_val is not None:
+            ztf_oid = find_ztf_object_by_coords(ra_val, dec_val)
+            if ztf_oid and ztf_oid not in alias_list:
+                alias_list.append(ztf_oid)
+                event["alias"].append({"value": ztf_oid, "source": tns_source_alias})
 
         if ztf_oid:
             alerce_data = get_alerce_lightcurve(ztf_oid)

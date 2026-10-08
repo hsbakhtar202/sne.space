@@ -21,6 +21,26 @@
         "secondary": true,
         "url": "https://sne.space",
         "alias": "3"
+      },
+      {
+        "name": "ALeRCE / ZTF",
+        "alias": "4",
+        "url": "https://alerce.online/object/ZTF26abyamcg",
+        "secondary": true
+      },
+      {
+        "name": "Planck 2015",
+        "alias": "5",
+        "bibcode": "2016A&A...594A..13P",
+        "reference": "Planck Collaboration (2016)",
+        "secondary": true
+      },
+      {
+        "name": "Schlafly & Finkbeiner (2011)",
+        "alias": "6",
+        "bibcode": "2011ApJ...737..103S",
+        "reference": "Schlafly & Finkbeiner (2011)",
+        "secondary": true
       }
     ],
     "alias": [
@@ -39,6 +59,10 @@
       {
         "value": "SN 2026acpp",
         "source": "1"
+      },
+      {
+        "value": "ZTF26abyamcg",
+        "source": "ALeRCE Cone Match"
       }
     ],
     "ra": [
@@ -88,6 +112,66 @@
         "u_time": "MJD",
         "source": "2",
         "telescope": "ALeRCE, ATLAS"
+      },
+      {
+        "time": "61312.52316",
+        "magnitude": "17.3849",
+        "band": "r",
+        "telescope": "ZTF",
+        "instrument": "ZTF",
+        "u_time": "MJD",
+        "source": "4",
+        "e_magnitude": "0.0566"
+      },
+      {
+        "time": "61313.52286",
+        "magnitude": "17.3856",
+        "band": "r",
+        "telescope": "ZTF",
+        "instrument": "ZTF",
+        "u_time": "MJD",
+        "source": "4",
+        "e_magnitude": "0.0496"
+      },
+      {
+        "time": "61315.52354",
+        "magnitude": "17.4895",
+        "band": "r",
+        "telescope": "ZTF",
+        "instrument": "ZTF",
+        "u_time": "MJD",
+        "source": "4",
+        "e_magnitude": "0.0600"
+      },
+      {
+        "time": "61316.52352",
+        "magnitude": "17.5143",
+        "band": "r",
+        "telescope": "ZTF",
+        "instrument": "ZTF",
+        "u_time": "MJD",
+        "source": "4",
+        "e_magnitude": "0.0589"
+      },
+      {
+        "time": "61318.52203",
+        "magnitude": "17.5498",
+        "band": "r",
+        "telescope": "ZTF",
+        "instrument": "ZTF",
+        "u_time": "MJD",
+        "source": "4",
+        "e_magnitude": "0.0502"
+      },
+      {
+        "time": "61320.52243",
+        "magnitude": "17.6298",
+        "band": "r",
+        "telescope": "ZTF",
+        "instrument": "ZTF",
+        "u_time": "MJD",
+        "source": "4",
+        "e_magnitude": "0.0482"
       }
     ],
     "spectra": [
@@ -958,6 +1042,94 @@
             "2.02300e-16"
           ]
         ]
+      }
+    ],
+    "lumdist": [
+      {
+        "value": "74.196",
+        "derived": true,
+        "u_value": "Mpc",
+        "source": "5"
+      }
+    ],
+    "comovingdist": [
+      {
+        "value": "72.986",
+        "derived": true,
+        "u_value": "Mpc",
+        "source": "5"
+      }
+    ],
+    "velocity": [
+      {
+        "value": "4926.4",
+        "derived": true,
+        "u_value": "km/s",
+        "source": "5"
+      }
+    ],
+    "ebv": [
+      {
+        "value": "0.0115",
+        "derived": true,
+        "source": "6",
+        "e_value": "0.0010"
+      }
+    ],
+    "maxappmag": [
+      {
+        "value": "17.38",
+        "derived": true,
+        "source": "4"
+      }
+    ],
+    "maxdate": [
+      {
+        "value": "2026/09/29",
+        "derived": true,
+        "source": "4"
+      }
+    ],
+    "maxband": [
+      {
+        "value": "r",
+        "derived": true,
+        "source": "4"
+      }
+    ],
+    "maxabsmag": [
+      {
+        "value": "-16.95",
+        "derived": true,
+        "source": "4"
+      }
+    ],
+    "maxvisualappmag": [
+      {
+        "value": "17.38",
+        "derived": true,
+        "source": "4"
+      }
+    ],
+    "maxvisualdate": [
+      {
+        "value": "2026/09/29",
+        "derived": true,
+        "source": "4"
+      }
+    ],
+    "maxvisualband": [
+      {
+        "value": "r",
+        "derived": true,
+        "source": "4"
+      }
+    ],
+    "maxvisualabsmag": [
+      {
+        "value": "-16.95",
+        "derived": true,
+        "source": "4"
       }
     ]
   }

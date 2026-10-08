@@ -637,6 +637,25 @@ def sync_all_recent_partitions() -> int:
     RECENT_PATH.parent.mkdir(parents=True, exist_ok=True)
     RECENT_PATH.write_text(json.dumps(all_recent, separators=(",", ":")), encoding="utf-8")
 
+    # Sync top recent events cards (recent-events.json)
+    try:
+        cards = []
+        for disc_d, r in rows[:8]:
+            cards.append({
+                "name": r["name"],
+                "date": r["discoverdate"][0]["value"].replace("/", "-") if r.get("discoverdate") else "",
+                "type": r["claimedtype"][0]["value"] if r.get("claimedtype") else "",
+                "discoverer": r["discoverer"][0]["value"][:48] if r.get("discoverer") else "",
+                "ra": r["ra"][0]["value"] if r.get("ra") else "",
+                "dec": r["dec"][0]["value"] if r.get("dec") else "",
+                "spectra_count": int(r.get("spectralink", "0")),
+                "photo_count": int(r.get("photolink", "0").split(",")[0]),
+            })
+        recent_events_path = RECENT_PATH.parent / "recent-events.json"
+        recent_events_path.write_text(json.dumps(cards, indent=2) + "\n", encoding="utf-8")
+    except Exception as exc:
+        logger.warning("Failed updating recent-events.json: %s", exc)
+
     # Write names.min.json
     try:
         names_file.write_text(json.dumps(names_map, separators=(",", ":")), encoding="utf-8")

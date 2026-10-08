@@ -11,7 +11,58 @@ from typing import Any, Dict, List, Optional, Tuple
 logger = logging.getLogger(__name__)
 
 CACHE_DIR = Path("ingest/cache/alerce")
+CONE_CACHE_DIR = Path("ingest/cache/alerce/cones")
 FID_TO_BAND = {1: "g", 2: "r", 3: "i"}
+
+
+def find_ztf_object_by_coords(
+    ra_deg: float,
+    dec_deg: float,
+    radius_arcsec: float = 6.0,
+    timeout: int = 5,
+    use_cache: bool = True,
+) -> Optional[str]:
+    """Query ALeRCE /objects/ cone search to find the ZTF object ID corresponding to sky coordinates."""
+    if ra_deg is None or dec_deg is None or dec_deg < -32.0:
+        return None
+
+    CONE_CACHE_DIR.mkdir(parents=True, exist_ok=True)
+    coord_key = f"{ra_deg:.5f}_{dec_deg:.5f}_{radius_arcsec:.1f}"
+    cache_file = CONE_CACHE_DIR / f"{coord_key}.json"
+
+    if use_cache and cache_file.is_file():
+        try:
+            return json.loads(cache_file.read_text(encoding="utf-8")).get("oid")
+        except Exception:
+            pass
+
+    url = f"https://api.alerce.online/ztf/v1/objects/?ra={ra_deg:.5f}&dec={dec_deg:.5f}&radius={radius_arcsec:.1f}&page_size=3"
+    headers = {
+        "User-Agent": "OpenSupernovaCatalog-Ingest/2.0 (https://sne.space)",
+        "Accept": "application/json",
+    }
+    req = urllib.request.Request(url, headers=headers)
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            if resp.status == 200:
+                data = json.loads(resp.read().decode("utf-8"))
+                items = data.get("items", [])
+                if items and items[0].get("oid"):
+                    oid = items[0]["oid"]
+                    try:
+                        cache_file.write_text(json.dumps({"oid": oid}), encoding="utf-8")
+                    except Exception:
+                        pass
+                    return oid
+                else:
+                    try:
+                        cache_file.write_text(json.dumps({"oid": None}), encoding="utf-8")
+                    except Exception:
+                        pass
+    except Exception as e:
+        logger.debug(f"ALeRCE cone search failed for {coord_key}: {e}")
+
+    return None
 
 
 def get_alerce_lightcurve(

@@ -1330,13 +1330,15 @@ def _event_page(name: str, entered: str | None = None, is_story: bool = False, f
         except Exception:
             meta = {}
 
-        # Auto-enrich missing classification spectra from TNS/WISeREP for recent transients
-        if enrich_event is not None and not meta.get("spectra"):
+        # Auto-enrich missing classification spectra & light curves for recent transients
+        need_lc = len(meta.get("photometry", [])) <= 1
+        need_spec = not meta.get("spectra")
+        if enrich_event is not None and (need_spec or need_lc):
             match_yr = re.search(r'(?<!\d)(202[0-9])(?!\d)', name)
             if match_yr and int(match_yr.group(1)) >= 2024:
                 try:
                     if is_file_stale is not None and is_file_stale(path):
-                        enrich_event(name, fetch_lightcurve=False, fetch_spectra=True, force=False)
+                        enrich_event(name, fetch_lightcurve=need_lc, fetch_spectra=need_spec, force=False)
                         raw = json.loads(path.read_text(encoding="utf-8", errors="replace"))
                         if isinstance(raw, dict) and len(raw) == 1:
                             meta = next(iter(raw.values()))
@@ -3827,9 +3829,9 @@ class Handler(SimpleHTTPRequestHandler):
                         ev_obj = ev_data[ev_key]
                         q_data = ev_obj.get(quantity, [])
 
-                        if quantity == "spectra" and not q_data and enrich_event is not None:
+                        if ((quantity == "spectra" and not q_data) or (quantity == "photometry" and len(q_data) <= 1)) and enrich_event is not None:
                             try:
-                                enrich_event(canon or raw_event, fetch_lightcurve=False, fetch_spectra=True, force=False)
+                                enrich_event(canon or raw_event, fetch_lightcurve=(len(q_data) <= 1), fetch_spectra=(quantity == "spectra"), force=False)
                                 ev_data = json.loads(fp.read_text(encoding="utf-8"))
                                 ev_key = list(ev_data.keys())[0]
                                 ev_obj = ev_data[ev_key]

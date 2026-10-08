@@ -91,7 +91,7 @@ def search_wiserep_spectra(
 
 def download_ascii_spectrum(
     url: str,
-    timeout: int = 10,
+    timeout: int = 30,
     max_points: int = 5000,
     use_cache: bool = True
 ) -> Optional[List[List[str]]]:

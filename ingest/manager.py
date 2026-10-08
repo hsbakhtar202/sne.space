@@ -9,7 +9,11 @@ import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Tuple
 
-from ingest.alerce import convert_alerce_to_astrocats_photometry, get_alerce_lightcurve
+from ingest.alerce import (
+    convert_alerce_to_astrocats_photometry,
+    find_ztf_object_by_coords,
+    get_alerce_lightcurve,
+)
 from ingest.astronomy import compute_cosmology, compute_peak_magnitudes, fetch_irsa_dust
 from ingest.coordinates import ra_dec_to_deg
 from ingest.tns import build_event_dict, stream_tns_rows
@@ -423,6 +427,23 @@ def enrich_event(
                 if a.startswith("ZTF") and len(a) >= 12:
                     ztf_oid = a
                     break
+
+            if not ztf_oid:
+                # Attempt coordinate-based cone match in ALeRCE for any transient observed by ZTF
+                ra_entry = event.get("ra", [{}])[0].get("value")
+                dec_entry = event.get("dec", [{}])[0].get("value")
+                if ra_entry and dec_entry:
+                    from ingest.coordinates import ra_dec_to_deg
+                    coords_deg = ra_dec_to_deg(ra_entry, dec_entry)
+                    if coords_deg:
+                        r_deg, d_deg = coords_deg
+                        if d_deg >= -32.0:
+                            matched_oid = find_ztf_object_by_coords(r_deg, d_deg)
+                            if matched_oid:
+                                ztf_oid = matched_oid
+                                if not any(a.get("value") == ztf_oid for a in event.get("alias", [])):
+                                    event.setdefault("alias", []).append({"value": ztf_oid, "source": "ALeRCE Cone Match"})
+
             if ztf_oid:
                 print(f"Querying ALeRCE for ZTF ID {ztf_oid}...")
                 lc = get_alerce_lightcurve(ztf_oid, max_cache_age=broker_cache_age)
@@ -473,27 +494,26 @@ def enrich_event(
             except Exception as e:
                 logger.warning(f"TNS spectra query failed for {tns_id}: {e}")
 
-            # 2. Query WISeREP (fallback if TNS had no spectra, or if force is enabled)
-            if not current_spectra or force:
-                try:
-                    print(f"Querying WISeREP for {tns_id} spectra...")
-                    wrows = search_wiserep_spectra(tns_id, max_cache_age=broker_cache_age)
-                    if wrows:
-                        src_alias = _get_or_add_source(
-                            event,
-                            name="WISeREP",
-                            bibcode="2012PASP..124..668Y",
-                            reference="Yaron & Gal-Yam (2012)",
-                            url="https://www.wiserep.org",
-                            secondary=True,
-                        )
-                        specs = convert_wiserep_to_astrocats_spectra(wrows, source_alias=src_alias, max_spectra=5)
-                        print(f"Retrieved {len(specs)} spectra from WISeREP.")
-                        for s in specs:
-                            if not is_duplicate_spectrum(s, current_spectra):
-                                current_spectra.append(s)
-                except Exception as e:
-                    logger.warning(f"WISeREP spectra query failed for {tns_id}: {e}")
+            # 2. Query WISeREP (merge any non-duplicate calibrated spectra)
+            try:
+                print(f"Querying WISeREP for {tns_id} spectra...")
+                wrows = search_wiserep_spectra(tns_id, max_cache_age=broker_cache_age)
+                if wrows:
+                    src_alias = _get_or_add_source(
+                        event,
+                        name="WISeREP",
+                        bibcode="2012PASP..124..668Y",
+                        reference="Yaron & Gal-Yam (2012)",
+                        url="https://www.wiserep.org",
+                        secondary=True,
+                    )
+                    specs = convert_wiserep_to_astrocats_spectra(wrows, source_alias=src_alias, max_spectra=5)
+                    print(f"Retrieved {len(specs)} spectra from WISeREP.")
+                    for s in specs:
+                        if not is_duplicate_spectrum(s, current_spectra):
+                            current_spectra.append(s)
+            except Exception as e:
+                logger.warning(f"WISeREP spectra query failed for {tns_id}: {e}")
 
         # Calculate Cosmological Distances & Recession Velocity
         dl_val = None
