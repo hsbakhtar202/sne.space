@@ -10,16 +10,6 @@
     "photo_count": 1
   },
   {
-    "name": "SN2026aebj",
-    "date": "2026-10-02",
-    "type": "Ia",
-    "discoverer": "Fritz",
-    "ra": "21:45:41.050",
-    "dec": "-07:03:45.02",
-    "spectra_count": 1,
-    "photo_count": 16
-  },
-  {
     "name": "SN2026aedv",
     "date": "2026-10-02",
     "type": "Ia",
@@ -28,6 +18,16 @@
     "dec": "+22:13:11.52",
     "spectra_count": 1,
     "photo_count": 14
+  },
+  {
+    "name": "SN2026aebj",
+    "date": "2026-10-02",
+    "type": "Ia",
+    "discoverer": "Fritz",
+    "ra": "21:45:41.050",
+    "dec": "-07:03:45.02",
+    "spectra_count": 1,
+    "photo_count": 16
   },
   {
     "name": "SN2026aeaq",

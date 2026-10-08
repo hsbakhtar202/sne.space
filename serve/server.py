@@ -3802,7 +3802,7 @@ class Handler(SimpleHTTPRequestHandler):
         # 2. OACAPI Event Quantity Endpoints: /{event}/{quantity} or /api/{event}/{quantity}
         # e.g. /SN2023ixf/photometry, /SN2023ixf/spectra, /SN2023ixf/spectra/data, /SN2014J+SN2015F/photometry/magnitude+band
         parts = [p for p in path.strip("/").split("/") if p]
-        if parts and parts[0] in ("api", "sne"):
+        if parts and parts[0] in ("api", "sne", "event"):
             parts = parts[1:]
 
         known_quantities = {
@@ -3884,12 +3884,32 @@ class Handler(SimpleHTTPRequestHandler):
                 self._send(404, "application/json", json.dumps({"error": f"event(s) '{raw_event_str}' not found"}).encode())
                 return
 
-        # 3. Direct Event JSON download (e.g. /SN2023ixf.json, /sne/SN2023ixf.json, /api/SN2023ixf)
-        is_json_req = path.endswith(".json") or (parts and len(parts) == 1 and path.startswith("/api/"))
-        if is_json_req:
-            raw = parts[0] if parts else ""
-            if raw.endswith(".json"):
-                raw = raw[:-5]
+        # Static file check under WWW (e.g. /astrocats/astrocats/supernovae/output/names.min.json, assets, images)
+        rel_path = path.lstrip("/")
+        if rel_path and not path.startswith(("/sne/", "/event/")):
+            static_cand = (WWW / rel_path).resolve()
+            try:
+                static_cand.relative_to(WWW.resolve())
+                if static_cand.is_file():
+                    ctype = mimetypes.guess_type(str(static_cand))[0] or "application/octet-stream"
+                    if ctype.startswith("text/") or ctype in ("application/javascript", "application/json", "application/xml"):
+                        ctype += "; charset=utf-8"
+                    self._send(200, ctype, static_cand.read_bytes(), {"Cache-Control": "public, max-age=300"})
+                    return
+            except ValueError:
+                pass
+
+        # 3. Direct Event JSON download (e.g. /SN2023ixf.json, /sne/SN2023ixf.json, /event/SN2023ixf.json, /api/SN2023ixf)
+        event_json_target = None
+        if path.startswith(("/sne/", "/event/")) and path.endswith(".json"):
+            event_json_target = path.split("/")[-1][:-5]
+        elif path.startswith("/api/") and len(parts) == 1:
+            event_json_target = parts[0].removesuffix(".json")
+        elif path.endswith(".json") and path.count("/") == 1:
+            event_json_target = path[1:-5]
+
+        if event_json_target:
+            raw = event_json_target
             if enrich_req and enrich_event is not None:
                 c, _ = _resolve_event(raw)
                 if c:
@@ -3989,16 +4009,28 @@ class Handler(SimpleHTTPRequestHandler):
                     self._send(code, "text/html; charset=utf-8", body)
                 return
 
-        # 5. Gzip HTML when .html empty/missing
+        # 5. Gzip HTML when .html empty/missing, or render live event page for historical URLs
         if path.startswith("/astrocats/") and path.endswith(".html"):
             html_path = WWW / path.lstrip("/")
             gz_path = Path(str(html_path) + ".gz")
-            if (not html_path.is_file() or html_path.stat().st_size == 0) and gz_path.is_file():
+            if html_path.is_file() and html_path.stat().st_size > 0:
+                self._send(200, "text/html; charset=utf-8", html_path.read_bytes())
+                return
+            if gz_path.is_file() and gz_path.stat().st_size > 0:
                 data = gz_path.read_bytes()
                 self._send(200, "text/html; charset=utf-8", data, {
                     "Content-Encoding": "gzip"
                 })
                 return
+            m_ev = re.search(r'/output/html/([^/]+)\.html$', path)
+            if m_ev:
+                ev_name = m_ev.group(1)
+                res, ent = _resolve_event(ev_name)
+                target = res or ev_name
+                code, body = _event_page(target)
+                if code == 200:
+                    self._send(200, "text/html; charset=utf-8", body)
+                    return
 
         # 6. IA / static directory indexes (with or without trailing slash)
         rel = path.lstrip("/")

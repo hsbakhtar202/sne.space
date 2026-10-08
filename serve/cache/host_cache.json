@@ -9,5 +9,54 @@
     "offset_ang_str": "4.7\u2033 (PA 51\u00b0)",
     "offset_kpc_str": "3.27 kpc",
     "offset_combined": "4.7\u2033 (PA 51\u00b0) (~3.27 kpc)"
-  }
+  },
+  "42.2693,-22.2336": {
+    "name": "LEDA 3095364 (PGC 3095364)",
+    "ra": "02 49 04.4",
+    "dec": "-22 13 56",
+    "offset_arcsec": 5.89,
+    "offset_pa_deg": 147.8,
+    "offset_kpc": 5.75,
+    "offset_ang_str": "5.9\u2033 (PA 148\u00b0)",
+    "offset_kpc_str": "5.75 kpc",
+    "offset_combined": "5.9\u2033 (PA 148\u00b0) (~5.75 kpc)"
+  },
+  "140.1433,50.6966": null,
+  "221.3351,38.7384": {
+    "name": "NGC  5752 (PGC 52685)",
+    "ra": "14 45 14.0",
+    "dec": "+38 43 43",
+    "offset_arcsec": 83.19,
+    "offset_pa_deg": 64.8,
+    "offset_kpc": 25.79,
+    "offset_ang_str": "83.2\u2033 (PA 65\u00b0)",
+    "offset_kpc_str": "25.79 kpc",
+    "offset_combined": "83.2\u2033 (PA 65\u00b0) (~25.79 kpc)"
+  },
+  "48.1064,19.2529": {
+    "name": "Z 464-7 (PGC 11943)",
+    "ra": "03 12 26.2",
+    "dec": "+19 14 46",
+    "offset_arcsec": 26.15,
+    "offset_pa_deg": 338.9,
+    "offset_kpc": 15.71,
+    "offset_ang_str": "26.1\u2033 (PA 339\u00b0)",
+    "offset_kpc_str": "15.71 kpc",
+    "offset_combined": "26.1\u2033 (PA 339\u00b0) (~15.71 kpc)"
+  },
+  "210.2991,9.8517": null,
+  "172.1402,58.5630": {
+    "name": "MCG+10-17-002a (PGC 35325)",
+    "ra": "11 28 27.1",
+    "dec": "+58 34 42",
+    "offset_arcsec": 75.4,
+    "offset_pa_deg": 137.2,
+    "offset_kpc": null,
+    "offset_ang_str": "75.4\u2033 (PA 137\u00b0)",
+    "offset_kpc_str": "\u2014",
+    "offset_combined": "75.4\u2033 (PA 137\u00b0)"
+  },
+  "247.4554,24.7728": null,
+  "0.7402,-1.5612": null,
+  "10.6849,13.4739": null
 }
