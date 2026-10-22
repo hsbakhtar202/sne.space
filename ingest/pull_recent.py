@@ -78,56 +78,11 @@ def _row(item: dict[str, str]) -> dict[str, str] | None:
     }
 
 
-def pull_recent(days: int = 40) -> int:
-    """Download the newest classified TNS supernovae and refresh the homepage list."""
-    items = fetch_classified(days=days)
-    written = []
-    for item in items:
-        row = _row(item)
-        if row is None:
-            continue
-
-        cname_raw = f"{row.get('name_prefix', 'SN')}{row['name']}"
-        year = int(row["discoverydate"][:4]) if row["discoverydate"][:4].isdigit() else 2026
-        dest = get_target_repo_folder(year)
-        dest.mkdir(parents=True, exist_ok=True)
-        dest_file = dest / f"{cname_raw}.json"
-
-        event = None
-        if dest_file.is_file():
-            try:
-                ex_data = json.loads(dest_file.read_text(encoding="utf-8"))
-                ex_key = list(ex_data.keys())[0] if ex_data else cname_raw
-                if len(ex_data.get(ex_key, {}).get("spectra", [])) > 0:
-                    cname = ex_key
-                    event = ex_data
-            except Exception:
-                pass
-
-        if event is None:
-            cname, event = build_event_dict(
-                row,
-                enrich_alerce=True,
-                enrich_wiserep=False,
-                enrich_tns_spectra=True
-            )
-            time.sleep(0.5)  # Respectful cadence to prevent TNS rate-limiting
-            atomic_write_json(dest / f"{cname}.json", event)
-
-        n_spectra = len(event[cname].get("spectra", []))
-        n_photo = len(event[cname].get("photometry", []))
-
-        written.append({
-            "name": cname,
-            "date": row["discoverydate"][:10],
-            "type": event[cname].get("claimedtype", [{"value": ""}])[0].get("value", ""),
-            "discoverer": (row["reporters"] or "")[:48],
-            "ra": event[cname].get("ra", [{"value": ""}])[0].get("value", ""),
-            "dec": event[cname].get("dec", [{"value": ""}])[0].get("value", ""),
-            "spectra_count": n_spectra,
-            "photo_count": n_photo,
-            "sort": row["discoverydate"],
-        })
+def _publish(written: list[dict]) -> None:
+    """Replace the homepage recent list. Never publish an empty pull over a good file."""
+    if not written:
+        print("TNS pull returned no rows; leaving the existing recent list in place", flush=True)
+        return
     written.sort(key=lambda r: r["sort"], reverse=True)
     cards = [{k: v for k, v in row.items() if k != "sort"} for row in written[:8]]
     RECENT_PATH.parent.mkdir(parents=True, exist_ok=True)
@@ -152,6 +107,76 @@ def pull_recent(days: int = 40) -> int:
         })
     catalog_path = RECENT_PATH.parent / "recent-catalog.min.json"
     catalog_path.write_text(json.dumps(catalog_rows, separators=(",", ":")), encoding="utf-8")
+    print(f"Published {len(written)} classified supernovae; newest {cards[0]['name']} {cards[0]['date']}", flush=True)
+
+
+def pull_recent(days: int = 40) -> int:
+    """Download the newest classified TNS supernovae and refresh the homepage list.
+
+    The homepage file is written from the TNS search rows first. Spectra and
+    photometry enrichment happens afterward, so a slow or stuck enrich cannot
+    leave the previous pull on disk.
+    """
+    items = fetch_classified(days=days)
+    written = []
+    pending = []
+    for item in items:
+        row = _row(item)
+        if row is None:
+            continue
+        cname_raw = f"{row.get('name_prefix', 'SN')}{row['name']}"
+        written.append({
+            "name": cname_raw,
+            "date": row["discoverydate"][:10],
+            "type": row.get("type") or "",
+            "discoverer": (row.get("reporters") or "")[:48],
+            "ra": item.get("RA", ""),
+            "dec": item.get("DEC", ""),
+            "spectra_count": 0,
+            "photo_count": 1,
+            "sort": row["discoverydate"],
+        })
+        pending.append((cname_raw, row, item))
+    _publish(written)
+    if not written:
+        return 0
+
+    by_name = {row["name"]: row for row in written}
+    for cname_raw, row, item in pending:
+        year = int(row["discoverydate"][:4]) if row["discoverydate"][:4].isdigit() else 2026
+        dest = get_target_repo_folder(year)
+        dest.mkdir(parents=True, exist_ok=True)
+        dest_file = dest / f"{cname_raw}.json"
+        event = None
+        cname = cname_raw
+        try:
+            if dest_file.is_file():
+                ex_data = json.loads(dest_file.read_text(encoding="utf-8"))
+                ex_key = list(ex_data.keys())[0] if ex_data else cname_raw
+                if len(ex_data.get(ex_key, {}).get("spectra", [])) > 0:
+                    cname = ex_key
+                    event = ex_data
+            if event is None:
+                cname, event = build_event_dict(
+                    row,
+                    enrich_alerce=True,
+                    enrich_wiserep=False,
+                    enrich_tns_spectra=True,
+                )
+                time.sleep(0.5)
+                atomic_write_json(dest / f"{cname}.json", event)
+            card = by_name.get(cname_raw)
+            if card is not None and event is not None:
+                body = event.get(cname, {})
+                card["spectra_count"] = len(body.get("spectra", []))
+                card["photo_count"] = len(body.get("photometry", [])) or 1
+                card["type"] = body.get("claimedtype", [{"value": card["type"]}])[0].get("value", card["type"])
+                card["ra"] = body.get("ra", [{"value": card["ra"]}])[0].get("value", card["ra"])
+                card["dec"] = body.get("dec", [{"value": card["dec"]}])[0].get("value", card["dec"])
+        except Exception as exc:
+            print(f"TNS enrich failed for {cname_raw}: {exc}", flush=True)
+            continue
+    _publish(written)
     print(f"Wrote {len(written)} events into {SUPERNOVAE_OUTPUT}", flush=True)
     return len(written)
 

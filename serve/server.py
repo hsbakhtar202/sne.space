@@ -3511,7 +3511,6 @@ class Handler(SimpleHTTPRequestHandler):
                 targets = scan_catalog_targets()
                 enriched = compute_observability_for_targets(targets, obs_key=obs)
                 if fmt == "csv":
-                    import io, csv
                     output = io.StringIO()
                     writer = csv.writer(output)
                     writer.writerow(["Name", "Type", "RA", "Dec", "Latest_Mag", "Band", "Trend", "Min_Airmass", "Observable_Hours"])
