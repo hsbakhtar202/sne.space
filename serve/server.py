@@ -3957,8 +3957,16 @@ class Handler(SimpleHTTPRequestHandler):
         fmt = query.get("format", [""])[0].lower()
 
         # Liveness / readiness probe. Must never touch a provider or the catalog.
+        # ``revision`` identifies the deployed build. A 200 here proves *a* container
+        # is running, not that it is the intended one: during an incident the first
+        # question is which commit is live. SNE_GIT_REVISION is stamped at build time
+        # from the Dockerfile; when absent, fall back to asking git in the source tree.
         if path in ("/healthz", "/health", "/livez"):
-            payload = {"status": "ok", "uptime_seconds": round(time.time() - _START_TIME, 1)}
+            payload = {
+                "status": "ok",
+                "uptime_seconds": round(time.time() - _START_TIME, 1),
+                "revision": _deployed_revision(),
+            }
             self._send(200, "application/json; charset=utf-8",
                        json.dumps(payload).encode("utf-8"), {"Cache-Control": "no-store"})
             return
@@ -5193,6 +5201,44 @@ def _peak_rss_mb() -> float:
         return -1.0
 
 
+_DEPLOYED_REVISION: str | None = None
+
+
+def _deployed_revision() -> str:
+    """Identify the running build: build-arg stamp first, then git, then unknown.
+
+    Reported by ``/healthz`` so an operator can confirm *which* commit is deployed.
+    During the earlier incident the endpoint 404'd against the old image, which
+    proved only that the new code was absent -- not what was actually running. An
+    explicit revision makes that unambiguous and is cached because it cannot change
+    for the life of the process.
+    """
+    global _DEPLOYED_REVISION
+    if _DEPLOYED_REVISION is not None:
+        return _DEPLOYED_REVISION
+
+    rev = (os.environ.get("SNE_GIT_REVISION") or "").strip()
+    if rev and rev != "unknown":
+        _DEPLOYED_REVISION = rev
+        return _DEPLOYED_REVISION
+
+    # No build stamp (Easypanel/Coolify do not pass build args by default). Ask git
+    # in the source tree, which is present in this image because the Dockerfile does
+    # a full COPY. A read-only .git or a missing git binary simply yields "unknown".
+    try:
+        out = subprocess.run(
+            ["git", "-C", str(Path(__file__).resolve().parent.parent), "rev-parse", "--short=12", "HEAD"],
+            capture_output=True, text=True, timeout=5, check=False,
+        )
+        if out.returncode == 0 and out.stdout.strip():
+            _DEPLOYED_REVISION = out.stdout.strip()
+            return _DEPLOYED_REVISION
+    except Exception:  # noqa: BLE001
+        pass
+    _DEPLOYED_REVISION = "unknown"
+    return _DEPLOYED_REVISION
+
+
 def _health_payload() -> dict:
     store_stats = {}
     try:
@@ -5203,6 +5249,7 @@ def _health_payload() -> dict:
         store_stats = {"error": str(exc)}
     return {
         "status": "ok",
+        "revision": _deployed_revision(),
         "uptime_seconds": round(time.time() - _START_TIME, 1),
         "rss_mb": _rss_mb(),
         "peak_rss_mb": _peak_rss_mb(),

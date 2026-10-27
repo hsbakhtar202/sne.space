@@ -28,13 +28,28 @@ ENV PYTHONUNBUFFERED=1 \
     OSC_PORT=8080 \
     PHP_BIN=php \
     SNE_DATA_DIR=/data/astrocats/astrocats/supernovae/output \
-    SNE_RUNTIME_DIR=/data/sne-runtime
+    SNE_RUNTIME_DIR=/data/sne-runtime \
+    SNE_GIT_REVISION=unknown
 
 # Mutable runtime JSON (recent-events.json, recent-catalog.min.json) lives here so a
 # redeploy cannot reset it to the image's build-time copy. Declared as a VOLUME so a
 # plain `docker run` keeps the data across container replacement, matching compose.
 # Only these two files are mutable; CSS/JS/fonts stay in the image layer.
 VOLUME ["/data/sne-runtime"]
+
+# Stamp the build with the commit it came from. Without this there is no way to tell
+# which revision is actually deployed: a health check that returns 200 proves *a*
+# container is up, not that it is the intended one. Easypanel/Coolify pass no build
+# args by default, so the fallback is "unknown" and the running code's git describe
+# is reported instead. Override at build time with:
+#   docker build --build-arg GIT_REVISION=$(git rev-parse HEAD) .
+ARG GIT_REVISION=unknown
+LABEL org.opencontainers.image.revision="${GIT_REVISION}" \
+      org.opencontainers.image.title="sne.space" \
+      org.opencontainers.image.description="Open Supernova Catalog server"
+# Also make it visible to the running process so /healthz can report it. ARG values
+# are not available at runtime, so this is set as a real environment variable.
+ENV SNE_GIT_REVISION=${GIT_REVISION}
 
 # Expose HTTP port
 EXPOSE 8080
