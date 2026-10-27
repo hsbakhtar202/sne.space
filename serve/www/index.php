@@ -5,7 +5,14 @@
  */
 declare(strict_types=1);
 
-$recentCatPath = __DIR__ . '/assets/recent-catalog.min.json';
+// Mutable runtime JSON (recent-events / recent-catalog) lives outside the image in
+// a persistent directory so a redeploy cannot reset it to its build-time copy.
+// SNE_RUNTIME_DIR is set by server.py from serve/data_paths.py — the single source
+// of truth for this location. The assets/ copy is only a first-boot fallback.
+$runtimeDir = getenv('SNE_RUNTIME_DIR') ?: (__DIR__ . '/assets');
+if (!is_dir($runtimeDir)) { $runtimeDir = __DIR__ . '/assets'; }
+$recentCatPath = $runtimeDir . '/recent-catalog.min.json';
+if (!is_file($recentCatPath)) { $recentCatPath = __DIR__ . '/assets/recent-catalog.min.json'; }
 $initialItems = [];
 if (is_file($recentCatPath)) {
     $rawRecent = json_decode((string)file_get_contents($recentCatPath), true);
@@ -646,13 +653,14 @@ function _fmt_field_val($field): string {
       </div>
 
       <?php
-        $recentPath = __DIR__ . '/assets/recent-events.json';
+        $recentPath = $runtimeDir . '/recent-events.json';
+        if (!is_file($recentPath)) { $recentPath = __DIR__ . '/assets/recent-events.json'; }
         $recent = is_file($recentPath) ? json_decode((string)file_get_contents($recentPath), true) : [];
         $today = new DateTimeImmutable('today');
       ?>
       <div class="recent-block">
-        <h2 class="recent-head">Newest classified supernovae on file</h2>
-        <p class="recent-note">Ages are counted from today, <?php echo $today->format('F j, Y'); ?>, using each event's discovery date from the Transient Name Server.</p>
+        <h2 class="recent-head">Newest transients on file</h2>
+        <p class="recent-note">Ages are counted from today, <?php echo $today->format('F j, Y'); ?>, using each event's discovery date from the Transient Name Server. Transients without a published classification report yet are shown as <em>unclassified</em>.</p>
         <div class="recent-grid">
           <?php if (is_array($recent)) foreach ($recent as $ev):
             $when = DateTimeImmutable::createFromFormat('!Y-m-d', (string)$ev['date']) ?: $today;

@@ -26,8 +26,36 @@ logger = logging.getLogger("sne.catalog")
 
 WWW = Path(__file__).resolve().parent / "www"
 SUPERNOVAE_OUTPUT = WWW / "astrocats/astrocats/supernovae/output"
-RECENT_PATH = WWW / "assets/recent-catalog.min.json"
 SNE_RECENT_DIR = SUPERNOVAE_OUTPUT / "sne-2025-2029"
+
+# ``recent-catalog.min.json`` is mutable runtime data: rewritten by the sync below
+# and read by the homepage. It lives in the persistent runtime directory so a
+# redeploy cannot reset it to the image's build-time copy. The import is local to
+# avoid a circular import at module load (data_paths does not import this module,
+# but server.py imports both).
+def _runtime_write_path(name: str) -> Path:
+    """Resolve the persistent runtime path, supporting both import styles.
+
+    ``server.py`` imports this module bare (``from catalog_engine import ...``)
+    when ``serve/`` is on ``sys.path``, and package-style otherwise. A relative
+    import only works in the second case, so try the bare name first.
+    """
+    try:
+        from data_paths import runtime_write_path  # noqa: PLC0415
+    except ImportError:
+        from .data_paths import runtime_write_path  # noqa: PLC0415
+    return runtime_write_path(name)
+
+
+def _runtime_recent_path() -> Path:
+    return _runtime_write_path("recent-catalog.min.json")
+
+
+def _runtime_recent_events_path() -> Path:
+    return _runtime_write_path("recent-events.json")
+
+
+RECENT_PATH = _runtime_recent_path()
 
 
 def _extract_val(obj: Any, key: str) -> str:
@@ -141,6 +169,7 @@ class CatalogEngine:
         self._total_transients = 0
         self._total_with_spectra = 0
         self._total_with_photometry = 0
+        self._catalog_store: Any = None
 
     @classmethod
     def get_instance(cls) -> "CatalogEngine":
@@ -150,6 +179,17 @@ class CatalogEngine:
                     cls._instance = cls()
         return cls._instance
 
+    def attach_store(self, store: Any) -> None:
+        """Attach an indexed store so ``query()`` never builds the in-memory list.
+
+        This is what keeps production RSS low: with a store attached, the 690 MB
+        ``_items`` list is never materialised.
+        """
+        self._catalog_store = store
+        if store is not None:
+            # Present the store as "loaded" so ensure_loaded() is a no-op.
+            self._loaded = True
+
     def ensure_loaded(self) -> None:
         if self._loaded:
             return
@@ -158,6 +198,14 @@ class CatalogEngine:
     def reload(self) -> None:
         with self._lock:
             if self._loading:
+                return
+            # With an indexed store attached, reloading into ``_items`` would
+            # rematerialise the full ~596 MB in-memory copy and defeat the whole
+            # point of the store. Rebuilding the SQLite index is the store's job.
+            if getattr(self, "_catalog_store", None) is not None:
+                self._loaded = True
+                self._last_loaded_time = time.time()
+                logger.info("CatalogEngine.reload skipped: indexed store attached")
                 return
             self._loading = True
 
@@ -359,6 +407,10 @@ class CatalogEngine:
             "search_blob": search_blob,
         }
 
+    def _store(self):
+        """Return the shared SQLite store when one has been configured."""
+        return getattr(self, "_catalog_store", None)
+
     def query(
         self,
         q: str = "",
@@ -370,7 +422,29 @@ class CatalogEngine:
         page: int = 1,
         limit: int = 50,
     ) -> dict[str, Any]:
-        """Perform sub-5ms multi-criteria search and sorting across the catalog."""
+        """Perform multi-criteria search and sorting across the catalog.
+
+        Delegates to the indexed SQLite store when one is attached. That is the
+        production path: it avoids holding 110k records in RAM. The in-memory
+        implementation below remains as a fallback for callers that construct a
+        ``CatalogEngine`` directly (scripts, tests).
+        """
+        store = self._store()
+        if store is not None:
+            try:
+                return store.query(
+                    q=q,
+                    type_filter=type_filter,
+                    has_spectra=has_spectra,
+                    has_photometry=has_photometry,
+                    sort=sort,
+                    order=order,
+                    page=page,
+                    limit=limit,
+                )
+            except Exception as exc:
+                logger.warning("CatalogStore query failed, falling back: %s", exc)
+
         self.ensure_loaded()
 
         q_clean = q.strip().lower()
@@ -633,9 +707,27 @@ def sync_all_recent_partitions() -> int:
     rows.sort(key=lambda x: x[0], reverse=True)
     all_recent = [r[1] for r in rows]
 
-    # Write recent-catalog.min.json
-    RECENT_PATH.parent.mkdir(parents=True, exist_ok=True)
-    RECENT_PATH.write_text(json.dumps(all_recent, separators=(",", ":")), encoding="utf-8")
+    # Write recent-catalog.min.json atomically. The homepage reads this file
+    # directly, so a crash or OOM mid-write used to leave it truncated. A sibling
+    # temp file plus os.replace means readers see either the old or the new file,
+    # never a partial one. An empty result is treated as a failed ingest and the
+    # previous valid copy is preserved rather than published.
+    _recent_out = _runtime_recent_path()
+    _recent_out.parent.mkdir(parents=True, exist_ok=True)
+    if all_recent:
+        _tmp = _recent_out.with_name(f".{_recent_out.name}.tmp.{os.getpid()}")
+        try:
+            _tmp.write_text(json.dumps(all_recent, separators=(",", ":")), encoding="utf-8")
+            os.replace(_tmp, _recent_out)
+        except Exception as exc:
+            logger.warning("Failed writing recent-catalog.min.json: %s", exc)
+            try:
+                if _tmp.exists():
+                    _tmp.unlink()
+            except Exception:
+                pass
+    else:
+        logger.warning("Recent sync produced 0 rows; keeping the existing overlay")
 
     # Sync top recent events cards (recent-events.json)
     try:
@@ -651,8 +743,10 @@ def sync_all_recent_partitions() -> int:
                 "spectra_count": int(r.get("spectralink", "0")),
                 "photo_count": int(r.get("photolink", "0").split(",")[0]),
             })
-        recent_events_path = RECENT_PATH.parent / "recent-events.json"
-        recent_events_path.write_text(json.dumps(cards, indent=2) + "\n", encoding="utf-8")
+        recent_events_path = _runtime_recent_events_path()
+        _ev_tmp = recent_events_path.with_name(f".{recent_events_path.name}.tmp.{os.getpid()}")
+        _ev_tmp.write_text(json.dumps(cards, indent=2) + "\n", encoding="utf-8")
+        os.replace(_ev_tmp, recent_events_path)
     except Exception as exc:
         logger.warning("Failed updating recent-events.json: %s", exc)
 

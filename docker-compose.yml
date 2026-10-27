@@ -11,8 +11,61 @@ services:
       - OSC_HOST=0.0.0.0
       - OSC_PORT=8080
       - PYTHONUNBUFFERED=1
+      # Point the corpus at the mounted volume. serve/data_paths.py reads this
+      # first, so a container always writes to durable storage even if the image
+      # also ships a baked copy of the corpus.
+      - SNE_DATA_DIR=/data/astrocats/astrocats/supernovae/output
+      # Mutable runtime JSON (recent-events / recent-catalog) lives here, not in
+      # serve/www/assets/, so a redeploy cannot reset it to the image's copy.
+      # Only these two files are mutable; CSS/JS stay in the image.
+      - SNE_RUNTIME_DIR=/data/sne-runtime
+      # Bounded enrichment queue. Enrichment runs off the request path; these
+      # limits stop a provider outage from turning into an unbounded thread pile.
+      - SNE_ENRICH_QUEUE_MAX=256
+      - SNE_ENRICH_WORKERS=2
+      - SNE_ENRICH_TIMEOUT=45
+      - SNE_ENRICH_ATTEMPTS=3
+      # Rendered-HTML cache bound. 96 MB holds roughly 350 gzipped event pages.
+      - SNE_PAGE_CACHE_MB=96
+      - SNE_PAGE_CACHE_TTL=900
+      # Cap simultaneous cold renders. A 38 MB event JSON peaks ~290 MB RSS, so
+      # unbounded cold concurrency OOM-killed the container at 8 simultaneous large
+      # renders (measured: 6 -> 1011 MB peak vs a 1200 MB limit). 4 leaves ~190 MB
+      # of headroom and costs only milliseconds of queueing on the miss path. Warm
+      # cache hits are unaffected and stay fully parallel.
+      - SNE_RENDER_MAX_CONCURRENT=4
     volumes:
       - sne_logs:/app/serve/logs
+      # THE fix for "ingested data does not survive deployments". Event JSON is
+      # the only stateful data this service owns; without this mount every
+      # restart starts from the image's baked snapshot.
+      - sne_data:/data/astrocats/astrocats/supernovae/output
+      # Mutable runtime JSON only. Deliberately NOT mounting serve/www/assets/:
+      # that would hide version-controlled CSS/JS behind an old volume.
+      - sne_runtime:/data/sne-runtime
+    # Memory guardrails sized for the measured footprint: ~250-350 MB RSS after
+    # the SQLite-index change (was ~974 MB), plus headroom for the 96 MB page
+    # cache and transient render allocations. The limit is 3x steady state so a
+    # leak shows up as a restart instead of taking down the host.
+    mem_limit: 1200m
+    memswap_limit: 1200m
+    # Event pages are served in ~1 ms warm, so a 3 s readiness timeout is generous.
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080/healthz"]
+      interval: 30s
+      timeout: 3s
+      start_period: 40s
+      retries: 3
+    logging:
+      driver: json-file
+      options:
+        max-size: "20m"
+        max-file: "3"
 
 volumes:
   sne_logs:
+  # Durable corpus. Back this up before any migration; see PATCH_PLAN.md.
+  sne_data:
+  # Mutable runtime JSON (recent-events / recent-catalog). Small, but losing it
+  # makes the homepage serve a stale recent-list after every redeploy.
+  sne_runtime:

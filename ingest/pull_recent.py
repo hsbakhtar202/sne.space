@@ -4,7 +4,9 @@ from __future__ import annotations
 import csv
 import io
 import json
+import os
 import sys
+import threading
 import urllib.parse
 import urllib.request
 from datetime import datetime, timedelta, timezone
@@ -21,35 +23,141 @@ from ingest.tns import build_event_dict
 import time
 
 ROOT = Path(__file__).resolve().parent.parent
-RECENT_PATH = ROOT / "serve/www/assets/recent-events.json"
+# ``recent-events.json`` is mutable runtime data written on every ingest run and
+# read by the homepage. It lives in the persistent runtime directory so a redeploy
+# cannot reset it to its build-time snapshot. See serve/data_paths.py.
+try:
+    from serve.data_paths import runtime_write_path as _runtime_write_path
+except ImportError:  # running as a script with ingest/ on sys.path
+    import sys as _sys
+
+    _sys.path.insert(0, str(ROOT))
+    from serve.data_paths import runtime_write_path as _runtime_write_path
+
+RECENT_PATH = _runtime_write_path("recent-events.json")
 
 
-def fetch_classified(days: int = 40) -> list[dict[str, str]]:
-    end = datetime.now(timezone.utc).date()
-    start = end - timedelta(days=days)
-    query = urllib.parse.urlencode({
-        "classified_sne": "1",
-        "date_start[date]": start.isoformat(),
-        "date_end[date]": end.isoformat(),
-        "format": "csv",
-        "num_page": "100",
-        "page": "0",
-    })
-    url = f"https://www.wis-tns.org/search?{query}"
+PAGE_SIZE = 100
+
+
+def _atomic_write_text(path: Path, text: str) -> None:
+    """Write text to ``path`` atomically so a crash cannot truncate a published file.
+
+    ``RECENT_PATH`` and ``recent-catalog.min.json`` are read directly by the web
+    server on every homepage request. A partial write during a deploy or OOM kill
+    left the homepage serving a truncated JSON file. Write to a sibling temp file
+    on the same filesystem and ``os.replace`` into position.
+    """
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_name(f".{path.name}.tmp.{os.getpid()}.{threading.get_ident()}")
+    try:
+        tmp.write_text(text, encoding="utf-8")
+        os.replace(tmp, path)
+    except Exception:
+        if tmp.exists():
+            try:
+                tmp.unlink()
+            except Exception:
+                pass
+        raise
+
+
+def _fetch_page(url: str) -> list[dict[str, str]]:
+    """Fetch one TNS search page, honouring 429 reset headers."""
     req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 (sne.space Ingestion)"})
-    for attempt in range(3):
+    for attempt in range(4):
         try:
             with urllib.request.urlopen(req, timeout=60) as resp:
                 text = resp.read().decode("utf-8", errors="replace")
             return list(csv.DictReader(io.StringIO(text)))
         except urllib.error.HTTPError as e:
             if e.code == 429:
-                reset_sec = float(e.headers.get("x-rate-limit-reset", "20")) + 1.0
+                try:
+                    reset_sec = float(e.headers.get("x-rate-limit-reset", "20")) + 1.0
+                except (ValueError, TypeError):
+                    reset_sec = 20.0 * (attempt + 1)
                 print(f"[TNS Search] Rate limit active. Sleeping {reset_sec:.1f}s for reset...", flush=True)
                 time.sleep(reset_sec)
                 continue
             raise
     return []
+
+
+def fetch_classified(days: int = 40, max_pages: int = 40) -> list[dict[str, str]]:
+    """Fetch every classified supernova in the trailing window.
+
+    TNS returns results newest-first and caps a page at PAGE_SIZE rows. Reading
+    only page 0 silently drops the oldest events in the window, and because the
+    window slides forward each day those dropped events fall out of reach for
+    good. Walk the pages until a short page is returned.
+    """
+    end = datetime.now(timezone.utc).date()
+    start = end - timedelta(days=days)
+    rows: list[dict[str, str]] = []
+    seen: set[str] = set()
+    for page in range(max_pages):
+        query = urllib.parse.urlencode({
+            "classified_sne": "1",
+            "date_start[date]": start.isoformat(),
+            "date_end[date]": end.isoformat(),
+            "format": "csv",
+            "num_page": str(PAGE_SIZE),
+            "page": str(page),
+        })
+        try:
+            batch = _fetch_page(f"https://www.wis-tns.org/search?{query}")
+        except Exception as exc:
+            print(f"[TNS Search] page {page} failed: {exc}", flush=True)
+            break
+        for row in batch:
+            key = (row.get("Name") or "").strip()
+            if key and key not in seen:
+                seen.add(key)
+                rows.append(row)
+        if len(batch) < PAGE_SIZE:
+            break
+        time.sleep(1.0)
+    print(f"[TNS Search] {len(rows)} classified rows for {start} -> {end}", flush=True)
+    return rows
+
+
+def fetch_recent_discoveries(days: int = 7, max_pages: int = 5) -> list[dict[str, str]]:
+    """Fetch every recent TNS transient, classified or not.
+
+    ``classified_sne=1`` only surfaces objects that already have a public
+    classification report. Those reports land days after discovery, so a
+    classified-only feed has a built-in multi-day blind spot: brand-new real
+    transients exist on TNS but stay invisible here until someone classifies
+    them. This lane keeps the discovery list current so tomorrow's events show
+    up tomorrow.
+    """
+    end = datetime.now(timezone.utc).date()
+    start = end - timedelta(days=days)
+    rows: list[dict[str, str]] = []
+    seen: set[str] = set()
+    for page in range(max_pages):
+        query = urllib.parse.urlencode({
+            "date_start[date]": start.isoformat(),
+            "date_end[date]": end.isoformat(),
+            "format": "csv",
+            "num_page": str(PAGE_SIZE),
+            "page": str(page),
+        })
+        try:
+            batch = _fetch_page(f"https://www.wis-tns.org/search?{query}")
+        except Exception as exc:
+            print(f"[TNS Discovery] page {page} failed: {exc}", flush=True)
+            break
+        for row in batch:
+            key = (row.get("Name") or "").strip()
+            if key and key not in seen:
+                seen.add(key)
+                rows.append(row)
+        if len(batch) < PAGE_SIZE:
+            break
+        time.sleep(1.0)
+    print(f"[TNS Discovery] {len(rows)} transients for {start} -> {end}", flush=True)
+    return rows
 
 
 def _row(item: dict[str, str]) -> dict[str, str] | None:
@@ -85,8 +193,7 @@ def _publish(written: list[dict]) -> None:
         return
     written.sort(key=lambda r: r["sort"], reverse=True)
     cards = [{k: v for k, v in row.items() if k != "sort"} for row in written[:8]]
-    RECENT_PATH.parent.mkdir(parents=True, exist_ok=True)
-    RECENT_PATH.write_text(json.dumps(cards, indent=2) + "\n", encoding="utf-8")
+    _atomic_write_text(RECENT_PATH, json.dumps(cards, indent=2) + "\n")
     catalog_rows = []
     for row in written:
         day = row["date"].replace("-", "/")
@@ -105,9 +212,16 @@ def _publish(written: list[dict]) -> None:
             "photolink": f"{p_count},0",
             "spectralink": f"{s_count}" if s_count > 0 else "0",
         })
-    catalog_path = RECENT_PATH.parent / "recent-catalog.min.json"
-    catalog_path.write_text(json.dumps(catalog_rows, separators=(",", ":")), encoding="utf-8")
-    print(f"Published {len(written)} classified supernovae; newest {cards[0]['name']} {cards[0]['date']}", flush=True)
+    # Explicit rather than derived from RECENT_PATH.parent so the intent is clear
+    # and a future move of one file cannot silently desynchronise the pair.
+    catalog_path = _runtime_write_path("recent-catalog.min.json")
+    _atomic_write_text(catalog_path, json.dumps(catalog_rows, separators=(",", ":")))
+    classified = sum(1 for r in written if r.get("type") and r["type"] != "unclassified")
+    print(
+        f"Published {len(written)} transients ({classified} classified); "
+        f"newest {cards[0]['name']} {cards[0]['date']}",
+        flush=True,
+    )
 
 
 def pull_recent(days: int = 40) -> int:
@@ -118,6 +232,22 @@ def pull_recent(days: int = 40) -> int:
     leave the previous pull on disk.
     """
     items = fetch_classified(days=days)
+
+    # Second lane: recent discoveries regardless of classification, so objects
+    # found in the last few days are not invisible while waiting for a report.
+    try:
+        discoveries = fetch_recent_discoveries(days=7)
+    except Exception as exc:
+        print(f"[TNS Discovery] lane skipped: {exc}", flush=True)
+        discoveries = []
+    known = {(i.get("Name") or "").strip() for i in items}
+    for d in discoveries:
+        key = (d.get("Name") or "").strip()
+        if key and key not in known:
+            items.append(d)
+            known.add(key)
+    print(f"[TNS Recent] {len(items)} rows total ({len(discoveries)} discovery lane)", flush=True)
+
     written = []
     pending = []
     for item in items:
@@ -128,7 +258,8 @@ def pull_recent(days: int = 40) -> int:
         written.append({
             "name": cname_raw,
             "date": row["discoverydate"][:10],
-            "type": row.get("type") or "",
+            # An unclassified transient must not render as a blank type; say so.
+            "type": row.get("type") or "unclassified",
             "discoverer": (row.get("reporters") or "")[:48],
             "ra": item.get("RA", ""),
             "dec": item.get("DEC", ""),
@@ -142,7 +273,40 @@ def pull_recent(days: int = 40) -> int:
         return 0
 
     by_name = {row["name"]: row for row in written}
+
+    # Load whatever is already on disk first. Enrichment is the expensive part and
+    # TNS throttles hard, so only events that are genuinely missing or still have
+    # no spectra get another attempt. Without this the loop re-enriches the whole
+    # window every cycle and spends its entire budget waiting out 429s, which
+    # leaves the newest events (the ones users actually open) unenriched.
+    on_disk: dict[str, tuple[Path, dict]] = {}
     for cname_raw, row, item in pending:
+        year = int(row["discoverydate"][:4]) if row["discoverydate"][:4].isdigit() else 2026
+        dest = get_target_repo_folder(year)
+        dest_file = dest / f"{cname_raw}.json"
+        if dest_file.is_file():
+            try:
+                ex_data = json.loads(dest_file.read_text(encoding="utf-8"))
+                if ex_data:
+                    on_disk[cname_raw] = (dest_file, ex_data)
+            except Exception:
+                pass
+
+    def _needs_enrich(cname_raw: str) -> bool:
+        hit = on_disk.get(cname_raw)
+        if hit is None:
+            return True
+        _path, ex_data = hit
+        key = next(iter(ex_data), cname_raw)
+        return len(ex_data.get(key, {}).get("spectra", [])) == 0
+
+    # Newest first so fresh discoveries are enriched before anything else.
+    pending.sort(key=lambda p: p[1]["discoverydate"], reverse=True)
+    todo = [p for p in pending if _needs_enrich(p[0])]
+    skipped = len(pending) - len(todo)
+    print(f"[TNS Enrich] {len(todo)} need enrichment, {skipped} already enriched", flush=True)
+
+    for cname_raw, row, item in todo:
         year = int(row["discoverydate"][:4]) if row["discoverydate"][:4].isdigit() else 2026
         dest = get_target_repo_folder(year)
         dest.mkdir(parents=True, exist_ok=True)
@@ -150,12 +314,11 @@ def pull_recent(days: int = 40) -> int:
         event = None
         cname = cname_raw
         try:
-            if dest_file.is_file():
-                ex_data = json.loads(dest_file.read_text(encoding="utf-8"))
-                ex_key = list(ex_data.keys())[0] if ex_data else cname_raw
-                if len(ex_data.get(ex_key, {}).get("spectra", [])) > 0:
-                    cname = ex_key
-                    event = ex_data
+            hit = on_disk.get(cname_raw)
+            if hit is not None:
+                _path, ex_data = hit
+                cname = next(iter(ex_data), cname_raw)
+                event = ex_data
             if event is None:
                 cname, event = build_event_dict(
                     row,
@@ -176,6 +339,28 @@ def pull_recent(days: int = 40) -> int:
         except Exception as exc:
             print(f"TNS enrich failed for {cname_raw}: {exc}", flush=True)
             continue
+
+    # Carry the enrichment counts for events we skipped back onto the cards.
+    for cname_raw, row, item in pending:
+        hit = on_disk.get(cname_raw)
+        card = by_name.get(cname_raw)
+        if hit is None or card is None:
+            continue
+        _path, ex_data = hit
+        key = next(iter(ex_data), cname_raw)
+        body = ex_data.get(key, {})
+        card["spectra_count"] = len(body.get("spectra", []))
+        card["photo_count"] = len(body.get("photometry", [])) or 1
+        ct = body.get("claimedtype") or []
+        if ct and ct[0].get("value"):
+            card["type"] = ct[0]["value"]
+        ra = body.get("ra") or []
+        dec = body.get("dec") or []
+        if ra and ra[0].get("value"):
+            card["ra"] = ra[0]["value"]
+        if dec and dec[0].get("value"):
+            card["dec"] = dec[0]["value"]
+
     _publish(written)
     print(f"Wrote {len(written)} events into {SUPERNOVAE_OUTPUT}", flush=True)
     return len(written)

@@ -27,7 +27,34 @@ _OUTPUT_CANDIDATES = [
     Path(__file__).resolve().parent.parent / "serve/www/astrocats/astrocats/supernovae/output",
     Path("vendor/astrocats/astrocats/supernovae/output"),
 ]
-SUPERNOVAE_OUTPUT = next((p for p in _OUTPUT_CANDIDATES if p.is_dir()), _OUTPUT_CANDIDATES[0])
+
+
+def _resolve_output_dir() -> Path:
+    """Resolve the writable corpus directory, honouring the durable volume.
+
+    This used to hardcode the in-image path. In a container that path is the
+    *ephemeral* layer while the named volume is mounted at ``/data/...``, so every
+    ingested event was written outside the volume and vanished on redeploy even
+    though the volume was mounted correctly. ``serve/data_paths.py`` already
+    resolves SNE_DATA_DIR first; delegate to it so ingest and the web server can
+    never disagree about where data lives.
+    """
+    try:
+        import sys as _sys
+
+        _root = Path(__file__).resolve().parent.parent
+        if str(_root) not in _sys.path:
+            _sys.path.insert(0, str(_root))
+        from serve.data_paths import OUTPUT_DIR as _durable_dir
+
+        if _durable_dir and _durable_dir.is_dir():
+            return _durable_dir
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("data_paths unavailable, using legacy output path: %s", exc)
+    return next((p for p in _OUTPUT_CANDIDATES if p.is_dir()), _OUTPUT_CANDIDATES[0])
+
+
+SUPERNOVAE_OUTPUT = _resolve_output_dir()
 
 _enrich_locks: Dict[str, threading.Lock] = {}
 _enrich_meta_lock = threading.Lock()
@@ -41,14 +68,34 @@ def get_object_lock(name: str) -> threading.Lock:
         return _enrich_locks[name]
 
 
-def atomic_write_json(file_path: Path, data: Any) -> None:
-    """Write JSON data to disk atomically using temporary file and os.replace."""
+def atomic_write_json(file_path: Path, data: Any, skip_if_unchanged: bool = True) -> bool:
+    """Write JSON data to disk atomically using temporary file and os.replace.
+
+    Returns ``True`` when the file was written, ``False`` when an identical file
+    already existed.
+
+    ``skip_if_unchanged`` matters more than it looks. An enrichment run that finds
+    nothing new used to rewrite the file with byte-identical content, which bumped
+    ``st_mtime_ns``. The rendered-page cache versions entries by mtime+size, so
+    every no-op enrichment invalidated a perfectly good cached page and forced a
+    full ~40 ms re-render on the next request -- and since rendering schedules more
+    enrichment, that became a self-sustaining loop. Comparing serialised bytes
+    first makes a no-op genuinely a no-op.
+    """
     file_path.parent.mkdir(parents=True, exist_ok=True)
+    payload = json.dumps(data, indent=2)
+    if skip_if_unchanged:
+        try:
+            if file_path.is_file() and file_path.read_text(encoding="utf-8") == payload:
+                return False
+        except OSError:
+            pass  # Unreadable existing file: fall through and rewrite it.
     # Temporary file in same directory guarantees same filesystem for atomic rename
     tmp_path = file_path.with_name(f".{file_path.name}.tmp.{os.getpid()}.{threading.get_ident()}")
     try:
-        tmp_path.write_text(json.dumps(data, indent=2), encoding="utf-8")
+        tmp_path.write_text(payload, encoding="utf-8")
         os.replace(tmp_path, file_path)
+        return True
     except Exception:
         if tmp_path.exists():
             try:

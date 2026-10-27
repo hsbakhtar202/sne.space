@@ -28,15 +28,86 @@ import threading
 import time
 import urllib.parse
 import urllib.request
+
+# ---------------------------------------------------------------------------
+# Outbound network accounting
+#
+# "No external network operations during ordinary page requests" cannot be proven
+# by blocking sockets in the *test client* -- that only proves the client did not
+# call out. The server is what used to call TNS/WISeREP/IRSA. So count connects at
+# the only place that matters, inside this process, and expose the counters on
+# /api/internal/health. A page request that bumps _OUTBOUND is a regression.
+#
+# Only non-loopback destinations count. The enrichment worker runs in this same
+# process, so a nonzero count proves *something* called out; comparing the delta
+# around page requests isolates the request path from the background worker.
+# ---------------------------------------------------------------------------
+_OUTBOUND = collections.Counter()
+_OUTBOUND_LOCK = threading.Lock()
+_OUTBOUND_HOSTS: "collections.deque[str]" = collections.deque(maxlen=64)
+
+
+def _install_outbound_counter() -> None:
+    import socket as _socket
+
+    if getattr(_socket, "_sne_outbound_patched", False):
+        return
+    real_conn = _socket.socket.connect
+    real_conn_ex = _socket.socket.connect_ex
+
+    def _record(host: str) -> None:
+        with _OUTBOUND_LOCK:
+            _OUTBOUND[host] += 1
+            _OUTBOUND_HOSTS.append(host)
+
+    def _connect(self, address):
+        try:
+            host = address[0] if isinstance(address, tuple) else str(address)
+            if isinstance(host, str) and host not in ("127.0.0.1", "localhost", "::1", "0.0.0.0"):
+                _record(host)
+        except Exception:
+            pass
+        return real_conn(self, address)
+
+    def _connect_ex(self, address):
+        try:
+            host = address[0] if isinstance(address, tuple) else str(address)
+            if isinstance(host, str) and host not in ("127.0.0.1", "localhost", "::1", "0.0.0.0"):
+                _record(host)
+        except Exception:
+            pass
+        return real_conn_ex(self, address)
+
+    _socket.socket.connect = _connect  # type: ignore[assignment]
+    _socket.socket.connect_ex = _connect_ex  # type: ignore[assignment]
+    _socket._sne_outbound_patched = True  # type: ignore[attr-defined]
+
+
+def _outbound_snapshot() -> dict:
+    with _OUTBOUND_LOCK:
+        return {
+            "total": sum(_OUTBOUND.values()),
+            "by_host": dict(_OUTBOUND.most_common(10)),
+            "recent": list(_OUTBOUND_HOSTS)[-10:],
+        }
 mimetypes.add_type("image/webp", ".webp")
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
+# When this file is executed as a script, sys.path[0] is ``serve/``, so the
+# sibling ``ingest`` package is not importable and the enrichment queue silently
+# disabled itself (`enrich_available: false` in /api/internal/health). Add the
+# repo root *before* the import so background enrichment actually runs.
+_REPO_ROOT = Path(__file__).resolve().parent.parent
+if str(_REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(_REPO_ROOT))
+
 try:
     from ingest.manager import enrich_event, is_file_stale
-except Exception:
+except Exception as _ingest_exc:  # noqa: BLE001
     enrich_event = None
     is_file_stale = None
+    print(f"[server] ingest.manager unavailable: {_ingest_exc}", flush=True)
 
 try:
     from event_render import render_pro_cockpit, render_story_mode, extract_coords, classify_event_tier
@@ -112,6 +183,14 @@ except Exception:
         CatalogEngine = None
         sync_all_recent_partitions = None
 
+try:
+    from catalog_store import CatalogStore
+except Exception:
+    try:
+        from serve.catalog_store import CatalogStore
+    except Exception:
+        CatalogStore = None
+
 import sys
 _SERVE_DIR_PARENT = Path(__file__).resolve().parent
 if str(_SERVE_DIR_PARENT) not in sys.path:
@@ -164,6 +243,24 @@ WWW = ROOT / "www"
 PHP = os.environ.get("PHP_BIN", "php")
 HOST = os.environ.get("OSC_HOST", "127.0.0.1")
 PORT = int(os.environ.get("OSC_PORT", "8080"))
+
+# Resolve the writable event corpus once. On a mounted volume this is /data/...,
+# so ingested event JSON survives container replacement. DATA_OUT mirrors the
+# historical URL prefix so every existing link keeps working.
+try:
+    import data_paths as _data_paths
+except Exception:
+    try:
+        from serve import data_paths as _data_paths
+    except Exception:
+        _data_paths = None
+
+if _data_paths is not None:
+    DATA_OUT = _data_paths.OUTPUT_DIR
+    URL_OUTPUT_PREFIX = _data_paths.URL_PREFIX
+else:  # pragma: no cover - defensive fallback
+    DATA_OUT = WWW / "astrocats/astrocats/supernovae/output"
+    URL_OUTPUT_PREFIX = "astrocats/astrocats/supernovae/output"
 
 _START_TIME = time.time()
 _API_STATS_LOCK = threading.Lock()
@@ -498,6 +595,13 @@ def _php_render(script: Path, env: dict | None = None, query: str = "") -> bytes
     run_env = os.environ.copy()
     run_env["OSC_DOCROOT"] = str(WWW)
     run_env["DOCUMENT_ROOT"] = str(WWW)
+    # Tell the PHP templates where mutable runtime JSON lives. Without this the
+    # template reads its build-time copy in assets/ and silently serves stale data
+    # after every redeploy. Resolution stays in data_paths.py: one source of truth.
+    try:
+        run_env["SNE_RUNTIME_DIR"] = str(_runtime_dir())
+    except Exception:
+        pass
     if env:
         run_env.update(env)
     # Simulate CGI-ish vars for event.php
@@ -514,6 +618,73 @@ def _php_render(script: Path, env: dict | None = None, query: str = "") -> bytes
     if proc.returncode != 0 and not proc.stdout:
         return (b"<pre>PHP error\n" + proc.stderr + b"</pre>")
     return proc.stdout
+
+
+# The homepage is a PHP CLI subprocess: ~50 ms of process spawn + JSON decode on
+# every hit, which showed up as ~100 ms median under 20-way concurrency. It only
+# depends on a handful of static files, so cache it the same way event pages are
+# cached, keyed by the mtime+size of every input. An ingest run that rewrites the
+# recent-catalog overlay changes the version and the next request re-renders.
+def _runtime_asset(name: str) -> Path:
+    """Read-side path for mutable runtime JSON (persistent dir, baked fallback)."""
+    try:
+        from data_paths import runtime_asset_path
+    except ImportError:
+        from serve.data_paths import runtime_asset_path
+    return runtime_asset_path(name)
+
+
+def _runtime_dir() -> Path:
+    """The persistent runtime directory itself (created on demand)."""
+    try:
+        from data_paths import runtime_write_path
+    except ImportError:
+        from serve.data_paths import runtime_write_path
+    return runtime_write_path("recent-events.json").parent
+
+
+def _homepage_inputs() -> tuple[Path, ...]:
+    """Files whose mtime+size version the cached homepage.
+
+    Resolved per call rather than at import so a runtime directory that appears
+    later (volume mounted after start) is picked up without a restart.
+    """
+    return (
+        WWW / "index.php",
+        _runtime_asset("recent-catalog.min.json"),
+        _runtime_asset("recent-events.json"),
+    )
+
+
+def _homepage_version() -> tuple:
+    return tuple(_RenderedPageCache._version(p) for p in _homepage_inputs())
+
+
+def _cached_homepage(accept_gzip: bool = True) -> tuple[int, bytes, bytes | None]:
+    """Return ``(status, body, gzip_body)`` for the homepage, cached by input mtime."""
+    version = _homepage_version()
+    key = "|homepage|"
+    hit = _PAGE_CACHE.get(key, version)
+    if hit is not None:
+        raw, gz = hit
+        if accept_gzip and gz:
+            return 200, gz, gz
+        return 200, raw, None
+    body = _php_render(WWW / "index.php")
+    if body and len(body) > 256:
+        try:
+            gz = gzip.compress(body, compresslevel=5)
+        except Exception:
+            gz = None
+        _PAGE_CACHE.put(key, version, body, gz)
+        if accept_gzip and gz:
+            return 200, gz, gz
+    return 200, body, None
+
+
+def _invalidate_page_cache() -> None:
+    """Drop all rendered HTML. Called after ingest rewrites catalog data."""
+    _PAGE_CACHE.clear()
 
 
 @lru_cache(maxsize=1)
@@ -575,44 +746,129 @@ def _alias_lookup_map() -> dict[str, str]:
 
 
 def _ensure_catalog_files():
-    """Ensure catalog.min.json is uncompressed and available on disk."""
-    cat_gz = WWW / "astrocats/astrocats/supernovae/output/catalog.min.json.gz"
-    cat_json = WWW / "astrocats/astrocats/supernovae/output/catalog.min.json"
-    if cat_gz.is_file() and (not cat_json.is_file() or cat_json.stat().st_size == 0):
-        try:
-            import gzip
-            with gzip.open(cat_gz, "rb") as f_in:
-                cat_json.write_bytes(f_in.read())
-            print("Extracted catalog.min.json from catalog.min.json.gz", flush=True)
-        except Exception as e:
-            print(f"Warning: could not extract catalog.min.json.gz: {e}", flush=True)
+    """Ensure catalog.min.json is uncompressed and available where we *read* it.
+
+    This used to extract into the baked in-image path while ``_catalog_source_files``
+    reads from ``DATA_OUT`` (the durable volume). In a container those are different
+    directories, so the index found no source and reported ``0 events`` -- every
+    catalog lookup then fell back to the slow in-memory maps. Extract into DATA_OUT,
+    and fall back to the baked copy only when the volume genuinely has no archive.
+    """
+    import gzip as _gzip
+
+    for base in (DATA_OUT, WWW / "astrocats/astrocats/supernovae/output"):
+        cat_json = base / "catalog.min.json"
+        if cat_json.is_file() and cat_json.stat().st_size > 0:
+            return  # Already usable; nothing to do.
+        for cat_gz in (base / "catalog.min.json.gz",):
+            if not cat_gz.is_file():
+                continue
+            try:
+                cat_json.parent.mkdir(parents=True, exist_ok=True)
+                # Write to a temp file and rename so a crash mid-extract cannot
+                # leave a truncated catalog that looks valid but parses as empty.
+                tmp = cat_json.with_name(f".{cat_json.name}.tmp.{os.getpid()}")
+                with _gzip.open(cat_gz, "rb") as f_in, open(tmp, "wb") as f_out:
+                    while True:
+                        chunk = f_in.read(1 << 20)
+                        if not chunk:
+                            break
+                        f_out.write(chunk)
+                os.replace(tmp, cat_json)
+                print(f"Extracted {cat_json.name} into {base}", flush=True)
+                return
+            except Exception as e:  # noqa: BLE001
+                print(f"Warning: could not extract {cat_gz}: {e}", flush=True)
+
+
+# Event-file path resolution cache.
+#
+# _find_event_file_direct used to run output_dir.glob("sne-*/NAME.json") on every
+# request. That is a directory scan across 8 epoch directories holding ~3,000
+# files in the largest one. Sequentially it costs ~1.6 ms; under 20 concurrent
+# requests the stat/glob traffic on the same inodes serialises in the kernel and
+# the same lookup measured ~335 ms. Caching the *path* removes the scan entirely
+# for repeat views of an event.
+#
+# Invalidation: event JSON appears or moves when ingest writes a file. A short TTL
+# plus an explicit bust on enrichment makes a newly written file visible without
+# letting a stale "not found" pin a 404 forever. Negative results are cached for a
+# much shorter window so a newly discovered event is picked up quickly.
+_PATH_CACHE_TTL = 60.0
+_PATH_CACHE_MISS_TTL = 10.0
+_PATH_CACHE: "collections.OrderedDict[str, tuple[float, str | None, Path | None]]" = collections.OrderedDict()
+_PATH_CACHE_MAX = 8192
+_PATH_CACHE_LOCK = threading.Lock()
+
+
+def _bust_path_cache(name: str | None = None) -> None:
+    """Drop cached path resolutions for one event (or all when name is None)."""
+    with _PATH_CACHE_LOCK:
+        if name is None:
+            _PATH_CACHE.clear()
+            return
+        target = _normalize_event_name(name)
+        for key in [k for k in _PATH_CACHE if k == target or k == target.replace("/", "_")]:
+            _PATH_CACHE.pop(key, None)
 
 
 def _find_event_file_direct(raw_name: str) -> tuple[str | None, Path | None]:
-    """Fast direct filesystem check for event JSON before hitting alias maps or Levenshtein."""
-    output_dir = WWW / "astrocats/astrocats/supernovae/output"
+    """Fast direct filesystem check for event JSON, memoised by name."""
     target = _normalize_event_name(raw_name)
     clean = target.replace("/", "_")
+    now = time.monotonic()
+    with _PATH_CACHE_LOCK:
+        hit = _PATH_CACHE.get(clean)
+        if hit is not None:
+            stored_at, hit_name, hit_path = hit
+            ttl = _PATH_CACHE_TTL if hit_path is not None else _PATH_CACHE_MISS_TTL
+            if now - stored_at < ttl and (hit_path is None or hit_path.is_file()):
+                _PATH_CACHE.move_to_end(clean)
+                return hit_name, hit_path
+            _PATH_CACHE.pop(clean, None)
+
+    output_dir = DATA_OUT
+    found_name: str | None = None
+    found_path: Path | None = None
+
     candidates = list(output_dir.glob(f"sne-*/{clean}.json"))
     candidates.append(output_dir / "json" / f"{clean}.json")
     for c in candidates:
         if c.is_file():
-            return target, c
+            found_name, found_path = target, c
+            break
 
-    flip = clean.replace("SN", "AT") if clean.startswith("SN") else clean.replace("AT", "SN")
-    flip_candidates = list(output_dir.glob(f"sne-*/{flip}.json"))
-    flip_candidates.append(output_dir / "json" / f"{flip}.json")
-    for c in flip_candidates:
-        if c.is_file():
-            return flip, c
+    if found_path is None:
+        flip = clean.replace("SN", "AT") if clean.startswith("SN") else clean.replace("AT", "SN")
+        flip_candidates = list(output_dir.glob(f"sne-*/{flip}.json"))
+        flip_candidates.append(output_dir / "json" / f"{flip}.json")
+        for c in flip_candidates:
+            if c.is_file():
+                found_name, found_path = flip, c
+                break
 
-    return None, None
+    with _PATH_CACHE_LOCK:
+        _PATH_CACHE[clean] = (now, found_name, found_path)
+        _PATH_CACHE.move_to_end(clean)
+        while len(_PATH_CACHE) > _PATH_CACHE_MAX:
+            _PATH_CACHE.popitem(last=False)
+    return found_name, found_path
 
 
 def _fetch_remote_event(name: str) -> tuple[str | None, Path | None]:
-    """Fetch event JSON from upstream repositories or live astronomical brokers and cache locally."""
+    """Resolve an event name against the *local* corpus only.
+
+    Historically this function downloaded JSON from the astrocatalogs GitHub
+    archives and then called ``enrich_event()``, i.e. it performed two provider
+    round-trips inside an HTTP handler. Both are gone: the request path serves
+    what is on disk and, when nothing is on disk, renders a stub from catalog
+    metadata. ``_request_enrichment()`` queues the fetch out-of-band.
+
+    The name is kept for call-site compatibility and for the offline backfill
+    tool in ``ingest/``.
+    """
     clean = _normalize_event_name(name)
-    output_dir = WWW / "astrocats/astrocats/supernovae/output"
+    output_dir = DATA_OUT
 
     match = re.search(r'(?<!\d)(19\d{2}|20\d{2})(?!\d)', clean)
     hist_match = re.search(r'(?<!\d)(?:SN|AT)?(\d{3,4})(?!\d)', clean, re.IGNORECASE) if not match else None
@@ -646,38 +902,26 @@ def _fetch_remote_event(name: str) -> tuple[str | None, Path | None]:
     else:
         epoch = "sne-2025-2029"
 
-    # 1. Targeted check in the specific epoch repo and boneyard
+    # Local-only: check the specific epoch directory and the boneyard on disk.
     repos_to_try = [epoch, "sne-boneyard"]
-
     for r in repos_to_try:
         for cand_name in (clean, clean.replace("SN", "AT"), clean.replace("AT", "SN")):
-            url = f"https://raw.githubusercontent.com/astrocatalogs/{r}/master/{cand_name}.json"
-            try:
-                req = urllib.request.Request(url, headers={"User-Agent": "sne.space/1.0"})
-                with urllib.request.urlopen(req, timeout=2.5) as resp:
-                    if resp.status == 200:
-                        data = resp.read()
-                        if data and len(data) > 10:
-                            target_dir = output_dir / r
-                            target_dir.mkdir(parents=True, exist_ok=True)
-                            target_file = target_dir / f"{clean}.json"
-                            target_file.write_bytes(data)
-                            return clean, target_file
-            except Exception:
-                pass
+            candidate = output_dir / r / f"{cand_name}.json"
+            if candidate.is_file():
+                return cand_name, candidate
 
-    # 2. Try live ingest/enrichment from TNS / ALeRCE / WISeREP if modern
+    # Nothing on disk. Queue the fetch instead of performing it inline, and let
+    # the caller fall back to catalog metadata for this response.
     if enrich_event is not None and year >= 2018:
-        try:
-            ok = enrich_event(clean, force=True)
-            if ok:
-                c, fp = _find_event_file_direct(clean)
-                if fp and fp.is_file():
-                    return c, fp
-        except Exception:
-            pass
+        _request_enrichment(clean, need_lightcurve=True, need_spectra=True)
 
     return None, None
+
+
+# _find_event_file and _resolve_event call each other. _find_event_file already
+# did the direct disk check before calling _resolve_event, so repeating the same
+# glob is pure waste on a cache miss. This thread-local flag short-circuits it.
+_RESOLVE_SKIP_DISK = threading.local()
 
 
 def _resolve_event(raw: str) -> tuple[str | None, str | None]:
@@ -686,9 +930,10 @@ def _resolve_event(raw: str) -> tuple[str | None, str | None]:
     eventname = _normalize_event_name(oname)
 
     # 0. Fast direct disk check: handles modern/ingested events instantly
-    direct_name, direct_path = _find_event_file_direct(eventname)
-    if direct_name:
-        return direct_name, None
+    if not getattr(_RESOLVE_SKIP_DISK, "active", False):
+        direct_name, direct_path = _find_event_file_direct(eventname)
+        if direct_name:
+            return direct_name, None
 
     alias_map = _alias_lookup_map()
 
@@ -715,35 +960,53 @@ def _resolve_event(raw: str) -> tuple[str | None, str | None]:
             clean_test = "SN" + clean_test
         return clean_test, oname
 
-    # 3. Levenshtein fallback for typos (with length difference pruning for 60x speedup)
+    # 3. Typo tolerance, narrowed by an indexed length band in the SQLite store.
+    #
+    # This used to sweep all 270k aliases with an unbounded Levenshtein loop on
+    # every miss: measured 1.8 s of pure CPU inside the HTTP handler for a name
+    # that does not exist. The store now files each key under its length, so a
+    # miss compares against one length band and abandons each comparison as soon
+    # as it exceeds the edit budget. A genuine 404 drops from ~5 s to a few ms.
     target_len = len(eventname)
     if target_len >= 3:
-        names, names_by = _names_maps()
-        levs: dict[str, int] = {}
-        for mapping in (names, names_by):
-            for name, aliases in mapping.items():
-                if not isinstance(aliases, list):
-                    continue
-                min_lev = 100
-                for alias in aliases:
-                    if not isinstance(alias, str):
+        try:
+            store = _get_catalog_store(rebuild_if_stale=False)
+        except Exception:
+            store = None
+        if store is not None:
+            try:
+                fuzzy = store.fuzzy_name(eventname, max_distance=2)
+            except Exception:
+                fuzzy = None
+            if fuzzy:
+                return fuzzy, oname
+        else:
+            # Store unavailable (first boot, build in progress). Fall back to the
+            # in-memory sweep but keep it bounded so a miss cannot stall a request.
+            names, names_by = _names_maps()
+            levs: dict[str, int] = {}
+            for mapping in (names, names_by):
+                for name, aliases in mapping.items():
+                    if not isinstance(aliases, list):
                         continue
-                    if abs(len(alias) - target_len) >= 3:
-                        continue
-                    try:
-                        lev = _levenshtein(alias, eventname)
-                    except Exception:
-                        lev = 100
-                    if lev < min_lev:
-                        min_lev = lev
-                        if lev <= 1:
-                            return name, oname
-                if min_lev < 3:
-                    levs[name] = min_lev
-
-        if levs and min(levs.values()) < 3:
-            lev_name = min(levs, key=levs.get)
-            return lev_name, oname
+                    min_lev = 100
+                    for alias in aliases:
+                        if not isinstance(alias, str):
+                            continue
+                        if abs(len(alias) - target_len) >= 3:
+                            continue
+                        try:
+                            lev = _levenshtein(alias, eventname)
+                        except Exception:
+                            lev = 100
+                        if lev < min_lev:
+                            min_lev = lev
+                            if lev <= 1:
+                                return name, oname
+                    if min_lev < 3:
+                        levs[name] = min_lev
+            if levs and min(levs.values()) < 3:
+                return min(levs, key=levs.get), oname
     return None, None
 
 
@@ -753,12 +1016,20 @@ def _find_event_file(raw_name: str) -> tuple[str | None, Path | None]:
     if direct_path:
         return direct_name, direct_path
 
-    resolved, _ = _resolve_event(raw_name)
+    # _resolve_event re-runs _find_event_file_direct internally; tell it not to,
+    # since we just did that scan. Everything else in _resolve_event (alias map,
+    # designation regex, indexed fuzzy lookup) still applies.
+    previous = getattr(_RESOLVE_SKIP_DISK, "active", False)
+    _RESOLVE_SKIP_DISK.active = True
+    try:
+        resolved, _ = _resolve_event(raw_name)
+    finally:
+        _RESOLVE_SKIP_DISK.active = previous
     if resolved:
         d_name, d_path = _find_event_file_direct(resolved)
         if d_path:
             return d_name, d_path
-        # On-demand streaming from GitHub archives or live TNS / ALeRCE / WISeREP
+        # Nothing on disk: queue a background fetch rather than blocking here.
         return _fetch_remote_event(resolved)
 
     norm = _normalize_event_name(raw_name)
@@ -1276,91 +1547,661 @@ def _not_found_page(name: str) -> bytes:
     return html.encode("utf-8")
 
 
-_CATALOG_LOOKUP_LOCK = threading.Lock()
-_CATALOG_LOOKUP: dict[str, dict] | None = None
+# ---------------------------------------------------------------------------
+# Indexed catalog store
+#
+# Replaces the ~618 MB ``_CATALOG_LOOKUP`` dict. Built by streaming
+# catalog.min.json one element at a time (peak ~60 MB) into SQLite. See
+# serve/catalog_store.py for the measurements and the atomic-rebuild contract.
+# ---------------------------------------------------------------------------
+
+_CATALOG_DB_PATH = DATA_OUT / ".index" / "catalog.db"
+_CATALOG_STORE: "CatalogStore | None" = None
+_CATALOG_STORE_LOCK = threading.Lock()
+_CATALOG_STORE_SOURCES: list[Path] = []
+
+
+def _catalog_source_files() -> list[Path]:
+    """Catalog JSON array sources, most authoritative first."""
+    out: list[Path] = []
+    primary = DATA_OUT / "catalog.min.json"
+    primary_gz = DATA_OUT / "catalog.min.json.gz"
+    if primary.is_file():
+        out.append(primary)
+    elif primary_gz.is_file():
+        out.append(primary_gz)
+    # Bake a live overlay so freshly discovered events are searchable without a
+    # full catalog rebuild. Order matters only for duplicate suppression.
+    recent = _runtime_asset("recent-catalog.min.json")
+    if recent.is_file():
+        out.append(recent)
+    return out
+
+
+def _gz_source(path: Path) -> Path:
+    """Return a decompressed sibling for a ``.gz`` source, or the path itself."""
+    if path.suffix != ".gz":
+        return path
+    plain = path.with_suffix("")
+    try:
+        if not plain.is_file() or plain.stat().st_mtime < path.stat().st_mtime:
+            import gzip as _gzip
+            tmp = plain.with_name(f".{plain.name}.tmp.{os.getpid()}")
+            with _gzip.open(path, "rb") as src, open(tmp, "wb") as dst:
+                while True:
+                    chunk = src.read(1 << 20)
+                    if not chunk:
+                        break
+                    dst.write(chunk)
+            os.replace(tmp, plain)
+    except OSError:
+        return path
+    return plain
+
+
+_CATALOG_BUILD_THREAD: threading.Thread | None = None
+
+
+def _get_catalog_store(rebuild_if_stale: bool = True) -> "CatalogStore | None":
+    """Return the process-wide CatalogStore, building it on first use.
+
+    A build streams the 53 MB catalog and takes seconds. Request threads must
+    never wait for it: when the index is absent or stale we hand back whatever is
+    usable now and kick a *single* background build. Callers degrade gracefully
+    to the in-memory maps when this returns ``None``.
+    """
+    global _CATALOG_STORE, _CATALOG_STORE_SOURCES, _CATALOG_BUILD_THREAD
+    if CatalogStore is None:
+        return None
+
+    sources = _catalog_source_files()
+    if not sources:
+        return None
+
+    store = _CATALOG_STORE
+    if store is not None and store._ready and not store.is_stale(sources):
+        return store
+
+    # Stale-but-present index is still useful; never block a visitor for a build.
+    if store is not None and store._ready and not rebuild_if_stale:
+        return store
+
+    with _CATALOG_STORE_LOCK:
+        store = _CATALOG_STORE
+        sources = _catalog_source_files()
+        if store is not None and store._ready and not store.is_stale(sources):
+            return store
+        if store is None:
+            _CATALOG_DB_PATH.parent.mkdir(parents=True, exist_ok=True)
+            store = CatalogStore(_CATALOG_DB_PATH)
+            _CATALOG_STORE = store
+            # An on-disk index from a previous run is usable immediately even
+            # though _ready is still False; mark it if the schema matches.
+            try:
+                if store.load_existing():
+                    _CATALOG_STORE_SOURCES = sources
+                    return store
+            except Exception:
+                pass
+
+        def _build_bg() -> None:
+            global _CATALOG_STORE_SOURCES
+            try:
+                store.build([_gz_source(p) for p in _catalog_source_files()])
+                _CATALOG_STORE_SOURCES = _catalog_source_files()
+            except Exception as exc:  # noqa: BLE001
+                print(f"[CatalogStore] build failed: {exc}", flush=True)
+
+        if _CATALOG_BUILD_THREAD is None or not _CATALOG_BUILD_THREAD.is_alive():
+            _CATALOG_BUILD_THREAD = threading.Thread(
+                target=_build_bg, name="catalog-store-build", daemon=True
+            )
+            _CATALOG_BUILD_THREAD.start()
+        # Return the (possibly not-yet-ready) store so metadata lookups can try.
+        return store
 
 
 def _get_catalog_entry(raw_name: str) -> dict | None:
-    """Fast indexed lookup of summary metadata from catalog.min.json for all 110,000+ supernovae."""
-    global _CATALOG_LOOKUP
-    if _CATALOG_LOOKUP is None:
-        with _CATALOG_LOOKUP_LOCK:
-            if _CATALOG_LOOKUP is None:
-                cat_file = WWW / "astrocats/astrocats/supernovae/output/catalog.min.json"
-                cat_gz = WWW / "astrocats/astrocats/supernovae/output/catalog.min.json.gz"
-                lookup = {}
-                raw_data = None
+    """Indexed lookup of summary metadata for all 110,000+ supernovae."""
+    store = _get_catalog_store()
+    if store is not None:
+        meta = store.get_meta(raw_name)
+        if meta is not None:
+            return meta
+        # Catalog keys are stored as-published; also try the normalised form so
+        # "2011fe" resolves to "SN2011fe" when only the canonical key exists.
+        norm = _normalize_event_name(raw_name)
+        if norm != raw_name:
+            meta = store.get_meta(norm)
+            if meta is not None:
+                return meta
+        return None
+    return None
+
+
+# ---------------------------------------------------------------------------
+# Rendered-HTML page cache
+#
+# Every event page costs ~230-780 KB of HTML and 250-600 ms of CPU to render.
+# Caching the gzipped bytes removes both the JSON parse and the render from
+# repeat requests, which is what turns 20 concurrent hits into a bounded
+# workload instead of linear CPU queueing.
+#
+# Invalidation is by *data version*: the event file's st_mtime_ns plus size.
+# An enrichment write changes the version, so the next request re-renders.
+# Entries also carry a wall-clock TTL so a missed mtime change cannot pin a page
+# forever, and the LRU bound keeps memory predictable.
+# ---------------------------------------------------------------------------
+
+_PAGE_CACHE_MAX_BYTES = int(os.environ.get("SNE_PAGE_CACHE_MB", "96")) * 1024 * 1024
+_PAGE_CACHE_TTL = float(os.environ.get("SNE_PAGE_CACHE_TTL", "900"))  # seconds
+
+
+class _RenderedPageCache:
+    """Thread-safe bounded LRU cache of rendered HTML, versioned by data mtime."""
+
+    def __init__(self, max_bytes: int, ttl: float) -> None:
+        self._max_bytes = max(0, max_bytes)
+        self._ttl = max(0.0, ttl)
+        self._lock = threading.Lock()
+        # key -> [version, stored_at, raw_bytes, gzip_bytes_or_None]
+        self._data: "collections.OrderedDict[str, list]" = collections.OrderedDict()
+        self._bytes = 0
+        self.hits = 0
+        self.misses = 0
+        self.stores = 0
+        self.evictions = 0
+
+    @staticmethod
+    def _version(path: Path | None) -> tuple:
+        """Cheap change detector: mtime_ns + size. Missing file -> sentinel."""
+        if path is None:
+            return ("missing",)
+        try:
+            st = path.stat()
+            return (st.st_mtime_ns, st.st_size)
+        except OSError:
+            return ("missing",)
+
+    @staticmethod
+    def _entry_bytes(entry: list) -> int:
+        """Total bytes an entry actually holds: raw *and* gzipped copies.
+
+        The cache stores both so a hit can skip recompression. Counting only
+        ``raw`` under-reported real usage and let the cache hold up to ~2x its
+        configured bound (observed 94.4 MB "of 96 MB" while RSS carried ~190 MB).
+        """
+        return len(entry[2]) + (len(entry[3]) if entry[3] else 0)
+
+    def _drop_locked(self, key: str) -> None:
+        entry = self._data.pop(key, None)
+        if entry is not None:
+            self._bytes -= self._entry_bytes(entry)
+
+    def get(self, key: str, version: tuple) -> tuple[bytes, bytes | None] | None:
+        if not self._max_bytes:
+            return None
+        now = time.time()
+        with self._lock:
+            entry = self._data.get(key)
+            if entry is None:
+                self.misses += 1
+                return None
+            if entry[0] != version or (self._ttl and now - entry[1] > self._ttl):
+                self._drop_locked(key)
+                self.misses += 1
+                return None
+            self._data.move_to_end(key)
+            self.hits += 1
+            return entry[2], entry[3]
+
+    def put(self, key: str, version: tuple, raw: bytes, gz: bytes | None = None) -> None:
+        if not self._max_bytes or len(raw) > self._max_bytes:
+            return
+        with self._lock:
+            self._drop_locked(key)
+            entry = [version, time.time(), raw, gz]
+            self._data[key] = entry
+            self._bytes += self._entry_bytes(entry)
+            self.stores += 1
+            while self._bytes > self._max_bytes and len(self._data) > 1:
+                _, evicted = self._data.popitem(last=False)
+                self._bytes -= self._entry_bytes(evicted)
+                self.evictions += 1
+
+    def set_gzip(self, key: str, gz: bytes) -> None:
+        """Attach pre-compressed bytes to an existing entry (avoids re-gzip per hit)."""
+        with self._lock:
+            entry = self._data.get(key)
+            if entry is not None and entry[3] is None:
+                entry[3] = gz
+                self._bytes += len(gz)
+                while self._bytes > self._max_bytes and len(self._data) > 1:
+                    _, evicted = self._data.popitem(last=False)
+                    self._bytes -= self._entry_bytes(evicted)
+                    self.evictions += 1
+
+    def clear_key(self, event_name: str) -> None:
+        """Drop every cached variant (page/story, entered-name) for one event."""
+        prefix = f"{event_name}|"
+        with self._lock:
+            for key in [k for k in self._data if k.startswith(prefix)]:
+                self._drop_locked(key)
+
+    def clear(self) -> None:
+        with self._lock:
+            self._data.clear()
+            self._bytes = 0
+
+    def stats(self) -> dict:
+        with self._lock:
+            total = self.hits + self.misses
+            return {
+                "entries": len(self._data),
+                "bytes": self._bytes,
+                "max_bytes": self._max_bytes,
+                "ttl_seconds": self._ttl,
+                "hits": self.hits,
+                "misses": self.misses,
+                "stores": self.stores,
+                "evictions": self.evictions,
+                "hit_rate": round(self.hits / total, 4) if total else 0.0,
+            }
+
+
+_PAGE_CACHE = _RenderedPageCache(_PAGE_CACHE_MAX_BYTES, _PAGE_CACHE_TTL)
+
+
+def _wants_gzip(handler) -> bool:
+    """True when the client advertised gzip support."""
+    try:
+        return "gzip" in (handler.headers.get("Accept-Encoding") or "").lower()
+    except Exception:
+        return False
+
+
+# Concurrent cold renders are memory-hungry, not CPU-hungry: a single 38 MB event
+# JSON peaks around 290 MB RSS, so N simultaneous cold renders of the largest events
+# cost roughly 140 MB each above baseline. Measured: 2 -> 516 MB, 4 -> 754 MB,
+# 6 -> 1011 MB peak against a 1200 MB container limit. Eight concurrent cold renders
+# of the largest events OOM-killed the container (exit 137), which is a far worse
+# failure than being briefly queued.
+#
+# This gate bounds how many cold renders run at once. Cache hits never touch it, so
+# warm serving stays fully parallel and unaffected; only the expensive miss path is
+# serialised to a safe width. A request that waits here waits milliseconds, whereas
+# an OOM restart costs ~40 s of downtime plus every cached page.
+_SNE_RENDER_MAX = max(1, int(os.environ.get("SNE_RENDER_MAX_CONCURRENT", "4")))
+_RENDER_GATE = threading.BoundedSemaphore(_SNE_RENDER_MAX)
+_RENDER_WAITS = 0
+_RENDER_WAIT_LOCK = threading.Lock()
+
+
+def _cached_event_page(
+    name: str,
+    entered: str | None,
+    is_story: bool,
+    fp: Path | None,
+    accept_gzip: bool = True,
+) -> tuple[int, bytes, bytes | None]:
+    """Serve an event page through the render cache.
+
+    Returns ``(status, body_to_send, gzip_body_or_None)``. ``_event_page`` runs
+    only on a cache miss, so a hit skips both the event-JSON parse and the whole
+    HTML render. Pages are stored pre-gzipped so a hit also skips recompression
+    of ~700 KB of HTML.
+    """
+    version = _RenderedPageCache._version(fp)
+    key = f"{name}|{entered or ''}|{1 if is_story else 0}"
+    hit = _PAGE_CACHE.get(key, version)
+    if hit is not None:
+        raw, gz = hit
+        if accept_gzip and gz:
+            return 200, gz, gz
+        return 200, raw, None
+    # Miss: bound concurrent renders so a burst of cold requests cannot exhaust the
+    # container's memory limit. The gate wraps only the expensive path, and the
+    # cache is re-checked after acquiring because another thread may have rendered
+    # the same page while this one waited.
+    global _RENDER_WAITS
+    with _RENDER_GATE:
+        hit = _PAGE_CACHE.get(key, version)
+        if hit is not None:
+            raw, gz = hit
+            with _RENDER_WAIT_LOCK:
+                _RENDER_WAITS += 1
+            if accept_gzip and gz:
+                return 200, gz, gz
+            return 200, raw, None
+        code, body = _event_page(name, entered, is_story=is_story, fp=fp)
+    if code == 200 and body and len(body) > 256:
+        try:
+            gz = gzip.compress(body, compresslevel=5)
+        except Exception:
+            gz = None
+        _PAGE_CACHE.put(key, version, body, gz)
+        if accept_gzip and gz:
+            return 200, gz, gz
+    return code, body, None
+
+
+# ---------------------------------------------------------------------------
+# Bounded background enrichment queue
+#
+# The HTTP path must never call a data provider. Handlers only *enqueue* work
+# here; a single daemon worker drains it. Guarantees that matter for stability:
+#
+#   * dedup      - one pending job per event name (repeat hits do not stack)
+#   * bounded    - the deque has a hard ceiling; overflow is dropped, not queued
+#   * timeout    - each job runs in its own thread so a hung provider is abandoned
+#   * retry      - exponential backoff with a cap, never a tight loop
+#   * TNS-aware  - 429s set a global cool-off so a rate limit does not fan out
+#
+# This is deliberately in-process: it survives request threads and page caches
+# but not a restart. Persistence of *data* is handled by the mounted volume;
+# persistence of *pending work* is not required for correctness, because the
+# next request or the periodic ingest loop re-enqueues what matters.
+# ---------------------------------------------------------------------------
+
+_ENRICH_QUEUE_MAX = int(os.environ.get("SNE_ENRICH_QUEUE_MAX", "256"))
+_ENRICH_WORKERS = int(os.environ.get("SNE_ENRICH_WORKERS", "2"))
+_ENRICH_JOB_TIMEOUT = float(os.environ.get("SNE_ENRICH_TIMEOUT", "45"))
+_ENRICH_MAX_ATTEMPTS = int(os.environ.get("SNE_ENRICH_ATTEMPTS", "3"))
+_ENRICH_BASE_BACKOFF = float(os.environ.get("SNE_ENRICH_BACKOFF", "30"))
+_ENRICH_BACKOFF_CAP = 900.0  # never wait longer than 15 minutes between tries
+# After a *successful* enrichment, refuse to re-queue the same event for this long.
+# Without it, an event whose JSON legitimately has nothing new to add gets queued
+# by every page view: each run rewrites the file, bumps mtime, invalidates the
+# rendered-page cache, and the next visitor re-renders and re-queues. That is the
+# "endless rapid retries" failure mode, and it looked exactly like a slow renderer.
+_ENRICH_SUCCESS_COOLDOWN = float(os.environ.get("SNE_ENRICH_SUCCESS_COOLDOWN", "900"))
+
+
+class _EnrichmentQueue:
+    """Single-flight, bounded, retrying background enrichment scheduler."""
+
+    def __init__(self) -> None:
+        self._lock = threading.Lock()
+        self._pending: "collections.deque[tuple[str, bool, bool]]" = collections.deque()
+        self._inflight: set[str] = set()
+        self._attempts: dict[str, int] = {}
+        self._not_before: dict[str, float] = {}
+        self._cooldown_until = 0.0
+        self._wake = threading.Condition(self._lock)
+        self._started = False
+        self.enqueued = 0
+        self.dropped = 0
+        self.deduped = 0
+        self.completed = 0
+        self.failed = 0
+        self.timed_out = 0
+        self.rate_limited = 0
+
+    def start(self) -> None:
+        with self._lock:
+            if self._started:
+                return
+            self._started = True
+        for i in range(max(1, _ENRICH_WORKERS)):
+            threading.Thread(
+                target=self._worker, name=f"enrich-worker-{i}", daemon=True
+            ).start()
+
+    # -- public API ------------------------------------------------------
+
+    def enqueue(self, name: str, fetch_lightcurve: bool = True, fetch_spectra: bool = True) -> bool:
+        """Queue an enrichment job. Returns False when deduped, dropped, or cooling down."""
+        if not name or enrich_event is None:
+            return False
+        with self._lock:
+            now = time.time()
+            if now < self._cooldown_until:
+                self.deduped += 1
+                return False
+            if name in self._inflight:
+                self.deduped += 1
+                return False
+            for job in self._pending:
+                if job[0] == name:
+                    self.deduped += 1
+                    return False
+            if len(self._pending) >= _ENRICH_QUEUE_MAX:
+                self.dropped += 1
+                return False
+            not_before = self._not_before.get(name, 0.0)
+            if now < not_before:
+                self.deduped += 1
+                return False
+            self._pending.append((name, fetch_lightcurve, fetch_spectra))
+            self.enqueued += 1
+            self._wake.notify()
+            return True
+
+    def set_cooldown(self, seconds: float) -> None:
+        """Global pause after an upstream 429 / rate-limit response."""
+        with self._lock:
+            self._cooldown_until = max(self._cooldown_until, time.time() + max(1.0, seconds))
+            self.rate_limited += 1
+
+    def stats(self) -> dict:
+        with self._lock:
+            return {
+                "pending": len(self._pending),
+                "inflight": len(self._inflight),
+                "max_pending": _ENRICH_QUEUE_MAX,
+                "workers": _ENRICH_WORKERS,
+                "cooldown_seconds_remaining": round(max(0.0, self._cooldown_until - time.time()), 1),
+                "enqueued": self.enqueued,
+                "deduped": self.deduped,
+                "dropped": self.dropped,
+                "completed": self.completed,
+                "failed": self.failed,
+                "timed_out": self.timed_out,
+                "rate_limited": self.rate_limited,
+                "known_attempts": len(self._attempts),
+            }
+
+    # -- worker ----------------------------------------------------------
+
+    def _next_job(self) -> tuple[str, bool, bool] | None:
+        with self._lock:
+            while True:
+                now = time.time()
+                if now < self._cooldown_until:
+                    self._wake.wait(timeout=min(5.0, self._cooldown_until - now))
+                    continue
+                if not self._pending:
+                    self._wake.wait(timeout=30.0)
+                    if not self._pending:
+                        return None
+                name, lc, sp = self._pending.popleft()
+                if name in self._inflight:
+                    continue
+                if now < self._not_before.get(name, 0.0):
+                    # Still backing off; put it back at the tail and wait.
+                    self._pending.append((name, lc, sp))
+                    self._wake.wait(timeout=5.0)
+                    continue
+                self._inflight.add(name)
+                return name, lc, sp
+
+    def _worker(self) -> None:
+        while True:
+            job = self._next_job()
+            if job is None:
+                time.sleep(1.0)
+                continue
+            name, lc, sp = job
+            outcome = {"ok": False, "timeout": False, "rate": False}
+            done = threading.Event()
+
+            def _run() -> None:
                 try:
-                    if cat_file.is_file():
-                        raw_data = cat_file.read_bytes()
-                    elif cat_gz.is_file():
-                        raw_data = gzip.decompress(cat_gz.read_bytes())
-                    if raw_data:
-                        items = json.loads(raw_data)
-                        if isinstance(items, list):
-                            for item in items:
-                                nm = item.get("name")
-                                if nm:
-                                    lookup[nm.lower()] = item
-                                    lookup[nm.lower().replace(" ", "")] = item
-                                    for a in item.get("alias", []):
-                                        aval = a.get("value") if isinstance(a, dict) else str(a)
-                                        if aval:
-                                            lookup[aval.lower()] = item
-                                            lookup[aval.lower().replace(" ", "")] = item
-                except Exception:
-                    pass
-                _CATALOG_LOOKUP = lookup
-    target = _normalize_event_name(raw_name).lower()
-    return _CATALOG_LOOKUP.get(target) or _CATALOG_LOOKUP.get(target.replace(" ", ""))
+                    ok = enrich_event(name, fetch_lightcurve=lc, fetch_spectra=sp, force=False)
+                    outcome["ok"] = bool(ok)
+                    if ok:
+                        # The event JSON just changed on disk. Drop both caches so
+                        # the next visitor sees the enriched data rather than the
+                        # stale page and the stale path resolution.
+                        _PAGE_CACHE.clear_key(name)
+                        _bust_path_cache(name)
+                except Exception as exc:
+                    msg = str(exc).lower()
+                    if "429" in msg or "rate limit" in msg:
+                        outcome["rate"] = True
+                    print(f"[EnrichQueue] {name} failed: {exc}", flush=True)
+                finally:
+                    done.set()
+
+            t = threading.Thread(target=_run, name=f"enrich-job-{name}", daemon=True)
+            t.start()
+            finished = done.wait(timeout=_ENRICH_JOB_TIMEOUT)
+
+            with self._lock:
+                self._inflight.discard(name)
+                if not finished:
+                    self.timed_out += 1
+                    attempts = self._attempts.get(name, 0) + 1
+                    self._attempts[name] = attempts
+                    if attempts >= _ENRICH_MAX_ATTEMPTS:
+                        # Give up; do not retry forever. A later request or the
+                        # periodic ingest re-enqueues when it is worth trying.
+                        self._attempts.pop(name, None)
+                        self._not_before.pop(name, None)
+                        self.failed += 1
+                    else:
+                        delay = min(_ENRICH_BACKOFF_CAP, _ENRICH_BASE_BACKOFF * (2 ** (attempts - 1)))
+                        self._not_before[name] = time.time() + delay
+                    self._wake.notify_all()
+                    continue
+
+                if outcome["rate"]:
+                    self.rate_limited += 1
+                    self._cooldown_until = max(self._cooldown_until, time.time() + 120.0)
+                    self._not_before[name] = time.time() + 120.0
+                    self._wake.notify_all()
+                    continue
+
+                if outcome["ok"]:
+                    self.completed += 1
+                    self._attempts.pop(name, None)
+                    # Success is not permission to retry. Hold the event out of the
+                    # queue long enough that ordinary page views cannot keep
+                    # re-enqueueing it and thrashing the render cache.
+                    self._not_before[name] = time.time() + _ENRICH_SUCCESS_COOLDOWN
+                else:
+                    attempts = self._attempts.get(name, 0) + 1
+                    self._attempts[name] = attempts
+                    if attempts >= _ENRICH_MAX_ATTEMPTS:
+                        self._attempts.pop(name, None)
+                        self._not_before.pop(name, None)
+                        self.failed += 1
+                    else:
+                        delay = min(_ENRICH_BACKOFF_CAP, _ENRICH_BASE_BACKOFF * (2 ** (attempts - 1)))
+                        self._not_before[name] = time.time() + delay
+                self._wake.notify_all()
 
 
-def _event_page(name: str, entered: str | None = None, is_story: bool = False, fp: Path | None = None) -> tuple[int, bytes]:
+_ENRICH_QUEUE = _EnrichmentQueue()
+
+
+def _request_enrichment(name: str, need_lightcurve: bool = True, need_spectra: bool = True) -> bool:
+    """Non-blocking enrichment request used by HTTP handlers."""
+    return _ENRICH_QUEUE.enqueue(name, need_lightcurve, need_spectra)
+
+
+def _load_event_meta(path: Path | None, name: str) -> dict:
+    """Parse one event JSON into its inner metadata dict. No network, no mutation."""
+    if path is None or not path.is_file():
+        return {}
+    try:
+        raw = json.loads(path.read_text(encoding="utf-8", errors="replace"))
+    except Exception:
+        return {}
+    if not isinstance(raw, dict):
+        return {}
+    if len(raw) == 1:
+        inner = next(iter(raw.values()))
+        return inner if isinstance(inner, dict) else {}
+    inner = raw.get(name)
+    return inner if isinstance(inner, dict) else raw
+
+
+def _meta_is_useful(meta: dict) -> bool:
+    return bool(meta) and bool(
+        meta.get("ra") or meta.get("dec") or meta.get("photometry") or meta.get("claimedtype")
+    )
+
+
+def _event_page(
+    name: str,
+    entered: str | None = None,
+    is_story: bool = False,
+    fp: Path | None = None,
+) -> tuple[int, bytes]:
+    """Render an event page from data already on disk.
+
+    This function performs **no network I/O**. Providers are only reached by the
+    background enrichment queue, which handlers feed without blocking. If the
+    event JSON is missing but the catalog knows the object, a lightweight stub
+    page is rendered from catalog metadata instead of a 404.
+    """
     fn = name.replace("/", "_")
     legacy_exists = _html_exists(fn)
     path = fp or _find_event_json(name)
-    meta = {}
-    if path and path.is_file():
-        try:
-            raw = json.loads(path.read_text(encoding="utf-8", errors="replace"))
-            if isinstance(raw, dict) and len(raw) == 1:
-                meta = next(iter(raw.values()))
-            elif isinstance(raw, dict):
-                meta = raw.get(name) or raw
-        except Exception:
-            meta = {}
+    meta = _load_event_meta(path, name)
+    from_catalog_stub = False
 
-        # Auto-enrich missing classification spectra & light curves for recent transients
-        need_lc = len(meta.get("photometry", [])) <= 1
-        need_spec = not meta.get("spectra")
-        if enrich_event is not None and (need_spec or need_lc):
-            match_yr = re.search(r'(?<!\d)(202[0-9])(?!\d)', name)
-            if match_yr and int(match_yr.group(1)) >= 2024:
-                try:
-                    if is_file_stale is not None and is_file_stale(path):
-                        enrich_event(name, fetch_lightcurve=need_lc, fetch_spectra=need_spec, force=False)
-                        raw = json.loads(path.read_text(encoding="utf-8", errors="replace"))
-                        if isinstance(raw, dict) and len(raw) == 1:
-                            meta = next(iter(raw.values()))
-                        elif isinstance(raw, dict):
-                            meta = raw.get(name) or raw
-                except Exception:
-                    pass
-    if not meta or not (meta.get("ra") or meta.get("photometry") or meta.get("claimedtype") or meta.get("dec")):
+    if not _meta_is_useful(meta):
+        # Catalog fallback: covers recently discovered events whose JSON has not
+        # been written yet, and events only present in catalog.min.json.
         cat_meta = _get_catalog_entry(entered or name)
         if cat_meta:
             meta = cat_meta
+            from_catalog_stub = True
+        elif _meta_is_useful(meta):
+            pass
         else:
             return 404, _not_found_page(entered or name)
+
+    # Derived astrophysics only. enrich_transient_astrophysics consults the local
+    # dust/host caches and never blocks on a provider (see astro_engine's
+    # cache-first contract); anything it cannot derive from cache is left as a
+    # dash and filled in later by the background queue.
     if enrich_transient_astrophysics is not None:
         try:
-            meta = enrich_transient_astrophysics(name, meta)
+            meta = enrich_transient_astrophysics(name, meta, allow_network=False)
+        except TypeError:
+            # Older signature without the network switch.
+            try:
+                meta = enrich_transient_astrophysics(name, meta)
+            except Exception:
+                pass
         except Exception:
             pass
+
+    # Queue enrichment for genuinely incomplete records, without blocking.
+    try:
+        need_lc = len(meta.get("photometry", []) or []) <= 1
+        need_spec = not meta.get("spectra")
+        year_match = re.search(r"(?<!\d)(20\d{2})(?!\d)", name)
+        if enrich_event is not None and (need_lc or need_spec) and year_match:
+            if int(year_match.group(1)) >= 2024:
+                _request_enrichment(name, need_lightcurve=need_lc, need_spectra=need_spec)
+    except Exception:
+        pass
+
     if is_story and render_story_mode is not None:
         return 200, render_story_mode(name, meta, entered).encode("utf-8")
+    if from_catalog_stub and render_pro_cockpit is not None:
+        # A stub still gets the full cockpit shell; the queue fills it in later.
+        return 200, render_pro_cockpit(
+            name, meta, entered, legacy_html_exists=legacy_exists
+        ).encode("utf-8")
     if render_pro_cockpit is not None:
-        return 200, render_pro_cockpit(name, meta, entered, legacy_html_exists=legacy_exists).encode("utf-8")
+        return 200, render_pro_cockpit(
+            name, meta, entered, legacy_html_exists=legacy_exists
+        ).encode("utf-8")
     return 200, _fallback_event_page(name, entered)
 
 
@@ -3115,6 +3956,44 @@ class Handler(SimpleHTTPRequestHandler):
         query = urllib.parse.parse_qs(parsed.query)
         fmt = query.get("format", [""])[0].lower()
 
+        # Liveness / readiness probe. Must never touch a provider or the catalog.
+        if path in ("/healthz", "/health", "/livez"):
+            payload = {"status": "ok", "uptime_seconds": round(time.time() - _START_TIME, 1)}
+            self._send(200, "application/json; charset=utf-8",
+                       json.dumps(payload).encode("utf-8"), {"Cache-Control": "no-store"})
+            return
+
+        # Deep health: cache hit rates, queue depth, RSS, index size. Auth-gated
+        # because it exposes operational detail; used to falsify the OOM hypothesis.
+        if path in ("/api/internal/health", "/api/internal/cache-stats", "/readyz"):
+            if not self._check_logs_auth(query):
+                self._send(401, "application/json; charset=utf-8",
+                           b'{"error":"Unauthorized"}', {"Cache-Control": "no-store"})
+                return
+            self._send(200, "application/json; charset=utf-8",
+                       json.dumps(_health_payload(), indent=2).encode("utf-8"),
+                       {"Cache-Control": "no-store"})
+            return
+
+        # Drop every rendered page so the next requests are guaranteed cold. Auth-
+        # gated like /api/internal/health. Operationally useful after a data fix
+        # (force a re-render without waiting out the TTL) and required for a
+        # *reproducible* cold-cache benchmark: without it, "cold" depends on which
+        # pages happen to have been evicted from the LRU, so a measurement cannot be
+        # repeated. Clears the in-process cache only; no file is touched.
+        if path == "/api/internal/cache/clear":
+            if not self._check_logs_auth(query):
+                self._send(401, "application/json; charset=utf-8",
+                           b'{"error":"Unauthorized"}', {"Cache-Control": "no-store"})
+                return
+            before = _PAGE_CACHE.stats()
+            _PAGE_CACHE.clear()
+            payload = {"status": "cleared", "cleared_entries": before.get("entries", 0)}
+            self._send(200, "application/json; charset=utf-8",
+                       json.dumps(payload).encode("utf-8"),
+                       {"Cache-Control": "no-store"})
+            return
+
         # Real-time API Telemetry & Stats Dashboard: /api/stats, /api/telemetry
         if path in ("/api/stats", "/api/telemetry"):
             # If the client is asking for full internal telemetry or polling stats, enforce auth if requested from outside logs
@@ -3334,26 +4213,50 @@ class Handler(SimpleHTTPRequestHandler):
             return
 
         if path in ("/", "/index.php", "/index.html"):
-            body = _php_render(WWW / "index.php")
-            self._send(200, "text/html; charset=utf-8", body)
+            # Cached by input mtime: skips the PHP CLI spawn + JSON decode on hits.
+            code, body, gz = _cached_homepage(accept_gzip=_wants_gzip(self))
+            headers = {"Cache-Control": "public, max-age=60"}
+            if gz:
+                headers["Content-Encoding"] = "gzip"
+                headers["Vary"] = "Accept-Encoding"
+            self._send(code, "text/html; charset=utf-8", body, headers)
             return
 
         enrich_req = query.get("enrich", [""])[0].lower() in ("1", "true")
 
         # 0. On-demand Enrichment API endpoint: /api/{event}/enrich
+        #
+        # Asynchronous by contract: this accepts the request, queues the work, and
+        # returns what is on disk right now with a 202 so callers can poll the
+        # event JSON for the result. It never waits on a provider.
         if path.startswith("/api/") and path.endswith("/enrich"):
             api_parts = [p for p in path.strip("/").split("/") if p]
             if len(api_parts) == 3 and api_parts[0] == "api" and api_parts[2] == "enrich":
                 raw_event = api_parts[1]
                 canon, _ = _resolve_event(raw_event)
-                if canon and enrich_event is not None:
-                    enrich_event(canon, force=True)
-                    canon, fp = _find_event_file(canon)
-                    if fp and fp.is_file():
-                        data = fp.read_bytes()
-                        self._send(200, "application/json; charset=utf-8", data)
-                        return
-                self._send(404, "application/json", b'{"error":"event could not be enriched"}')
+                target = canon or _normalize_event_name(raw_event)
+                queued = _request_enrichment(target, need_lightcurve=True, need_spectra=True)
+                _, fp = _find_event_file(target)
+                body = {
+                    "event": target,
+                    "queued": bool(queued),
+                    "queue": _ENRICH_QUEUE.stats(),
+                }
+                if fp and fp.is_file():
+                    self._send(202, "application/json; charset=utf-8",
+                               json.dumps(body, indent=2).encode("utf-8"),
+                               {"Cache-Control": "no-store"})
+                    return
+                cat_meta = _get_catalog_entry(target)
+                if cat_meta:
+                    body["catalog_metadata"] = cat_meta
+                    self._send(202, "application/json; charset=utf-8",
+                               json.dumps(body, indent=2).encode("utf-8"),
+                               {"Cache-Control": "no-store"})
+                    return
+                body["error"] = "event unknown to the local catalog"
+                self._send(404, "application/json; charset=utf-8",
+                           json.dumps(body, indent=2).encode("utf-8"))
                 return
 
         # Sitemaps Engine (Google 50,000 URLs per file compliant)
@@ -3633,7 +4536,7 @@ class Handler(SimpleHTTPRequestHandler):
 
         # Recent Supernova Discoveries API: /api/recent, /api/recent-discoveries
         if path in ("/api/recent", "/api/recent-discoveries"):
-            f_recent = WWW / "assets/recent-events.json"
+            f_recent = _runtime_asset("recent-events.json")
             if f_recent.is_file():
                 self._send(200, "application/json; charset=utf-8", f_recent.read_bytes(), {"Cache-Control": "public, max-age=300"})
                 return
@@ -3647,32 +4550,22 @@ class Handler(SimpleHTTPRequestHandler):
         # Classification Type Filter API: /api/by-type
         if path == "/api/by-type":
             target_type = query.get("type", [""])[0].strip().lower()
-            limit = int(query.get("limit", ["25"])[0])
-            _get_catalog_entry("SN2023ixf")  # Ensure _CATALOG_LOOKUP is loaded
-            matches = []
-            seen = set()
-            if _CATALOG_LOOKUP:
-                for name_k, meta in _CATALOG_LOOKUP.items():
-                    if not isinstance(meta, dict):
-                        continue
-                    c_name = meta.get("name")
-                    if not c_name or c_name in seen:
-                        continue
-                    ctype = meta.get("claimedtype", {})
-                    ctype_val = str(ctype.get("value") or "").lower() if isinstance(ctype, dict) else str(ctype or "").lower()
-                    if target_type in ctype_val:
-                        seen.add(c_name)
-                        matches.append({
-                            "name": c_name,
-                            "type": meta.get("claimedtype", {}).get("value") if isinstance(meta.get("claimedtype"), dict) else meta.get("claimedtype", "—"),
-                            "ra": meta.get("ra", {}).get("value") if isinstance(meta.get("ra"), dict) else meta.get("ra", "—"),
-                            "dec": meta.get("dec", {}).get("value") if isinstance(meta.get("dec"), dict) else meta.get("dec", "—"),
-                            "maxappmag": meta.get("maxappmag", {}).get("value") if isinstance(meta.get("maxappmag"), dict) else meta.get("maxappmag", "—"),
-                            "discoverdate": meta.get("discoverdate", {}).get("value") if isinstance(meta.get("discoverdate"), dict) else meta.get("discoverdate", "—"),
-                            "url": f"/sne/{urllib.parse.quote(c_name)}/"
-                        })
-                        if len(matches) >= limit:
-                            break
+            limit = max(1, min(int(query.get("limit", ["25"])[0]), 250))
+            matches: list[dict] = []
+            # SQL-side filter: no 110k-record Python scan, no in-memory dict.
+            store = _get_catalog_store()
+            if store is not None:
+                res = store.query(type_filter=target_type or "all", limit=limit)
+                for rec in res.get("items", []):
+                    matches.append({
+                        "name": rec["name"],
+                        "type": rec["type"],
+                        "ra": rec["ra"],
+                        "dec": rec["dec"],
+                        "maxappmag": rec["mag"] if rec["mag"] is not None else "—",
+                        "discoverdate": rec["date"],
+                        "url": f"/sne/{urllib.parse.quote(rec['name'])}/",
+                    })
             resp = {
                 "type": target_type,
                 "count": len(matches),
@@ -3828,15 +4721,17 @@ class Handler(SimpleHTTPRequestHandler):
                         ev_obj = ev_data[ev_key]
                         q_data = ev_obj.get(quantity, [])
 
-                        if ((quantity == "spectra" and not q_data) or (quantity == "photometry" and len(q_data) <= 1)) and enrich_event is not None:
-                            try:
-                                enrich_event(canon or raw_event, fetch_lightcurve=(len(q_data) <= 1), fetch_spectra=(quantity == "spectra"), force=False)
-                                ev_data = json.loads(fp.read_text(encoding="utf-8"))
-                                ev_key = list(ev_data.keys())[0]
-                                ev_obj = ev_data[ev_key]
-                                q_data = ev_obj.get(quantity, [])
-                            except Exception:
-                                pass
+                        # Incomplete data is served as-is and enriched in the
+                        # background. Calling the provider inline here made every
+                        # photometry/spectra API hit a potential multi-second stall.
+                        if (quantity == "spectra" and not q_data) or (
+                            quantity == "photometry" and len(q_data) <= 1
+                        ):
+                            _request_enrichment(
+                                canon or raw_event,
+                                need_lightcurve=(quantity == "photometry"),
+                                need_spectra=(quantity == "spectra"),
+                            )
 
                         if selected_cols:
                             q_data = [{k: row[k] for k in selected_cols if k in row} for row in q_data]
@@ -3909,41 +4804,28 @@ class Handler(SimpleHTTPRequestHandler):
 
         if event_json_target:
             raw = event_json_target
-            if enrich_req and enrich_event is not None:
-                c, _ = _resolve_event(raw)
-                if c:
-                    enrich_event(c, force=True)
+            # ?enrich=1 used to call a provider synchronously here. It is now a
+            # request to *queue* work; the response is served from disk either way.
+            if enrich_req:
+                _request_enrichment(raw)
             canon, fp = _find_event_file(raw)
-            if fp and is_file_stale is not None and enrich_event is not None:
-                if is_file_stale(fp):
-                    # Stale-while-revalidate: spawn background thread to refresh active supernova
-                    threading.Thread(target=enrich_event, args=(canon or raw,), kwargs={"force": False}, daemon=True).start()
             if fp and fp.is_file():
-                if enrich_transient_astrophysics is not None:
-                    try:
-                        ev_dict = json.loads(fp.read_text(encoding="utf-8", errors="replace"))
-                        ev_name = canon or raw
-                        if isinstance(ev_dict, dict) and ev_name in ev_dict and isinstance(ev_dict[ev_name], dict):
-                            ev_dict[ev_name] = enrich_transient_astrophysics(ev_name, ev_dict[ev_name])
-                            data = json.dumps(ev_dict, indent=2).encode("utf-8")
-                            self._send(200, "application/json; charset=utf-8", data, {
-                                "Content-Disposition": f'attachment; filename="{canon or raw}.json"'
-                            })
-                            return
-                        elif isinstance(ev_dict, dict) and len(ev_dict) == 1:
-                            k = next(iter(ev_dict))
-                            if isinstance(ev_dict[k], dict):
-                                ev_dict[k] = enrich_transient_astrophysics(k, ev_dict[k])
-                                data = json.dumps(ev_dict, indent=2).encode("utf-8")
-                                self._send(200, "application/json; charset=utf-8", data, {
-                                    "Content-Disposition": f'attachment; filename="{canon or raw}.json"'
-                                })
-                                return
-                    except Exception:
-                        pass
+                # Serve stored bytes exactly. Re-deriving astrophysics inline meant
+                # a JSON re-serialise plus provider calls on every download.
                 data = fp.read_bytes()
                 self._send(200, "application/json; charset=utf-8", data, {
                     "Content-Disposition": f'attachment; filename="{canon or raw}.json"'
+                })
+                return
+            # No JSON on disk yet: return catalog metadata so a recent discovery is
+            # still machine-readable instead of a hard 404.
+            cat_meta = _get_catalog_entry(raw)
+            if cat_meta:
+                _request_enrichment(raw)
+                payload = json.dumps({cat_meta.get("name") or raw: cat_meta}, indent=2).encode("utf-8")
+                self._send(200, "application/json; charset=utf-8", payload, {
+                    "Content-Disposition": f'attachment; filename="{(cat_meta.get("name") or raw)}.json"',
+                    "X-Catalog-Stub": "1",
                 })
                 return
             self._send(404, "application/json", b'{"error":"event not found"}')
@@ -3979,13 +4861,14 @@ class Handler(SimpleHTTPRequestHandler):
                     return
 
                 resolved, entered = _resolve_event(raw)
-                if resolved and enrich_req and enrich_event is not None:
-                    enrich_event(resolved, force=True)
+                # ?enrich=1 only queues work; it never blocks this response and it
+                # cannot be used to drive unbounded provider traffic.
+                if enrich_req:
+                    _request_enrichment(resolved or _normalize_event_name(raw))
                 canon, fp = _find_event_file(raw)
-                if fp and is_file_stale is not None and enrich_event is not None:
-                    if is_file_stale(fp):
-                        # Stale-while-revalidate: spawn background thread to refresh active supernova
-                        threading.Thread(target=enrich_event, args=(resolved or canon or raw,), kwargs={"force": False}, daemon=True).start()
+                # Staleness is handled by the enrichment worker's own TTL logic and
+                # by the periodic ingest loop. Checking it here used to parse the
+                # entire event JSON on every single page view.
                 if resolved:
                     if is_story and classify_event_tier is not None:
                         # Tier 3 Faint Data Record: redirect to canonical pro cockpit to protect index health
@@ -3999,13 +4882,19 @@ class Handler(SimpleHTTPRequestHandler):
                                     return
                             except Exception:
                                 pass
-                    code, body = _event_page(resolved, entered, is_story=is_story, fp=fp)
-                    self._send(code, "text/html; charset=utf-8", body)
+                    code, body, gz = _cached_event_page(
+                        resolved, entered, is_story, fp, accept_gzip=_wants_gzip(self)
+                    )
+                    headers = {"Content-Encoding": "gzip", "Vary": "Accept-Encoding"} if gz else None
+                    self._send(code, "text/html; charset=utf-8", body, headers)
                 else:
                     # Permissive fallback: render pro cockpit or story page directly for the requested event name
                     fallback_name = _normalize_event_name(raw)
-                    code, body = _event_page(fallback_name, is_story=is_story, fp=fp)
-                    self._send(code, "text/html; charset=utf-8", body)
+                    code, body, gz = _cached_event_page(
+                        fallback_name, None, is_story, fp, accept_gzip=_wants_gzip(self)
+                    )
+                    headers = {"Content-Encoding": "gzip", "Vary": "Accept-Encoding"} if gz else None
+                    self._send(code, "text/html; charset=utf-8", body, headers)
                 return
 
         # 5. Gzip HTML when .html empty/missing, or render live event page for historical URLs
@@ -4026,9 +4915,13 @@ class Handler(SimpleHTTPRequestHandler):
                 ev_name = m_ev.group(1)
                 res, ent = _resolve_event(ev_name)
                 target = res or ev_name
-                code, body = _event_page(target)
+                code, body, gz = _cached_event_page(
+                    target, None, False, _find_event_json(target),
+                    accept_gzip=_wants_gzip(self),
+                )
                 if code == 200:
-                    self._send(200, "text/html; charset=utf-8", body)
+                    headers = {"Content-Encoding": "gzip", "Vary": "Accept-Encoding"} if gz else None
+                    self._send(200, "text/html; charset=utf-8", body, headers)
                     return
 
         # 6. IA / static directory indexes (with or without trailing slash)
@@ -4166,6 +5059,13 @@ class ReusableThreadingServer(ThreadingHTTPServer):
     allow_reuse_address = True
     daemon_threads = True
 
+    # socketserver defaults to a listen backlog of 5. That is the single biggest
+    # cause of the "20 requests take 15 s" symptom: the 6th..20th simultaneous
+    # connections are not queued in userspace, they are dropped and the client
+    # retries with a 200 ms SYN backoff. Measured here as ~550-650 ms per request
+    # on a 3 ms cached page. 512 gives the kernel room to hand off to accept().
+    request_queue_size = 512
+
     def server_bind(self):
         import socket
         self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -4192,7 +5092,7 @@ def _catalog_for_table() -> tuple[bytes, bytes] | None:
     global _LIVE_CATALOG
     base = WWW / "astrocats/astrocats/supernovae/output/catalog.min.json"
     base_gz = WWW / "astrocats/astrocats/supernovae/output/catalog.min.json.gz"
-    recent = WWW / "assets/recent-catalog.min.json"
+    recent = _runtime_asset("recent-catalog.min.json")
     if not base.is_file() and not base_gz.is_file():
         return None
     stamp = recent.stat().st_mtime if recent.is_file() else 0.0
@@ -4226,21 +5126,125 @@ def _recent_tns_loop() -> None:
         time.sleep(15 * 60)
 
 
+def _warm_catalog_store() -> None:
+    """Build/refresh the SQLite catalog index and attach it to the engine.
+
+    Runs off the main thread so the HTTP listener is up immediately. Until the
+    first build finishes, catalog lookups return no metadata (pages still render
+    from event JSON on disk), which is strictly better than blocking startup for
+    the ~5 s a full index build takes.
+    """
+    try:
+        store = _get_catalog_store()
+        if store is None:
+            return
+        if CatalogEngine is not None:
+            CatalogEngine.get_instance().attach_store(store)
+        print(
+            f"[CatalogStore] ready: {store.count()} events, "
+            f"db={store.db_path}",
+            flush=True,
+        )
+    except Exception as exc:
+        print(f"[CatalogStore] warmup failed: {exc}", flush=True)
+
+
+def _rss_mb() -> float:
+    """**Current** resident set size in MB. Use this to detect leaks.
+
+    ``ru_maxrss`` is a high-water mark that never decreases, so a single burst of
+    rendering inflates it forever. That made the old health payload report 705 MB
+    for a process holding 335 MB, which is exactly the kind of number that fakes
+    an OOM story. Prefer ``/proc/self/status`` on Linux; fall back to ``ps`` on
+    BSD/macOS where ``/proc`` does not exist.
+    """
+    try:
+        with open("/proc/self/status", "r", encoding="utf-8") as fh:
+            for line in fh:
+                if line.startswith("VmRSS:"):
+                    return round(int(line.split()[1]) / 1024.0, 1)
+    except OSError:
+        pass
+    try:
+        import subprocess as _sp
+
+        out = _sp.run(
+            ["ps", "-o", "rss=", "-p", str(os.getpid())],
+            capture_output=True, text=True, timeout=5, check=False,
+        ).stdout.strip()
+        if out:
+            return round(float(out) / 1024.0, 1)  # ps reports KiB everywhere
+    except Exception:
+        pass
+    return -1.0
+
+
+def _peak_rss_mb() -> float:
+    """High-water RSS in MB (``ru_maxrss``). Diagnostic only, never a leak signal."""
+    try:
+        import resource as _res
+
+        raw = float(_res.getrusage(_res.RUSAGE_SELF).ru_maxrss)
+        # macOS/BSD report bytes; Linux reports KiB. 1 GB in KiB would be ~1e6,
+        # in bytes ~1e9. Anything above 1e8 is bytes.
+        divisor = 1024.0 * 1024.0 if raw > 1e8 else 1024.0
+        return round(raw / divisor, 1)
+    except Exception:
+        return -1.0
+
+
+def _health_payload() -> dict:
+    store_stats = {}
+    try:
+        st = _get_catalog_store(rebuild_if_stale=False)
+        if st is not None:
+            store_stats = st.stats()
+    except Exception as exc:
+        store_stats = {"error": str(exc)}
+    return {
+        "status": "ok",
+        "uptime_seconds": round(time.time() - _START_TIME, 1),
+        "rss_mb": _rss_mb(),
+        "peak_rss_mb": _peak_rss_mb(),
+        "outbound": _outbound_snapshot(),
+        "data_dir": str(DATA_OUT),
+        "data_dir_exists": DATA_OUT.is_dir(),
+        "catalog_store": store_stats,
+        "page_cache": _PAGE_CACHE.stats(),
+        # Cold-render concurrency bound. A non-zero queue depth here means requests
+        # are waiting for a render slot, which is expected under a cold burst and is
+        # the alternative to an OOM restart.
+        "render_gate": {
+            "max_concurrent": _SNE_RENDER_MAX,
+            "cache_hits_while_waiting": _RENDER_WAITS,
+        },
+        "enrich_queue": _ENRICH_QUEUE.stats(),
+        "enrich_available": enrich_event is not None,
+    }
+
+
 def main():
     os.environ["OSC_DOCROOT"] = str(WWW)
     _ensure_catalog_files()
+    # Expose the resolved corpus root under the historical WWW URL prefix when a
+    # mounted volume moved it. Best-effort: URL mapping still works without it.
+    if _data_paths is not None:
+        try:
+            _data_paths.ensure_static_link()
+        except Exception as exc:
+            print(f"[data_paths] link skipped: {exc}", flush=True)
+    print(f"[data_paths] event corpus: {DATA_OUT}", flush=True)
     # Warm names cache & spatial cone index
     _names_maps()
     if init_cone_index is not None:
         threading.Thread(target=init_cone_index, daemon=True).start()
-    if CatalogEngine is not None:
-        def _warm_catalog():
-            try:
-                sync_all_recent_partitions()
-                CatalogEngine.get_instance().ensure_loaded()
-            except Exception as exc:
-                print(f"CatalogEngine warmup failed: {exc}", flush=True)
-        threading.Thread(target=_warm_catalog, name="catalog-engine-warm", daemon=True).start()
+    # Build the indexed catalog store (streaming, ~60 MB peak) instead of the
+    # 690 MB in-memory CatalogEngine list.
+    threading.Thread(target=_warm_catalog_store, name="catalog-store-warm", daemon=True).start()
+    # Must be installed before any worker starts so background provider calls are
+    # distinguishable from request-path calls in /api/internal/health.
+    _install_outbound_counter()
+    _ENRICH_QUEUE.start()
     threading.Thread(target=_recent_tns_loop, name="tns-recent", daemon=True).start()
     httpd = ReusableThreadingServer((HOST, PORT), Handler)
     print(f"sne.space local server on http://{HOST}:{PORT}/", flush=True)

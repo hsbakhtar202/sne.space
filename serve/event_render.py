@@ -810,11 +810,27 @@ def format_cosmic_neighbors_panel(
     </div>"""
 
 
-def render_pro_cockpit(name: str, meta: dict, entered: str | None = None, legacy_html_exists: bool = False) -> str:
-    """Render the high-performance professional scientific cockpit."""
+def render_pro_cockpit(
+    name: str,
+    meta: dict,
+    entered: str | None = None,
+    legacy_html_exists: bool = False,
+    allow_network: bool = False,
+) -> str:
+    """Render the high-performance professional scientific cockpit.
+
+    ``allow_network`` defaults to **False**. Rendering runs on the HTTP request
+    path and must not block on IRSA/VizieR; uncached derived values stay as
+    dashes and are filled in by the background enrichment queue.
+    """
     if enrich_transient_astrophysics is not None:
         try:
-            meta = enrich_transient_astrophysics(name, meta)
+            meta = enrich_transient_astrophysics(name, meta, allow_network=allow_network)
+        except TypeError:
+            try:
+                meta = enrich_transient_astrophysics(name, meta)
+            except Exception:
+                pass
         except Exception:
             pass
 
@@ -3467,11 +3483,21 @@ def classify_event_tier(name: str, meta: dict) -> int:
     return 3
 
 
-def render_story_mode(name: str, meta: dict, entered: str | None = None) -> str:
+def render_story_mode(
+    name: str,
+    meta: dict,
+    entered: str | None = None,
+    allow_network: bool = False,
+) -> str:
     """Render the consumer-friendly Story Mode / Observer Dossier page (/sne/{event}/story)."""
     if enrich_transient_astrophysics is not None:
         try:
-            meta = enrich_transient_astrophysics(name, meta)
+            meta = enrich_transient_astrophysics(name, meta, allow_network=allow_network)
+        except TypeError:
+            try:
+                meta = enrich_transient_astrophysics(name, meta)
+            except Exception:
+                pass
         except Exception:
             pass
 

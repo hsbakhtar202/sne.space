@@ -9,6 +9,7 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+import os
 import re
 import sys
 import urllib.error
@@ -33,8 +34,12 @@ def fetch(url: str, timeout: float = 30.0) -> tuple[int, int, str]:
 
 def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--base", default="http://127.0.0.1:8080")
-    ap.add_argument("--api", default="http://127.0.0.1:8090")
+    # server.py serves both the web surface and the JSON API on OSC_PORT (8080).
+    # A separate 8090 API port does not exist, so defaulting to it made every API
+    # case report "Connection refused" even against a perfectly healthy server.
+    default_port = os.environ.get("OSC_PORT", "8080")
+    ap.add_argument("--base", default=f"http://127.0.0.1:{default_port}")
+    ap.add_argument("--api", default=f"http://127.0.0.1:{default_port}")
     ap.add_argument("--crawl-limit", type=int, default=500,
                     help="Max /sne/ URLs sampled from crawl CSV")
     args = ap.parse_args()

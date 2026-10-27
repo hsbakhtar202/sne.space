@@ -1,0 +1,442 @@
+{
+  "base": "http://127.0.0.1:8080",
+  "passed": 14,
+  "total": 14,
+  "results": [
+    {
+      "test": "no_network_ordinary_requests",
+      "pass": true,
+      "detail": "statuses={'/': 200, '/sne/SN2011fe/': 200, '/sne/SN1987A/': 200, '/sne/AT2026afwc/': 200} client_outbound=0 server_outbound_delta=0 (total 3->3) queue_quiet=True",
+      "extra": {
+        "client_blocked": [],
+        "server_outbound_delta": 0,
+        "server_outbound_by_host": {
+          "18.200.80.181": 3
+        },
+        "queue_quiet": true
+      }
+    },
+    {
+      "test": "no_repeated_enrichment",
+      "pass": true,
+      "detail": "50 requests to complete event -> enrichment enqueued delta=0 (enqueued 1 -> 1)",
+      "extra": {
+        "before": 1,
+        "after": 1,
+        "queue": {
+          "pending": 0,
+          "inflight": 0,
+          "max_pending": 256,
+          "workers": 2,
+          "cooldown_seconds_remaining": 0.0,
+          "enqueued": 1,
+          "deduped": 0,
+          "dropped": 0,
+          "completed": 1,
+          "failed": 0,
+          "timed_out": 0,
+          "rate_limited": 0,
+          "known_attempts": 0
+        }
+      }
+    },
+    {
+      "test": "persistence_across_restart",
+      "pass": true,
+      "detail": "corpus=/Users/haseeb/Desktop/WorkingDev/sne.space/serve/www/astrocats/astrocats/supernovae/output exists=True sample_served=True SNE_DATA_DIR_set=False",
+      "extra": {
+        "output_dir": "/Users/haseeb/Desktop/WorkingDev/sne.space/serve/www/astrocats/astrocats/supernovae/output",
+        "url_prefix": "astrocats/astrocats/supernovae/output",
+        "is_absolute": true,
+        "exists": true,
+        "sample": "/Users/haseeb/Desktop/WorkingDev/sne.space/serve/www/astrocats/astrocats/supernovae/output/sne-1990-1999/SN1994I.json",
+        "sample_status": 200
+      }
+    },
+    {
+      "test": "no_rapid_retry_storm",
+      "pass": true,
+      "detail": "60 enqueue GETs in 0.30s -> accepted=60/60 pending=0 deduped=59",
+      "extra": {
+        "queue": {
+          "pending": 0,
+          "inflight": 0,
+          "max_pending": 256,
+          "workers": 2,
+          "cooldown_seconds_remaining": 0.0,
+          "enqueued": 2,
+          "deduped": 59,
+          "dropped": 0,
+          "completed": 2,
+          "failed": 0,
+          "timed_out": 0,
+          "rate_limited": 0,
+          "known_attempts": 0
+        },
+        "codes": [
+          202
+        ]
+      }
+    },
+    {
+      "test": "cache_hit_skips_render",
+      "pass": true,
+      "detail": "20 warm requests: hits+20 misses+0 median=2.4ms p95=2.8ms",
+      "extra": {
+        "page_cache": {
+          "entries": 5,
+          "bytes": 2692764,
+          "max_bytes": 100663296,
+          "ttl_seconds": 900.0,
+          "hits": 71,
+          "misses": 11,
+          "stores": 6,
+          "evictions": 0,
+          "hit_rate": 0.8659
+        },
+        "times_ms": [
+          2.5,
+          2.6,
+          2.6,
+          2.4,
+          2.4,
+          2.4,
+          2.3,
+          2.3,
+          2.7,
+          4.5,
+          2.5,
+          2.1,
+          2.1,
+          2.0,
+          2.0,
+          2.5,
+          2.7,
+          2.5,
+          2.3,
+          2.3
+        ]
+      }
+    },
+    {
+      "test": "recent_event_cache_stable",
+      "pass": true,
+      "detail": "12 requests over ~12s to AT2026afwc: hits+12 misses+0 median=5.54ms",
+      "extra": {
+        "page_cache": {
+          "entries": 5,
+          "bytes": 2692764,
+          "max_bytes": 100663296,
+          "ttl_seconds": 900.0,
+          "hits": 84,
+          "misses": 11,
+          "stores": 6,
+          "evictions": 0,
+          "hit_rate": 0.8842
+        },
+        "times_ms": [
+          1.12,
+          5.08,
+          4.79,
+          7.8,
+          4.38,
+          4.18,
+          8.34,
+          6.1,
+          6.27,
+          8.85,
+          5.85,
+          5.24
+        ]
+      }
+    },
+    {
+      "test": "concurrency_no_linear_queue",
+      "pass": true,
+      "detail": "20 concurrent -> wall=36.4ms median=25.5ms max=33.1ms serial_total=45.0ms speedup=1.24x ok=20/20 (baseline 15.3s wall, 12990ms median, ~1.0x speedup)",
+      "extra": {
+        "wall_ms": 36.38,
+        "median_ms": 25.48,
+        "max_ms": 33.08,
+        "single_ms": 2.31,
+        "serial_total_ms": 44.98,
+        "speedup_x": 1.24
+      }
+    },
+    {
+      "test": "concurrent_cold_distinct",
+      "pass": true,
+      "detail": "20 concurrent cold distinct events -> wall=591.5ms ok=20/20 median=575.2ms p95=584.4ms misses+40 hits+0 cold=True | serial cold set wall=671.7ms median=12.7ms speedup=1.14x server_cpu=-1ms cpu_frac=-1.00",
+      "extra": {
+        "concurrent": {
+          "wall": 0.59,
+          "codes": [
+            200,
+            200,
+            200,
+            200,
+            200,
+            200,
+            200,
+            200,
+            200,
+            200,
+            200,
+            200,
+            200,
+            200,
+            200,
+            200,
+            200,
+            200,
+            200,
+            200
+          ],
+          "median_ms": 575.17,
+          "max_ms": 588.07,
+          "p95_ms": 584.39,
+          "hits": 0,
+          "misses": 40
+        },
+        "serial": {
+          "wall": 0.67,
+          "codes": [
+            200,
+            200,
+            200,
+            200,
+            200,
+            200,
+            200,
+            200,
+            200,
+            200,
+            200,
+            200,
+            200,
+            200,
+            200,
+            200,
+            200,
+            200,
+            200,
+            200
+          ],
+          "median_ms": 12.74,
+          "max_ms": 161.26,
+          "p95_ms": 114.51,
+          "hits": 0,
+          "misses": 40
+        },
+        "genuinely_cold": true,
+        "cpu_frac": null,
+        "events": [
+          "AT1990am",
+          "SN2000cb",
+          "SN2005M",
+          "SN2010X",
+          "AT2018lwh",
+          "AT2020acyg",
+          "AT2025aaeu",
+          "SN1054A",
+          "SN1993J",
+          "SN2002ap",
+          "SN2005P",
+          "SN2010bh",
+          "SN2015F",
+          "AT2020czx",
+          "AT2025aahc",
+          "SN1572A",
+          "SN1993ah",
+          "SN2002cr",
+          "SN2005hg",
+          "SN2010dq"
+        ]
+      }
+    },
+    {
+      "test": "ttl_expiry_cost",
+      "pass": true,
+      "detail": "ttl=900.0s ok=True; cold render median=18.2ms (misses+10) -> warm median=2.0ms (hits+5 misses+0) for 5 events",
+      "extra": {
+        "ttl_seconds": 900.0,
+        "cold_median_ms": 18.22,
+        "warm_median_ms": 2.02,
+        "cold_misses": 10,
+        "warm_hits": 5,
+        "warm_misses": 0
+      }
+    },
+    {
+      "test": "worst_case_memory_bounded",
+      "pass": true,
+      "detail": "8 concurrent cold largest events -> wall=1754ms ok=8/8 alive=True peak_rss=299.3->754.7MB gate=4 waits=0 largest=38MB",
+      "extra": {
+        "wall_ms": 1753.7,
+        "ok_codes": 8,
+        "alive": true,
+        "peak_rss_before_mb": 299.3,
+        "peak_rss_after_mb": 754.7,
+        "render_gate": {
+          "max_concurrent": 4,
+          "cache_hits_while_waiting": 0
+        },
+        "events": [
+          "SN1999aa",
+          "SN2012fr",
+          "SN2013ej",
+          "SN2011fe",
+          "SN2004dt",
+          "SN1993J",
+          "SN2014J",
+          "SN2006jc"
+        ],
+        "largest_json_mb": 38.1
+      }
+    },
+    {
+      "test": "provider_outage_preserves_data",
+      "pass": true,
+      "detail": "providers failed (2 attempted calls), pull returned 0 rows; files byte-identical=True",
+      "extra": {
+        "attempted_calls": 2,
+        "returned_rows": 0,
+        "before": {
+          "recent-events.json": [
+            "f4d18a5ef05af9ff",
+            1726
+          ],
+          "recent-catalog.min.json": [
+            "d933ce2e367fa885",
+            80173
+          ]
+        },
+        "after": {
+          "recent-events.json": [
+            "f4d18a5ef05af9ff",
+            1726
+          ],
+          "recent-catalog.min.json": [
+            "d933ce2e367fa885",
+            80173
+          ]
+        },
+        "identical": true
+      }
+    },
+    {
+      "test": "rss_stabilizes",
+      "pass": true,
+      "detail": "RSS 143MB -> 146MB after 120 requests (growth +3MB, tail spread 2MB)",
+      "extra": {
+        "samples_mb": [
+          143,
+          143,
+          143,
+          143,
+          143,
+          143,
+          143,
+          143,
+          143,
+          144,
+          144,
+          145,
+          146
+        ]
+      }
+    },
+    {
+      "test": "ttfb_before_after",
+      "pass": true,
+      "detail": "homepage p50=0.8ms p95=1.0ms; event_large_SN2011fe p50=2.2ms p95=2.4ms; event_classic_SN1987A p50=2.0ms p95=2.1ms; event_recent_AT2026afwc p50=1.1ms p95=1.2ms; event_recent_SN2024nrb p50=1.2ms p95=1.2ms",
+      "extra": {
+        "table": {
+          "homepage": {
+            "path": "/",
+            "ok": true,
+            "min_ms": 0.7,
+            "p50_ms": 0.8,
+            "p95_ms": 1.0,
+            "max_ms": 1.2
+          },
+          "event_large_SN2011fe": {
+            "path": "/sne/SN2011fe/",
+            "ok": true,
+            "min_ms": 1.9,
+            "p50_ms": 2.2,
+            "p95_ms": 2.4,
+            "max_ms": 2.5
+          },
+          "event_classic_SN1987A": {
+            "path": "/sne/SN1987A/",
+            "ok": true,
+            "min_ms": 1.8,
+            "p50_ms": 2.0,
+            "p95_ms": 2.1,
+            "max_ms": 2.1
+          },
+          "event_recent_AT2026afwc": {
+            "path": "/sne/AT2026afwc/",
+            "ok": true,
+            "min_ms": 0.9,
+            "p50_ms": 1.1,
+            "p95_ms": 1.2,
+            "max_ms": 1.2
+          },
+          "event_recent_SN2024nrb": {
+            "path": "/sne/SN2024nrb/",
+            "ok": true,
+            "min_ms": 1.0,
+            "p50_ms": 1.2,
+            "p95_ms": 1.2,
+            "max_ms": 1.3
+          }
+        }
+      }
+    },
+    {
+      "test": "edge_cases",
+      "pass": true,
+      "detail": "6/6 edge cases ok",
+      "extra": {
+        "incomplete_SN2024nrb": {
+          "status": 200,
+          "bytes": 196742,
+          "ms": 1.1,
+          "ok": true
+        },
+        "incomplete_AT2026afsz": {
+          "status": 200,
+          "bytes": 165951,
+          "ms": 1.0,
+          "ok": true
+        },
+        "missing_record": {
+          "status": 404,
+          "bytes": 20906,
+          "ms": 79.8,
+          "ok": true
+        },
+        "very_large": {
+          "status": 200,
+          "bytes": 796336,
+          "ms": 11.5,
+          "ok": true
+        },
+        "recently_discovered": {
+          "status": 200,
+          "bytes": 166864,
+          "ms": 39.9,
+          "ok": true
+        },
+        "story_mode": {
+          "status": 200,
+          "bytes": 796336,
+          "ms": 41.3,
+          "ok": true
+        }
+      }
+    }
+  ]
+}

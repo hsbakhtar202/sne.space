@@ -30,6 +30,8 @@ import json
 import math
 import os
 import re
+import threading
+import time
 import urllib.parse
 import urllib.request
 from pathlib import Path
@@ -59,18 +61,52 @@ def _load_caches() -> None:
             _HOST_CACHE = {}
 
 
-def _save_dust_cache() -> None:
+_CACHE_SAVE_LOCK = threading.Lock()
+_CACHE_SAVE_PENDING = {"dust": False, "host": False}
+
+
+def _save_cache_file(path: Path, data: dict) -> None:
+    """Atomic whole-file cache write."""
+    tmp = path.with_name(f".{path.name}.tmp.{os.getpid()}")
     try:
-        DUST_CACHE_FILE.write_text(json.dumps(_DUST_CACHE, indent=2), encoding="utf-8")
+        tmp.write_text(json.dumps(data, indent=2), encoding="utf-8")
+        os.replace(tmp, path)
     except Exception:
-        pass
+        if tmp.exists():
+            try:
+                tmp.unlink()
+            except Exception:
+                pass
+
+
+def _schedule_cache_save(which: str) -> None:
+    """Coalesce cache persistence off the request thread.
+
+    These caches are derived data. Rewriting a multi-hundred-KB JSON file inline
+    on every uncached coordinate added request latency and disk churn; a single
+    debounced writer does the same work without blocking a visitor.
+    """
+    with _CACHE_SAVE_LOCK:
+        if _CACHE_SAVE_PENDING.get(which):
+            return
+        _CACHE_SAVE_PENDING[which] = True
+
+    def _flush() -> None:
+        time.sleep(0.5)  # let a burst of misses accumulate into one write
+        with _CACHE_SAVE_LOCK:
+            _CACHE_SAVE_PENDING[which] = False
+            data = dict(_DUST_CACHE if which == "dust" else _HOST_CACHE)
+        _save_cache_file(DUST_CACHE_FILE if which == "dust" else HOST_CACHE_FILE, data)
+
+    threading.Thread(target=_flush, name=f"cache-save-{which}", daemon=True).start()
+
+
+def _save_dust_cache() -> None:
+    _schedule_cache_save("dust")
 
 
 def _save_host_cache() -> None:
-    try:
-        HOST_CACHE_FILE.write_text(json.dumps(_HOST_CACHE, indent=2), encoding="utf-8")
-    except Exception:
-        pass
+    _schedule_cache_save("host")
 
 
 _load_caches()
@@ -249,7 +285,7 @@ def eq_to_gal(ra_deg: float, dec_deg: float) -> tuple[float, float]:
     return round(math.degrees(l_rad), 3), round(math.degrees(b_rad), 3)
 
 
-def get_milkyway_extinction(ra_deg: float, dec_deg: float) -> dict[str, Any]:
+def get_milkyway_extinction(ra_deg: float, dec_deg: float, allow_network: bool = False) -> dict[str, Any]:
     """Obtain Milky Way Galactic foreground extinction E(B-V) via NASA IPAC IRSA DUST service with local cache.
 
     Includes extinction coefficients across common astronomical passbands:
@@ -259,6 +295,11 @@ def get_milkyway_extinction(ra_deg: float, dec_deg: float) -> dict[str, Any]:
     - A_g = 3.793 * E(B-V) (SDSS / ZTF / Pan-STARRS g)
     - A_r = 2.750 * E(B-V) (SDSS / ZTF / Pan-STARRS r)
     - A_i = 2.086 * E(B-V) (SDSS / ZTF / Pan-STARRS i)
+
+    ``allow_network`` defaults to **False**: HTTP render paths must never block on
+    a provider. Cached values are always used; an uncached coordinate falls back
+    to the analytical galactic-disk model, which is deterministic and instant.
+    Background jobs pass ``allow_network=True`` to populate the cache.
     """
     coord_key = f"{ra_deg:.4f},{dec_deg:.4f}"
     if coord_key in _DUST_CACHE:
@@ -268,22 +309,23 @@ def get_milkyway_extinction(ra_deg: float, dec_deg: float) -> dict[str, Any]:
     ebv_val = None
     source = "Schlafly & Finkbeiner (2011)"
 
-    # Query NASA IPAC IRSA Dust Extinction API
-    url = f"https://irsa.ipac.caltech.edu/cgi-bin/DUST/nph-dust?locstr={ra_deg:.5f}+{dec_deg:.5f}"
-    try:
-        req = urllib.request.Request(url, headers={"User-Agent": "sne.space/astronomy-engine (academic catalog)"})
-        with urllib.request.urlopen(req, timeout=2.0) as resp:
-            text = resp.read().decode("utf-8", errors="replace")
-            # Extract meanValueSandF (Schlafly & Finkbeiner 2011) or meanValueSFD
-            m_sf = re.search(r"<meanValueSandF>\s*([0-9.]+)", text)
-            m_sfd = re.search(r"<meanValueSFD>\s*([0-9.]+)", text)
-            if m_sf:
-                ebv_val = float(m_sf.group(1))
-            elif m_sfd:
-                ebv_val = float(m_sfd.group(1))
-                source = "Schlegel, Finkbeiner & Davis (1998)"
-    except Exception:
-        pass
+    if allow_network:
+        # Query NASA IPAC IRSA Dust Extinction API
+        url = f"https://irsa.ipac.caltech.edu/cgi-bin/DUST/nph-dust?locstr={ra_deg:.5f}+{dec_deg:.5f}"
+        try:
+            req = urllib.request.Request(url, headers={"User-Agent": "sne.space/astronomy-engine (academic catalog)"})
+            with urllib.request.urlopen(req, timeout=2.0) as resp:
+                text = resp.read().decode("utf-8", errors="replace")
+                # Extract meanValueSandF (Schlafly & Finkbeiner 2011) or meanValueSFD
+                m_sf = re.search(r"<meanValueSandF>\s*([0-9.]+)", text)
+                m_sfd = re.search(r"<meanValueSFD>\s*([0-9.]+)", text)
+                if m_sf:
+                    ebv_val = float(m_sf.group(1))
+                elif m_sfd:
+                    ebv_val = float(m_sfd.group(1))
+                    source = "Schlegel, Finkbeiner & Davis (1998)"
+        except Exception:
+            pass
 
     # High-precision analytical galactic latitude fallback if network query timed out
     if ebv_val is None:
@@ -322,6 +364,7 @@ def resolve_host_galaxy(
     ra_deg: float | None,
     dec_deg: float | None,
     da_mpc: float | None = None,
+    allow_network: bool = False,
 ) -> dict[str, Any] | None:
     """Identify host galaxy and compute angular separation and physical projected offset (kpc)."""
     # 1. Check curated landmarks
@@ -354,6 +397,11 @@ def resolve_host_galaxy(
         if cached:
             offset_data = _compute_host_offsets(ra_deg, dec_deg, cached.get("ra"), cached.get("dec"), da_mpc)
             return {**cached, **offset_data}
+        return None
+
+    if not allow_network:
+        # Render paths stop here: an uncached host is left unresolved rather than
+        # blocking a visitor on VizieR + Sesame. A background job will fill it in.
         return None
 
     # 4. Query VizieR PGC Cone Search (VII/237/pgc) within 90 arcseconds
@@ -542,10 +590,15 @@ def extract_photometry_peaks(photometry: list, dist_mod: float | None = None, a_
     }
 
 
-def enrich_transient_astrophysics(name: str, meta: dict) -> dict:
+def enrich_transient_astrophysics(name: str, meta: dict, allow_network: bool = False) -> dict:
     """Enrich an AstroCats event dictionary with complete, calibrated, publication-grade astrophysics.
 
     Guarantees that no core physical parameters are left as dashes when they can be scientifically derived.
+
+    ``allow_network`` defaults to **False**. HTTP handlers must never block on
+    IRSA or VizieR, so on the render path only cached values are used and the
+    analytical galactic-disk fallback covers the rest. The background enrichment
+    worker passes ``True`` to warm the caches.
     """
     if not isinstance(meta, dict):
         return meta
@@ -613,7 +666,7 @@ def enrich_transient_astrophysics(name: str, meta: dict) -> dict:
     # 6. Derive Milky Way Galactic Extinction if missing
     extinction_data = None
     if ra_deg is not None and dec_deg is not None:
-        extinction_data = get_milkyway_extinction(ra_deg, dec_deg)
+        extinction_data = get_milkyway_extinction(ra_deg, dec_deg, allow_network=allow_network)
         if not meta.get("ebv"):
             meta["ebv"] = [
                 {
@@ -658,7 +711,9 @@ def enrich_transient_astrophysics(name: str, meta: dict) -> dict:
         ]
 
     # 8. Resolve Host Galaxy & Projected Offset
-    host_info = resolve_host_galaxy(name, meta, ra_deg, dec_deg, da_mpc=da_mpc)
+    host_info = resolve_host_galaxy(
+        name, meta, ra_deg, dec_deg, da_mpc=da_mpc, allow_network=allow_network
+    )
     if host_info:
         if not meta.get("host") or meta.get("host") in ("—", ["—"]):
             meta["host"] = [{"value": host_info["name"], "derived": True}]

@@ -30,6 +30,9 @@ serve/logs/*
 !serve/logs/mcp_activity.json
 !serve/logs/agent_feedback.json
 
+# Derived indexes (rebuilt on demand; never commit a 155 MB SQLite file)
+serve/www/astrocats/astrocats/supernovae/output/.index/
+
 # Large Astronomical Data Repositories (12GB+ / 110,000 JSONs)
 vendor/
 serve/www/astrocats/astrocats/supernovae/output/catalog.min.json
