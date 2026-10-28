@@ -376,8 +376,36 @@ def backfill_one(
                     "source": "ALeRCE Cone Match",
                 })
         if not oid:
-            result["status"] = "no_ztf"
-            result["reason"] = "no_ztf_alias_or_cone_match"
+            # Still try TNS object photometry for AT/SN names without a ZTF id.
+            try:
+                from ingest.tns_photometry import apply_tns_photometry_to_event
+                bare = name[2:] if name.startswith(("SN", "AT")) else name
+                tns_src = _get_or_add_source(
+                    meta,
+                    name="Transient Name Server",
+                    url=f"https://www.wis-tns.org/object/{bare}",
+                )
+                before = len(meta.get("photometry") or [])
+                cov = apply_tns_photometry_to_event(meta, bare, source_alias=tns_src)
+                after = len(meta.get("photometry") or [])
+                if cov.get("status") == "ok" and after > before:
+                    if not dry_run:
+                        atomic_write_json(fpath, {name: meta})
+                    result["status"] = "ok_tns"
+                    result["detections_added"] = after - before
+                    result["after"] = len(usable_outburst_detections(meta))
+                    result["reason"] = (
+                        f"no_ztf_tns_ok det={cov.get('n_detections')} "
+                        f"lim={cov.get('n_limits')}"
+                    )
+                    return result
+                result["status"] = "no_ztf"
+                result["reason"] = (
+                    f"no_ztf_alias_or_cone_match; tns_status={cov.get('status')}"
+                )
+            except Exception as exc:  # noqa: BLE001
+                result["status"] = "no_ztf"
+                result["reason"] = f"no_ztf_alias_or_cone_match; tns_exc={exc}"
             log_reject(name, result["reason"])
             return result
     result["ztf_oid"] = oid
@@ -402,8 +430,38 @@ def backfill_one(
     cache_age = 0 if force_refresh else 7 * 86400
     lc = get_alerce_lightcurve(oid, max_cache_age=cache_age)
     if not lc:
-        result["status"] = "no_alerce"
-        result["reason"] = f"alerce_empty_or_error oid={oid}"
+        # ALeRCE miss is not evidence that no observations exist — try TNS.
+        try:
+            from ingest.tns_photometry import apply_tns_photometry_to_event
+            bare = name[2:] if name.startswith(("SN", "AT")) else name
+            tns_src = _get_or_add_source(
+                meta,
+                name="Transient Name Server",
+                url=f"https://www.wis-tns.org/object/{bare}",
+            )
+            before = len(meta.get("photometry") or [])
+            cov = apply_tns_photometry_to_event(meta, bare, source_alias=tns_src)
+            after = len(meta.get("photometry") or [])
+            added = max(0, after - before)
+            if cov.get("status") == "ok" and after > before:
+                if not dry_run:
+                    atomic_write_json(fpath, {name: meta})
+                result["status"] = "ok_tns"
+                result["detections_added"] = after - before
+                result["after"] = len(usable_outburst_detections(meta))
+                result["reason"] = (
+                    f"alerce_empty_tns_ok det={cov.get('n_detections')} "
+                    f"lim={cov.get('n_limits')}"
+                )
+                return result
+            result["status"] = "no_alerce"
+            result["reason"] = (
+                f"alerce_empty_or_error oid={oid}; "
+                f"tns_status={cov.get('status')} tns_err={cov.get('error')}"
+            )
+        except Exception as exc:  # noqa: BLE001
+            result["status"] = "no_alerce"
+            result["reason"] = f"alerce_empty_or_error oid={oid}; tns_exc={exc}"
         log_reject(name, result["reason"], {"oid": oid})
         return result
 

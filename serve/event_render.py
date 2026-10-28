@@ -646,19 +646,30 @@ def get_transient_lifecycle(
         maxappmag_derived = bool(maxappmag_raw[0].get("derived"))
         maxappmag_single_epoch = bool(maxappmag_raw[0].get("single_epoch"))
 
-    has_independent_catalog_peak = maxappmag_str != "—" and not maxappmag_derived
+    # A catalog scalar alone is never a confirmed peak. Discovery magnitudes and
+    # single detections must not be promoted to fitted / cataloged peaks.
+    maxappmag_kind = ""
+    if isinstance(maxappmag_raw, list) and maxappmag_raw and isinstance(maxappmag_raw[0], dict):
+        maxappmag_kind = str(maxappmag_raw[0].get("kind") or "")
     num_detections = len(outburst_pts)
     has_multi_epoch_lc = num_detections >= 2
+    has_independent_catalog_peak = (
+        maxappmag_str != "—"
+        and not maxappmag_derived
+        and maxappmag_kind not in ("discovery", "discovery_mag")
+        and num_detections >= 2
+    )
     is_single_epoch_only = num_detections == 1 and not has_independent_catalog_peak
 
     m_peak = None
-    if maxappmag_str != "—" and not (maxappmag_derived and is_single_epoch_only and num_detections == 0):
-        try:
-            m_peak = float(re.sub(r"[^\d.]", "", maxappmag_str))
-        except Exception:
-            m_peak = None
-    if m_peak is None and outburst_pts:
-        m_peak = min(pt[1] for pt in outburst_pts)
+    if has_multi_epoch_lc or has_independent_catalog_peak:
+        if maxappmag_str != "—" and not maxappmag_derived:
+            try:
+                m_peak = float(re.sub(r"[^\d.]", "", maxappmag_str))
+            except Exception:
+                m_peak = None
+        if m_peak is None and outburst_pts:
+            m_peak = min(pt[1] for pt in outburst_pts)
 
     m_observed = None
     m_observed_date = None
@@ -1386,28 +1397,59 @@ def render_pro_cockpit(
 
     lifecycle = get_transient_lifecycle(meta, host_name=host, event_name=name, redshift=redshift, claimedtype=claimedtype)
 
-    # Peak Apparent Mag label: never call a single detection a "peak".
+    # Magnitude labels: discovery ≠ peak. One detection cannot establish a peak.
     maxappmag_label = "Peak Apparent Mag"
     maxappmag_cell = maxappmag
-    if maxappmag != "—":
-        if lifecycle.get("magnitude_kind") == "observed_single_epoch" or (
-            lifecycle.get("peak_confirmed") is False and lifecycle.get("measured_points", 0) == 1
-        ):
-            maxappmag_label = "Observed Mag (single-epoch)"
-            obs_date = lifecycle.get("m_observed_date") or lifecycle.get("ref_date") or "—"
-            maxappmag_cell = (
-                f"{maxappmag}"
-                f'<div style="font-size:0.72rem;color:var(--text-muted);margin-top:2px;">'
-                f"observed {obs_date}; not a confirmed peak (1 detection)</div>"
-            )
-        elif lifecycle.get("peak_confirmed"):
-            maxappmag_label = "Peak Apparent Mag"
-            ref = lifecycle.get("ref_date") or "—"
-            maxappmag_cell = (
-                f"{maxappmag}"
-                f'<div style="font-size:0.72rem;color:var(--text-muted);margin-top:2px;">'
-                f"cataloged/observed peak ({ref})</div>"
-            )
+    disc_mag_raw = meta.get("discoverymag")
+    disc_mag_val = "—"
+    disc_mag_err = None
+    disc_mag_band = None
+    if isinstance(disc_mag_raw, list) and disc_mag_raw and isinstance(disc_mag_raw[0], dict):
+        disc_mag_val = str(disc_mag_raw[0].get("value") or "—")
+        disc_mag_err = disc_mag_raw[0].get("e_value") or disc_mag_raw[0].get("e_magnitude")
+        disc_mag_band = disc_mag_raw[0].get("band")
+    if lifecycle.get("peak_confirmed"):
+        maxappmag_label = "Peak Apparent Mag"
+        ref = lifecycle.get("ref_date") or "—"
+        maxappmag_cell = (
+            f"{maxappmag}"
+            f'<div style="font-size:0.72rem;color:var(--text-muted);margin-top:2px;">'
+            f"brightest multi-epoch detection ({ref})</div>"
+        )
+    elif lifecycle.get("measured_points", 0) == 1 or lifecycle.get("magnitude_kind") == "observed_single_epoch":
+        # Prefer explicit discovery magnitude + uncertainty when present.
+        show = disc_mag_val if disc_mag_val != "—" else maxappmag
+        err_txt = f" ± {disc_mag_err}" if disc_mag_err not in (None, "", "—") else ""
+        band_txt = f" ({disc_mag_band})" if disc_mag_band else ""
+        maxappmag_label = "Discovery Magnitude"
+        maxappmag_cell = (
+            f"{show}{err_txt}{band_txt}"
+            f'<div style="font-size:0.72rem;color:var(--text-muted);margin-top:2px;">'
+            f"Peak magnitude: Not established (1 detection)</div>"
+        )
+    elif disc_mag_val != "—" and (maxappmag == "—" or lifecycle.get("measured_points", 0) == 0):
+        err_txt = f" ± {disc_mag_err}" if disc_mag_err not in (None, "", "—") else ""
+        band_txt = f" ({disc_mag_band})" if disc_mag_band else ""
+        maxappmag_label = "Discovery Magnitude"
+        maxappmag_cell = (
+            f"{disc_mag_val}{err_txt}{band_txt}"
+            f'<div style="font-size:0.72rem;color:var(--text-muted);margin-top:2px;">'
+            f"Peak magnitude: Not established</div>"
+        )
+    elif maxappmag != "—":
+        maxappmag_label = "Reported Magnitude"
+        maxappmag_cell = (
+            f"{maxappmag}"
+            f'<div style="font-size:0.72rem;color:var(--text-muted);margin-top:2px;">'
+            f"Peak magnitude: Not established</div>"
+        )
+    else:
+        maxappmag_label = "Peak Apparent Mag"
+        maxappmag_cell = (
+            "—"
+            f'<div style="font-size:0.72rem;color:var(--text-muted);margin-top:2px;">'
+            f"Peak magnitude: Not established</div>"
+        )
 
     # MOSFiT Theoretical Models & Magnetar Engine Fit
     models_data = meta.get("models", [])
@@ -1545,9 +1587,30 @@ def render_pro_cockpit(
 
     # Photometry processing for Plotly
     photometry = meta.get("photometry", [])
-    photo_count = len(photometry)
+    if not isinstance(photometry, list):
+        photometry = []
+    n_det = sum(
+        1
+        for p in photometry
+        if isinstance(p, dict)
+        and not p.get("upperlimit")
+        and p.get("kind") != "non_detection"
+        and p.get("magnitude") is not None
+        and not str(p.get("magnitude")).startswith(">")
+    )
+    n_lim = sum(
+        1
+        for p in photometry
+        if isinstance(p, dict)
+        and (p.get("upperlimit") or p.get("kind") == "non_detection")
+    )
+    photo_count = n_det  # observations row: detections only; limits reported separately
     spectra = meta.get("spectra", [])
-    spec_count = len(spectra)
+    spec_count = len(spectra) if isinstance(spectra, list) else 0
+    obs_summary = f"{n_det} detection{'s' if n_det != 1 else ''}"
+    if n_lim:
+        obs_summary += f", {n_lim} upper limit{'s' if n_lim != 1 else ''}"
+    obs_summary += f", {spec_count} spectra"
 
     # Prepare photometry data for client-side plotting
     photo_points = []
@@ -2574,7 +2637,7 @@ def render_pro_cockpit(
           <tr><th>MW Dust E(B-V)</th><td>{ebv_display}</td></tr>
           <tr><th>Host Galaxy</th><td>{host}</td></tr>
           <tr><th>Host Offset</th><td>{host_offset_str}</td></tr>
-          <tr><th>Observations</th><td>{photo_count} photometry, {spec_count} spectra</td></tr>
+          <tr><th>Observations</th><td>{obs_summary}</td></tr>
         </table>
       </div>
 
@@ -4245,24 +4308,31 @@ def render_story_mode(
 
     maxappmag_label = "Peak Apparent Mag"
     maxappmag_cell = maxappmag
-    if maxappmag != "—":
-        if lifecycle.get("magnitude_kind") == "observed_single_epoch" or (
-            lifecycle.get("peak_confirmed") is False and lifecycle.get("measured_points", 0) == 1
-        ):
-            maxappmag_label = "Observed Mag (single-epoch)"
-            obs_date = lifecycle.get("m_observed_date") or lifecycle.get("ref_date") or "—"
-            maxappmag_cell = (
-                f"{maxappmag}"
-                f'<div style="font-size:0.72rem;color:var(--text-muted);margin-top:2px;">'
-                f"observed {obs_date}; not a confirmed peak (1 detection)</div>"
-            )
-        elif lifecycle.get("peak_confirmed"):
-            ref = lifecycle.get("ref_date") or "—"
-            maxappmag_cell = (
-                f"{maxappmag}"
-                f'<div style="font-size:0.72rem;color:var(--text-muted);margin-top:2px;">'
-                f"cataloged/observed peak ({ref})</div>"
-            )
+    disc_mag_raw = meta.get("discoverymag")
+    disc_mag_val = "—"
+    disc_mag_err = None
+    disc_mag_band = None
+    if isinstance(disc_mag_raw, list) and disc_mag_raw and isinstance(disc_mag_raw[0], dict):
+        disc_mag_val = str(disc_mag_raw[0].get("value") or "—")
+        disc_mag_err = disc_mag_raw[0].get("e_value") or disc_mag_raw[0].get("e_magnitude")
+        disc_mag_band = disc_mag_raw[0].get("band")
+    if lifecycle.get("peak_confirmed"):
+        ref = lifecycle.get("ref_date") or "—"
+        maxappmag_cell = (
+            f"{maxappmag}"
+            f'<div style="font-size:0.72rem;color:var(--text-muted);margin-top:2px;">'
+            f"brightest multi-epoch detection ({ref})</div>"
+        )
+    elif lifecycle.get("measured_points", 0) <= 1:
+        show = disc_mag_val if disc_mag_val != "—" else maxappmag
+        err_txt = f" ± {disc_mag_err}" if disc_mag_err not in (None, "", "—") else ""
+        band_txt = f" ({disc_mag_band})" if disc_mag_band else ""
+        maxappmag_label = "Discovery Magnitude"
+        maxappmag_cell = (
+            f"{show}{err_txt}{band_txt}"
+            f'<div style="font-size:0.72rem;color:var(--text-muted);margin-top:2px;">'
+            f"Peak magnitude: Not established</div>"
+        )
 
     # Type explanation
     _ct_low = (claimedtype or "").strip().lower()

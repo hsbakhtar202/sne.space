@@ -212,19 +212,23 @@ def _publish(written: list[dict]) -> None:
     for row in written:
         day = row["date"].replace("-", "/")
         s_count = row.get("spectra_count", 0)
-        p_count = row.get("photo_count", 1)
-        # Prefer enriched peak mag; fall back to TNS discovery magnitude so the
-        # homepage table is not blank while publish/enrich catches up.
+        p_count = int(row.get("photo_count") or 0)
+        # Prefer enriched brightest-observed mag; discovery mag may fill the
+        # listing column but photolink stays tied to persisted point counts.
         mag = row.get("maxappmag") or row.get("discoverymag") or ""
         mag = str(mag).strip()
         ctype = (row.get("type") or "").strip() or "unclassified"
+        mag_entry = []
+        if mag:
+            kind = "brightest_observed" if p_count >= 2 else "discovery"
+            mag_entry = [{"value": mag, "kind": kind}]
         catalog_rows.append({
             "name": row["name"],
             "alias": [{"value": row["name"]}],
             "discoverer": [{"value": row["discoverer"]}],
             "discoverdate": [{"value": day}],
             "maxdate": [{"value": day}],
-            "maxappmag": [{"value": mag}] if mag else [],
+            "maxappmag": mag_entry,
             "ra": [{"value": row.get("ra", "")}],
             "dec": [{"value": row.get("dec", "")}],
             "claimedtype": [{"value": ctype}],
@@ -320,7 +324,8 @@ def _pull_recent_body(days: int = 40) -> int:
             "discoverymag": (row.get("discoverymag") or "").strip(),
             "maxappmag": "",
             "spectra_count": 0,
-            "photo_count": 1,
+            # Honest default: no persisted photometry until enrich writes points.
+            "photo_count": 0,
             "sort": row["discoverydate"],
         })
         pending.append((cname_raw, row, item))
@@ -413,13 +418,17 @@ def _pull_recent_body(days: int = 40) -> int:
             if card is not None and event is not None:
                 body = event.get(cname, {})
                 card["spectra_count"] = len(body.get("spectra", []))
-                card["photo_count"] = _usable_photo_count(body) or len(body.get("photometry", [])) or 1
+                card["photo_count"] = _usable_photo_count(body)
                 card["type"] = body.get("claimedtype", [{"value": card["type"]}])[0].get("value", card["type"])
                 card["ra"] = body.get("ra", [{"value": card["ra"]}])[0].get("value", card["ra"])
                 card["dec"] = body.get("dec", [{"value": card["dec"]}])[0].get("value", card["dec"])
                 peak = body.get("maxappmag") or []
                 if peak and isinstance(peak[0], dict) and peak[0].get("value"):
                     card["maxappmag"] = str(peak[0]["value"])
+                elif body.get("discoverymag"):
+                    dm = body["discoverymag"]
+                    if isinstance(dm, list) and dm and isinstance(dm[0], dict) and dm[0].get("value"):
+                        card["maxappmag"] = str(dm[0]["value"])
         except Exception as exc:
             print(f"TNS enrich failed for {cname_raw}: {exc}", flush=True)
             continue
@@ -434,7 +443,7 @@ def _pull_recent_body(days: int = 40) -> int:
         key = next(iter(ex_data), cname_raw)
         body = ex_data.get(key, {})
         card["spectra_count"] = len(body.get("spectra", []))
-        card["photo_count"] = _usable_photo_count(body) or len(body.get("photometry", [])) or 1
+        card["photo_count"] = _usable_photo_count(body)
         ct = body.get("claimedtype") or []
         if ct and ct[0].get("value"):
             card["type"] = ct[0]["value"]

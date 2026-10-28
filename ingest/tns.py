@@ -16,6 +16,7 @@ from ingest.alerce import (
 )
 from ingest.coordinates import deg_to_ra_dec, parse_float_safe, parse_iso_datetime
 from ingest.tns_spectra import convert_tns_to_astrocats_spectra, is_duplicate_spectrum, search_tns_spectra
+from ingest.tns_photometry import apply_tns_photometry_to_event, photometry_merge
 from ingest.wiserep import convert_wiserep_to_astrocats_spectra, search_wiserep_spectra
 
 logger = logging.getLogger(__name__)
@@ -140,7 +141,8 @@ def build_event_dict(
     row: Dict[str, str],
     enrich_alerce: bool = False,
     enrich_wiserep: bool = False,
-    enrich_tns_spectra: bool = True
+    enrich_tns_spectra: bool = True,
+    tns_photometry_result: Optional[Dict[str, Any]] = None,
 ) -> Tuple[str, Dict[str, Any]]:
     """Transform a TNS row into a full AstroCats JSON event dict."""
     prefix = row.get("name_prefix", "SN").strip() or "SN"
@@ -257,24 +259,28 @@ def build_event_dict(
             "source": tns_source_alias,
         }]
 
-    # Initial Photometry (Discovery Magnitude)
+    # Discovery magnitude is a distinct quantity — never silently promoted to a
+    # fitted peak. Persist it with explicit semantics; photometry points come
+    # from TNS/ALeRCE observation tables below.
     disc_mag_val = parse_float_safe(row.get("discoverymag"))
     disc_filter = row.get("filter", "").strip()
     photometry: List[Dict[str, Any]] = []
 
-    if disc_mag_val is not None and disc_mjd is not None:
-        photo_entry: Dict[str, Any] = {
-            "time": f"{disc_mjd:.5f}",
-            "magnitude": f"{disc_mag_val:.2f}",
-            "band": disc_filter or "Clear",
-            "u_time": "MJD",
+    if disc_mag_val is not None:
+        disc_entry: Dict[str, Any] = {
+            "value": f"{disc_mag_val:g}",
+            "kind": "discovery",
             "source": disc_source_alias,
         }
-        if reporting_group and reporting_group.lower() != "none":
-            photo_entry["telescope"] = reporting_group
-        photometry.append(photo_entry)
+        if disc_filter:
+            disc_entry["band"] = disc_filter
+        if disc_mjd is not None:
+            disc_entry["time"] = f"{disc_mjd:.5f}"
+            disc_entry["u_time"] = "MJD"
+        event["discoverymag"] = [disc_entry]
 
     # Optional Enrichment: ALeRCE ZTF Light Curve
+    alerce_cov: Dict[str, Any] = {"status": "unavailable"}
     if enrich_alerce:
         ztf_oid = None
         for a in alias_list:
@@ -306,11 +312,60 @@ def build_event_dict(
                 ztf_photo = convert_alerce_to_astrocats_photometry(
                     alerce_data, source_alias=alerce_source_alias
                 )
-                photometry.extend(ztf_photo)
+                photometry = photometry_merge(photometry, ztf_photo)
+                alerce_cov = {
+                    "status": "ok",
+                    "n_detections": sum(1 for p in ztf_photo if not p.get("upperlimit")),
+                    "n_limits": sum(1 for p in ztf_photo if p.get("upperlimit")),
+                }
+            else:
+                alerce_cov = {"status": "empty", "oid": ztf_oid}
+        else:
+            alerce_cov = {"status": "empty", "oid": None}
 
-    if photometry:
-        photometry.sort(key=lambda x: float(x.get("time", 0)))
-        event["photometry"] = photometry
+    event["photometry"] = photometry
+    event.setdefault("photometry_ingest", {})["alerce"] = alerce_cov
+
+    # TNS object photometry (detections + upper limits). Always attempted so an
+    # ALeRCE miss cannot erase real TNS observations for fresh ZTF alerts.
+    apply_tns_photometry_to_event(
+        event,
+        name,
+        source_alias=tns_source_alias,
+        fetch_result=tns_photometry_result,
+    )
+
+    # Magnitude summary fields derived only from persisted detections.
+    dets = [
+        p for p in (event.get("photometry") or [])
+        if isinstance(p, dict)
+        and not p.get("upperlimit")
+        and p.get("kind") != "non_detection"
+        and p.get("magnitude") is not None
+        and not str(p.get("magnitude")).startswith(">")
+    ]
+    if len(dets) >= 2:
+        try:
+            brightest = min(dets, key=lambda p: float(p["magnitude"]))
+            event["maxappmag"] = [{
+                "value": str(brightest["magnitude"]),
+                "kind": "brightest_observed",
+                "source": brightest.get("source", tns_source_alias),
+            }]
+            if brightest.get("time"):
+                event["maxdate"] = [{
+                    "value": row.get("discoverydate", "")[:10].replace("-", "/"),
+                    "source": tns_source_alias,
+                }]
+        except Exception:
+            pass
+    elif disc_mag_val is not None and not event.get("maxappmag"):
+        # Listing convenience only — kind marks it as discovery, never fitted peak.
+        event["maxappmag"] = [{
+            "value": f"{disc_mag_val:g}",
+            "kind": "discovery",
+            "source": disc_source_alias,
+        }]
 
     # Spectra Enrichment: Direct TNS Public Spectra and/or WISeREP
     all_spectra: List[Dict[str, Any]] = []

@@ -129,9 +129,14 @@ def test_measured_magnitude_is_preserved() -> None:
 
     lc = get_transient_lifecycle(_one_point_event(), claimedtype="unclassified")
     check(
-        "one real point: m_peak equals the measured 17.80",
-        lc.get("m_peak") == 17.80,
+        "one real point: m_peak is None (peak not established from 1 detection)",
+        lc.get("m_peak") is None,
         f"got {lc.get('m_peak')!r}",
+    )
+    check(
+        "one real point: m_observed preserves the measured 17.80",
+        lc.get("m_observed") == 17.80,
+        f"got {lc.get('m_observed')!r}",
     )
     check(
         "one real point: phase is not 'active' (no light curve)",

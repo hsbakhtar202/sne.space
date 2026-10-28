@@ -455,9 +455,11 @@ def enrich_event(
                 logger.warning(f"Error loading {file_path}: {e}")
 
         if not event_data:
-            # Fetch row from TNS (requires local public-objects ZIP). Missing ZIP
-            # must not raise into EnrichQueue — return False and keep serving.
+            # Prefer the public-objects ZIP; when the object is newer than the ZIP
+            # (or the archive is absent), bootstrap from the TNS object page so
+            # photometry is not silently discarded.
             bare_name = clean_name[2:] if clean_name.startswith(("SN", "AT")) else clean_name
+            rows: List[Dict[str, str]] = []
             try:
                 rows = list(stream_tns_rows(target_names={bare_name}, classified_only=False))
             except FileNotFoundError as exc:
@@ -466,13 +468,60 @@ def enrich_event(
                     _TNS_ZIP_WARNED = True
                     logger.warning("TNS public catalog unavailable: %s", exc)
                     print(f"Warning: {exc}", flush=True)
-                return False
-            if not rows:
-                print(f"Error: Could not find '{object_name}' in TNS database or local catalog.")
-                return False
-            cname, event_data = build_event_dict(rows[0], enrich_alerce=False, enrich_wiserep=False)
-            disc_date = rows[0].get("discoverydate", "")
-            year = int(disc_date[:4]) if disc_date[:4].isdigit() else 2025
+            if rows:
+                cname, event_data = build_event_dict(
+                    rows[0], enrich_alerce=False, enrich_wiserep=False, enrich_tns_spectra=False
+                )
+                disc_date = rows[0].get("discoverydate", "")
+                year = int(disc_date[:4]) if disc_date[:4].isdigit() else 2026
+            else:
+                from ingest.tns_photometry import fetch_tns_photometry
+                from ingest.coordinates import ra_dec_to_deg
+
+                cov = fetch_tns_photometry(bare_name, use_cache=False)
+                if cov.get("status") not in ("ok", "empty"):
+                    print(
+                        f"Error: Could not find '{object_name}' in TNS ZIP or object page "
+                        f"(status={cov.get('status')} err={cov.get('error')}).",
+                        flush=True,
+                    )
+                    return False
+                header = cov.get("header") or {}
+                prefix = "AT" if clean_name.startswith("AT") else (
+                    "SN" if clean_name.startswith("SN") else "AT"
+                )
+                ra_sex = header.get("ra_sexagesimal", "")
+                dec_sex = header.get("dec_sexagesimal", "")
+                ra_deg = dec_deg = None
+                if ra_sex and dec_sex:
+                    try:
+                        ra_deg, dec_deg = ra_dec_to_deg(ra_sex, dec_sex)
+                    except Exception:
+                        ra_deg = dec_deg = None
+                sparse = {
+                    "name_prefix": prefix,
+                    "name": bare_name,
+                    "ra": f"{ra_deg:.8f}" if ra_deg is not None else "",
+                    "declination": f"{dec_deg:.8f}" if dec_deg is not None else "",
+                    "type": "",
+                    "redshift": "",
+                    "reporters": "",
+                    "reporting_group": "",
+                    "internal_names": header.get("internal_names") or cov.get("ztf_oid") or "",
+                    "Discovery_ADS_bibcode": "",
+                    "discoverydate": header.get("discoverydate") or "",
+                    "discoverymag": header.get("discoverymag") or "",
+                    "filter": header.get("filter") or "",
+                }
+                cname, event_data = build_event_dict(
+                    sparse,
+                    enrich_alerce=False,
+                    enrich_wiserep=False,
+                    enrich_tns_spectra=False,
+                    tns_photometry_result=cov,
+                )
+                disc_date = sparse.get("discoverydate") or ""
+                year = int(disc_date[:4]) if disc_date[:4].isdigit() else 2026
             dest_folder = get_target_repo_folder(year)
             dest_folder.mkdir(parents=True, exist_ok=True)
             file_path = dest_folder / f"{cname}.json"
@@ -529,15 +578,59 @@ def enrich_event(
                         if isinstance(p, dict)
                     }
                     for p in photo:
-                        key = photometry_dedupe_key(p)
-                        if key not in existing_keys:
+                        pkey = photometry_dedupe_key(p)
+                        if pkey not in existing_keys:
                             event.setdefault("photometry", []).append(p)
-                            existing_keys.add(key)
+                            existing_keys.add(pkey)
                     event["photometry"].sort(key=lambda x: float(x.get("time", 0)))
+                    event.setdefault("photometry_ingest", {})["alerce"] = {
+                        "status": "ok",
+                        "n_points": len(photo),
+                    }
+                else:
+                    event.setdefault("photometry_ingest", {})["alerce"] = {
+                        "status": "empty",
+                        "oid": ztf_oid,
+                    }
+            else:
+                event.setdefault("photometry_ingest", {})["alerce"] = {"status": "empty"}
+
+        # TNS photometry fallback / complement — ALeRCE absence is not evidence
+        # that no observations exist (fresh ZTF alerts often miss ALeRCE).
+        prior_tns = (event.get("photometry_ingest") or {}).get("tns") or {}
+        if prior_tns.get("status") == "ok" and not force:
+            print(
+                f"[TNS Photometry] {clean_name}: already ok "
+                f"det={prior_tns.get('n_detections')} lim={prior_tns.get('n_limits')}",
+                flush=True,
+            )
+        else:
+            try:
+                from ingest.tns_photometry import apply_tns_photometry_to_event
+                tns_id = clean_name[2:] if clean_name.startswith(("SN", "AT")) else clean_name
+                tns_src = _get_or_add_source(
+                    event,
+                    name="Transient Name Server",
+                    url=f"https://www.wis-tns.org/object/{tns_id}",
+                    secondary=True,
+                )
+                cov = apply_tns_photometry_to_event(event, tns_id, source_alias=tns_src)
+                print(
+                    f"[TNS Photometry] {clean_name}: status={cov.get('status')} "
+                    f"det={cov.get('n_detections')} lim={cov.get('n_limits')} "
+                    f"via={cov.get('source')}",
+                    flush=True,
+                )
+            except Exception as exc:
+                logger.warning("TNS photometry enrich failed for %s: %s", clean_name, exc)
+                event.setdefault("photometry_ingest", {})["tns"] = {
+                    "status": "error",
+                    "error": str(exc),
+                }
 
         # Fetch TNS and WISeREP spectra
         if fetch_spectra:
-            tns_id = key[2:] if key.startswith(("SN", "AT")) else key
+            tns_id = clean_name[2:] if clean_name.startswith(("SN", "AT")) else clean_name
             current_spectra = event.setdefault("spectra", [])
 
             # 1. Query TNS directly for public classification spectra
@@ -645,19 +738,63 @@ def enrich_event(
                 except Exception:
                     pass
 
-        # Peak Apparent and Absolute Magnitudes
+        # Peak Apparent and Absolute Magnitudes — only when ≥2 detections
+        # establish a light-curve peak. A single discovery point stays in
+        # discoverymag / brightest_observed_mag, never as fitted peak.
         if "photometry" in event and event["photometry"]:
             peaks = compute_peak_magnitudes(event["photometry"], dl_mpc=dl_val, z=z_val)
             if peaks:
-                for k, val in peaks.items():
-                    if k in ("max_source", "maxvisual_source"):
-                        continue
-                    src = peaks.get("max_source", "1")
-                    event[k] = [{
-                        "value": str(val),
-                        "derived": True,
+                src = peaks.get("max_source") or peaks.get("brightest_observed_source") or "1"
+                bright = peaks.get("brightest_observed_mag")
+                if bright is not None:
+                    event["brightest_observed_mag"] = [{
+                        "value": str(bright),
+                        "kind": "brightest_observed",
+                        "band": peaks.get("brightest_observed_band") or "",
                         "source": src,
                     }]
+                if peaks.get("peak_established"):
+                    for k in (
+                        "maxappmag", "maxdate", "maxband",
+                        "maxabsmag", "maxvisualappmag", "maxvisualdate",
+                        "maxvisualband", "maxvisualabsmag",
+                    ):
+                        if k not in peaks:
+                            continue
+                        event[k] = [{
+                            "value": str(peaks[k]),
+                            "kind": "fitted_peak" if k.endswith("mag") else "peak_epoch",
+                            "derived": True,
+                            "source": src,
+                        }]
+                else:
+                    # Strip fabricated peaks; keep discovery-tagged scalars.
+                    for k in (
+                        "maxappmag", "maxdate", "maxband",
+                        "maxabsmag", "maxvisualappmag", "maxvisualdate",
+                        "maxvisualband", "maxvisualabsmag",
+                    ):
+                        entries = event.get(k)
+                        if not isinstance(entries, list):
+                            event.pop(k, None)
+                            continue
+                        kept = []
+                        for e in entries:
+                            if not isinstance(e, dict):
+                                continue
+                            kind = e.get("kind") or ""
+                            if kind in ("discovery", "listing"):
+                                kept.append(e)
+                            elif e.get("derived") or kind in ("fitted_peak", "peak_epoch"):
+                                continue
+                            else:
+                                e = dict(e)
+                                e["kind"] = "discovery"
+                                kept.append(e)
+                        if kept:
+                            event[k] = kept
+                        else:
+                            event.pop(k, None)
 
         from ingest.event_file_lock import event_file_lock
         with event_file_lock(file_path):

@@ -139,17 +139,31 @@ def compute_peak_magnitudes(
     if not valid_points:
         return {}
 
-    # Peak apparent magnitude = minimum magnitude
+    # Brightest observed magnitude = minimum magnitude number (always reportable).
+    # A fitted / catalog "peak" requires ≥2 detections — a single discovery
+    # point is not an established light-curve peak.
     valid_points.sort(key=lambda x: x[0])
-    peak_m, peak_t, peak_b, peak_src = valid_points[0]
+    bright_m, bright_t, bright_b, bright_src = valid_points[0]
+    result: Dict[str, Any] = {
+        "brightest_observed_mag": f"{bright_m:.2f}",
+        "brightest_observed_band": bright_b,
+        "brightest_observed_source": bright_src,
+        "n_detections": len(valid_points),
+        "peak_established": len(valid_points) >= 2,
+    }
+
+    if len(valid_points) < 2:
+        return result
+
+    peak_m, peak_t, peak_b, peak_src = bright_m, bright_t, bright_b, bright_src
     peak_date = mjd_to_date_str(peak_t)
 
-    result: Dict[str, Any] = {
+    result.update({
         "maxappmag": f"{peak_m:.2f}",
         "maxdate": peak_date,
         "maxband": peak_b,
         "max_source": peak_src,
-    }
+    })
 
     # Absolute magnitude: M = m - 5*(log10(dl * 10^6) - 1) + 2.5*log10(1+z)
     if dl_mpc is not None and dl_mpc > 0:
@@ -159,7 +173,7 @@ def compute_peak_magnitudes(
         result["maxabsmag"] = f"{m_abs:.2f}"
 
     # Visual peak
-    if visual_points:
+    if visual_points and len(visual_points) >= 2:
         visual_points.sort(key=lambda x: x[0])
         v_m, v_t, v_b, v_src = visual_points[0]
         result["maxvisualappmag"] = f"{v_m:.2f}"
