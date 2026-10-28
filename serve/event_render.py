@@ -72,11 +72,45 @@ except Exception:
 # <script>. That Strasbourg host is frequently unreachable from US networks and
 # stalls DOMContentLoaded for ~60–75s. Serve the npm build from jsDelivr as an
 # ES module (deferred, non-blocking); CSS is injected by the library itself.
+#
+# Sky tiles are a separate problem: CDS IDs like "P/DSS2/color" resolve via
+# alasky.cds.unistra.fr (same dead path). Point Aladin at China-VO HiPS mirrors
+# by full URL so tile fetches never touch Strasbourg.
 ALADIN_JS_CDN = "https://cdn.jsdelivr.net/npm/aladin-lite@3.8.2/dist/aladin.js"
+ALADIN_HIPS_DSS2 = "https://hips.china-vo.org/m/CDS_P_DSS2_color"
+ALADIN_HIPS_SDSS9 = "https://hips.china-vo.org/m/CDS_P_SDSS9_color"
+ALADIN_HIPS_2MASS = "https://hips.china-vo.org/m/CDS_P_2MASS_color"
+ALADIN_HIPS_WISE = "https://hips.china-vo.org/m/CDS_P_allWISE_color"
+ALADIN_HIPS_BASS = "https://hips.china-vo.org/bass-dr3-image"
 ALADIN_LOADER_HTML = f"""  <script type="module">
 try {{
   const mod = await import("{ALADIN_JS_CDN}");
   window.A = mod && (mod.default || mod);
+  window.SNE_ALADIN_HIPS = {{
+    dss2: "{ALADIN_HIPS_DSS2}",
+    sdss9: "{ALADIN_HIPS_SDSS9}",
+    twomass: "{ALADIN_HIPS_2MASS}",
+    wise: "{ALADIN_HIPS_WISE}",
+    bass: "{ALADIN_HIPS_BASS}",
+  }};
+  // Full HiPS root URLs (not CDS IDs) — Aladin fetches /properties + tiles
+  // from China-VO and never needs alasky.cds.unistra.fr.
+  window.sneAladinDefaultSurveyUrl = function(dec) {{
+    const H = window.SNE_ALADIN_HIPS;
+    if (typeof dec === "number" && isFinite(dec) && dec >= -5.0) return H.bass;
+    return H.dss2;
+  }};
+  window.sneAladinSurvey = function(urlOrId) {{
+    if (!window.A) return urlOrId;
+    const url = urlOrId || window.sneAladinDefaultSurveyUrl(null);
+    if (typeof A.imageHiPS === "function") {{
+      try {{ return A.imageHiPS(url, {{ name: url }}); }} catch (e) {{ return url; }}
+    }}
+    if (typeof A.createImageSurvey === "function") {{
+      try {{ return A.createImageSurvey(url, url, url, "icrs"); }} catch (e) {{ return url; }}
+    }}
+    return url;
+  }};
   window.dispatchEvent(new Event("aladin-ready"));
 }} catch (err) {{
   console.warn("Aladin Lite CDN load failed:", err);
@@ -2381,7 +2415,7 @@ def render_pro_cockpit(
       <div class="panel">
         <h2 class="panel-title">
           <span>Interactive Sky Field (Aladin)</span>
-          <span class="cutout-tag active" style="cursor:default;border-color:rgba(56,189,248,0.4);background:rgba(56,189,248,0.12);color:#38bdf8;font-size:0.7rem;">✨ Highest-Definition Optical (0.25″/pix)</span>
+          <span class="cutout-tag active" style="cursor:default;border-color:rgba(56,189,248,0.4);background:rgba(56,189,248,0.12);color:#38bdf8;font-size:0.7rem;">✨ Optical HiPS (China-VO mirror)</span>
         </h2>
         <div class="aladin-custom-box">
           <div id="aladin-lite-div" style="width:100%;height:100%;"></div>
@@ -2893,7 +2927,16 @@ def render_pro_cockpit(
 
     function switchAladinSurvey(surveyId, btn) {{
       if (window.aladinInstance && window.aladinInstance.setImageSurvey) {{
-        window.aladinInstance.setImageSurvey(surveyId);
+        const H = window.SNE_ALADIN_HIPS || {{}};
+        const mapped = ({{
+          'P/DSS2/color': H.dss2,
+          'P/PanSTARRS/DR1/color-z-zg-g': H.bass || H.dss2,
+          'P/SDSS9/color': H.sdss9,
+          'P/2MASS/color': H.twomass,
+          'P/allWISE/color': H.wise,
+        }})[surveyId] || surveyId;
+        const layer = (typeof window.sneAladinSurvey === 'function') ? window.sneAladinSurvey(mapped) : mapped;
+        window.aladinInstance.setImageSurvey(layer);
         document.querySelectorAll('#btn-aladin-dss, #btn-aladin-ps1, #btn-aladin-2mass, #btn-aladin-wise').forEach(b => b.classList.remove('active'));
         if (btn) btn.classList.add('active');
       }}
@@ -2925,6 +2968,16 @@ def render_pro_cockpit(
             btn.classList.add('active');
             btn.innerText = '⏳ Loading...';
           }}
+          // SIMBAD still lives on CDS Strasbourg — if that path is blackholed,
+          // fail the button instead of spinning forever.
+          const simbadWatchdog = setTimeout(function() {{
+            if (btn && btn.innerText.indexOf('Loading') >= 0) {{
+              btn.innerText = '🏷️ SIMBAD (offline)';
+              btn.classList.remove('active');
+              btn.title = 'SIMBAD/CDS unreachable from this network';
+              simbadCatalogLayer = null;
+            }}
+          }}, 8000);
           const showSourcePopup = function(source) {{
             if (!source) return;
             let res = formatSimbadData(source, RA_DEG, DEC_DEG);
@@ -2942,6 +2995,7 @@ def render_pro_cockpit(
               displayLabel: true
             }},
             function(cat) {{
+              clearTimeout(simbadWatchdog);
               if (btn) {{
                 btn.innerText = '🏷️ SIMBAD Labels';
                 btn.classList.add('active');
@@ -3014,8 +3068,13 @@ def render_pro_cockpit(
       if (RA_DEG === null || DEC_DEG === null || typeof A === 'undefined' || !A) return;
       const initAladin = () => {{
         try {{
-          // Automatically select the most HD optical survey available for this declination
-          const hdSurvey = (DEC_DEG !== null && DEC_DEG >= -30.0) ? "P/PanSTARRS/DR1/color-z-zg-g" : "P/DSS2/color";
+          // Full China-VO HiPS URLs — never CDS IDs (those resolve via alasky).
+          const surveyUrl = (typeof window.sneAladinDefaultSurveyUrl === 'function')
+            ? window.sneAladinDefaultSurveyUrl(DEC_DEG)
+            : "{ALADIN_HIPS_DSS2}";
+          const hdSurvey = (typeof window.sneAladinSurvey === 'function')
+            ? window.sneAladinSurvey(surveyUrl)
+            : surveyUrl;
           let aladin = A.aladin('#aladin-lite-div', {{
             survey: hdSurvey,
             fov: 0.15,
@@ -5315,7 +5374,7 @@ def render_story_mode(
       <div id="story-top-hud" style="position:absolute;top:10px;left:10px;right:10px;display:flex;align-items:center;z-index:30;pointer-events:auto;">
         <!-- Default State: Deep Field info -->
         <div id="story-hud-default" style="display:flex;align-items:center;background:rgba(7,10,19,0.85);backdrop-filter:blur(8px);border:1px solid rgba(56,189,248,0.3);color:#38bdf8;font-family:monospace;font-size:0.75rem;padding:5px 12px;border-radius:6px;box-shadow:0 2px 10px rgba(0,0,0,0.5);">
-          <span>🔭 Deep Field (~2.1′ FOV) · Highest-Definition Optical Field (0.25″/pix)</span>
+          <span>🔭 Deep Field (~2.1′ FOV) · Optical HiPS (China-VO mirror)</span>
         </div>
 
         <!-- Selected State: Replaces default, highlighted cyan background with close '×' -->
@@ -5707,6 +5766,14 @@ def render_story_mode(
             btn.classList.add('active');
             btn.innerText = '⏳ Loading...';
           }}
+          const storySimbadWatchdog = setTimeout(function() {{
+            if (btn && btn.innerText.indexOf('Loading') >= 0) {{
+              btn.innerText = '🏷️ SIMBAD (offline)';
+              btn.classList.remove('active');
+              btn.title = 'SIMBAD/CDS unreachable from this network';
+              storySimbadLayer = null;
+            }}
+          }}, 8000);
           const showStorySourcePopup = function(source) {{
             if (!source) return;
             let res = formatStorySimbadData(source, STORY_RA, STORY_DEC);
@@ -5724,6 +5791,7 @@ def render_story_mode(
               displayLabel: true
             }},
             function(cat) {{
+              clearTimeout(storySimbadWatchdog);
               if (btn) {{
                 btn.innerText = '🏷️ SIMBAD Labels';
                 btn.classList.add('active');
@@ -5791,8 +5859,13 @@ def render_story_mode(
       if (STORY_RA === null || STORY_DEC === null || typeof A === 'undefined' || !A) return;
       const initStoryAladin = () => {{
         try {{
-          // Highest-definition optical survey (Pan-STARRS DR1 color north of Dec -30°, DSS2 color fallback)
-          const bestHdSurvey = STORY_DEC >= -30.0 ? "P/PanSTARRS/DR1/color-z-zg-g" : "P/DSS2/color";
+          // Full China-VO HiPS URLs — never CDS IDs (those resolve via alasky).
+          const surveyUrl = (typeof window.sneAladinDefaultSurveyUrl === 'function')
+            ? window.sneAladinDefaultSurveyUrl(STORY_DEC)
+            : "{ALADIN_HIPS_DSS2}";
+          const bestHdSurvey = (typeof window.sneAladinSurvey === 'function')
+            ? window.sneAladinSurvey(surveyUrl)
+            : surveyUrl;
           let aladin = A.aladin('#story-aladin-div', {{
             survey: bestHdSurvey,
             fov: 0.035, // High zoom ~2.1 arcmin into host galaxy
