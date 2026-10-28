@@ -95,9 +95,14 @@ try {{
   }};
   // Full HiPS root URLs (not CDS IDs) — Aladin fetches /properties + tiles
   // from China-VO and never needs alasky.cds.unistra.fr.
-  // Always default to DSS2 color: all-sky (moc_sky_fraction=1). BASS DR3 only
-  // covers ~15% of the sky; using it for Dec>=-5 left polar/high-Dec fields
-  // (e.g. Dec~+80) as a black rectangle with only the target pin drawn.
+  //
+  // Coverage-aware policy:
+  // 1) Always paint DSS2 first (all-sky, moc_sky_fraction=1) so polar fields
+  //    never sit on a black partial-survey tile (the Dec>=-5 → BASS bug).
+  // 2) After the view is up, optionally upgrade to SDSS9 / BASS only when the
+  //    survey MOC actually contains (ra, dec). Partial surveys return valid
+  //    black JPEG/PNG outside their footprint — HTTP 200 is not coverage.
+  // 3) If MOC check fails/times out, keep DSS2.
   window.sneAladinDefaultSurveyUrl = function(dec) {{
     return window.SNE_ALADIN_HIPS.dss2;
   }};
@@ -111,6 +116,71 @@ try {{
       try {{ return A.createImageSurvey(url, url, url, "icrs"); }} catch (e) {{ return url; }}
     }}
     return url;
+  }};
+  window.sneAladinSetSurveyBadge = function(label) {{
+    document.querySelectorAll("[data-aladin-survey-badge]").forEach((el) => {{
+      el.textContent = "✨ " + label;
+    }});
+  }};
+  window.sneAladinTryUpgradeSurvey = function(aladin, raDeg, decDeg) {{
+    const H = window.SNE_ALADIN_HIPS;
+    if (!aladin || !window.A || typeof A.MOCFromURL !== "function") return;
+    if (typeof raDeg !== "number" || typeof decDeg !== "number") return;
+    if (!isFinite(raDeg) || !isFinite(decDeg)) return;
+
+    const candidates = [
+      {{ url: H.sdss9, moc: H.sdss9 + "/Moc.fits", label: "SDSS9 Optical (China-VO)" }},
+      {{ url: H.bass, moc: H.bass + "/Moc.fits", label: "BASS DR3 (China-VO)" }},
+    ];
+
+    const tryOne = (i) => {{
+      if (i >= candidates.length) return;
+      const c = candidates[i];
+      let settled = false;
+      let moc = null;
+      let poll = null;
+      const cleanup = () => {{
+        if (poll) clearInterval(poll);
+        if (!moc || !aladin) return;
+        try {{
+          if (typeof aladin.removeOverlay === "function") aladin.removeOverlay(moc);
+        }} catch (e) {{}}
+      }};
+      const finish = (upgraded) => {{
+        if (settled) return;
+        settled = true;
+        cleanup();
+        if (upgraded) {{
+          try {{
+            aladin.setImageSurvey(window.sneAladinSurvey(c.url));
+            window.sneAladinSetSurveyBadge(c.label);
+          }} catch (e) {{
+            console.warn("Aladin survey upgrade failed:", e);
+            tryOne(i + 1);
+          }}
+        }} else {{
+          tryOne(i + 1);
+        }}
+      }};
+      const watchdog = setTimeout(() => finish(false), 4000);
+      try {{
+        moc = A.MOCFromURL(c.moc, {{ name: "sne-cov-" + i, opacity: 0, lineWidth: 0 }}, () => {{}});
+        aladin.addMOC(moc);
+        poll = setInterval(() => {{
+          try {{
+            const hit = moc.contains(raDeg, decDeg);
+            clearTimeout(watchdog);
+            finish(!!hit);
+          }} catch (e) {{
+            // MOC not ready yet for wasm contains().
+          }}
+        }}, 120);
+      }} catch (e) {{
+        clearTimeout(watchdog);
+        finish(false);
+      }}
+    }};
+    tryOne(0);
   }};
   window.dispatchEvent(new Event("aladin-ready"));
 }} catch (err) {{
@@ -2416,7 +2486,7 @@ def render_pro_cockpit(
       <div class="panel">
         <h2 class="panel-title">
           <span>Interactive Sky Field (Aladin)</span>
-          <span class="cutout-tag active" style="cursor:default;border-color:rgba(56,189,248,0.4);background:rgba(56,189,248,0.12);color:#38bdf8;font-size:0.7rem;">✨ DSS2 Optical (China-VO mirror)</span>
+          <span data-aladin-survey-badge class="cutout-tag active" style="cursor:default;border-color:rgba(56,189,248,0.4);background:rgba(56,189,248,0.12);color:#38bdf8;font-size:0.7rem;">✨ DSS2 Optical (China-VO mirror)</span>
         </h2>
         <div class="aladin-custom-box">
           <div id="aladin-lite-div" style="width:100%;height:100%;"></div>
@@ -3105,6 +3175,11 @@ def render_pro_cockpit(
           targetCatalogLayer = cat;
           aladin.addCatalog(cat);
           setInterval(updateTargetPin, 100);
+          // DSS2 is already on screen; upgrade only if a partial survey's MOC
+          // actually covers this coordinate (never by Dec cut alone).
+          if (typeof window.sneAladinTryUpgradeSurvey === 'function') {{
+            window.sneAladinTryUpgradeSurvey(aladin, RA_DEG, DEC_DEG);
+          }}
 
           let alDiv = document.getElementById('aladin-lite-div');
           if (alDiv) {{
@@ -5376,7 +5451,7 @@ def render_story_mode(
       <div id="story-top-hud" style="position:absolute;top:10px;left:10px;right:10px;display:flex;align-items:center;z-index:30;pointer-events:auto;">
         <!-- Default State: Deep Field info -->
         <div id="story-hud-default" style="display:flex;align-items:center;background:rgba(7,10,19,0.85);backdrop-filter:blur(8px);border:1px solid rgba(56,189,248,0.3);color:#38bdf8;font-family:monospace;font-size:0.75rem;padding:5px 12px;border-radius:6px;box-shadow:0 2px 10px rgba(0,0,0,0.5);">
-          <span>🔭 Deep Field (~2.1′ FOV) · DSS2 Optical (China-VO mirror)</span>
+          <span data-aladin-survey-badge>🔭 Deep Field (~2.1′ FOV) · DSS2 Optical (China-VO mirror)</span>
         </div>
 
         <!-- Selected State: Replaces default, highlighted cyan background with close '×' -->
@@ -5896,6 +5971,9 @@ def render_story_mode(
           storyTargetCatalogLayer = cat;
           aladin.addCatalog(cat);
           setInterval(updateStoryPin, 100);
+          if (typeof window.sneAladinTryUpgradeSurvey === 'function') {{
+            window.sneAladinTryUpgradeSurvey(aladin, STORY_RA, STORY_DEC);
+          }}
 
           let sDiv = document.getElementById('story-aladin-div');
           if (sDiv) {{
