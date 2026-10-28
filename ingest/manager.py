@@ -23,6 +23,9 @@ from ingest.wiserep import convert_wiserep_to_astrocats_spectra, search_wiserep_
 
 logger = logging.getLogger(__name__)
 
+# Log missing TNS ZIP once per process — every EnrichQueue miss used to reprint it.
+_TNS_ZIP_WARNED = False
+
 _OUTPUT_CANDIDATES = [
     Path("serve/www/astrocats/astrocats/supernovae/output"),
     Path(__file__).resolve().parent.parent / "serve/www/astrocats/astrocats/supernovae/output",
@@ -458,8 +461,11 @@ def enrich_event(
             try:
                 rows = list(stream_tns_rows(target_names={bare_name}, classified_only=False))
             except FileNotFoundError as exc:
-                logger.warning("TNS public catalog unavailable for %s: %s", object_name, exc)
-                print(f"Error: {exc}", flush=True)
+                global _TNS_ZIP_WARNED
+                if not _TNS_ZIP_WARNED:
+                    _TNS_ZIP_WARNED = True
+                    logger.warning("TNS public catalog unavailable: %s", exc)
+                    print(f"Warning: {exc}", flush=True)
                 return False
             if not rows:
                 print(f"Error: Could not find '{object_name}' in TNS database or local catalog.")
@@ -661,7 +667,9 @@ def enrich_event(
                 if isinstance(latest, dict) and latest:
                     # Prefer our enriched body but keep any photometry keys added
                     # by a concurrent writer that we do not already have.
-                    from ingest.alerce import photometry_dedupe_key
+                    # photometry_dedupe_key is imported at module scope — do NOT
+                    # re-import it here; a local import makes the name unbound for
+                    # the whole function and crashes EnrichQueue after ALeRCE returns.
                     our_name = next(iter(event_data))
                     if our_name in latest and isinstance(latest[our_name], dict):
                         theirs = latest[our_name]

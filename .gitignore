@@ -21,8 +21,11 @@ ENV/
 .vscode/
 .idea/
 
-# Large temporary cache files
+# Large temporary cache files — keep the TNS public-objects ZIP tracked so
+# production images built from GitHub can seed EnrichQueue (see docker-entrypoint).
 ingest/cache/
+!ingest/cache/
+!ingest/cache/tns_public_objects.csv.zip
 *.log
 serve/logs/*
 !serve/logs/agent_forum.json

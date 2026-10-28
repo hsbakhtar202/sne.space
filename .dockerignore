@@ -10,7 +10,10 @@ agent-transcripts
 vendor/
 # Keep ALeRCE/WISeREP caches out of the image, but ship the TNS public-objects
 # ZIP so EnrichQueue can bootstrap missing event JSON without a volume seed.
+# Docker requires un-excluding the directory before the file or the negation
+# is ignored and production logs "TNS ZIP archive not found".
 ingest/cache/**
+!ingest/cache/
 !ingest/cache/tns_public_objects.csv.zip
 serve/www/astrocats/astrocats/supernovae/output/catalog.min.json
 serve/www/astrocats/astrocats/supernovae/output/catalog.json

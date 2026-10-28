@@ -44,6 +44,23 @@ if [ "$data_count" -eq 0 ] && [ "$baked_count" -gt 0 ]; then
     echo "[entrypoint] seeded ${seeded} event JSON files"
 elif [ "$data_count" -gt 0 ]; then
     echo "[entrypoint] using existing volume data (${data_count} files); not overwriting"
+    # Still copy event JSON files that exist in the image but are absent on the
+    # volume. cp -n never overwrites, so enriched volume copies stay authoritative;
+    # brand-new designations baked into a redeploy stop 404'ing against an older volume.
+    synced=0
+    for d in "$BAKED_DIR"/sne-*/; do
+        [ -d "$d" ] || continue
+        base=$(basename "$d")
+        mkdir -p "$DATA_DIR/$base"
+        for f in "$d"*.json; do
+            [ -f "$f" ] || continue
+            dest="$DATA_DIR/$base/$(basename "$f")"
+            if [ ! -f "$dest" ]; then
+                cp -a "$f" "$dest" 2>/dev/null && synced=$((synced + 1)) || true
+            fi
+        done
+    done
+    echo "[entrypoint] synced ${synced} missing event JSON files from image into volume"
 fi
 
 # The master catalog ships as catalog.min.json.gz because .dockerignore excludes
@@ -112,5 +129,25 @@ for name in recent-events.json recent-catalog.min.json; do
     fi
 done
 echo "[entrypoint] runtime JSON directory: $RUNTIME_DIR (${runtime_count}/2 already present)"
+
+# TNS public-objects ZIP: EnrichQueue needs this file to materialise missing
+# event JSON from the real TNS dump. Prefer a volume copy (ops can refresh it
+# without rebuild); seed once from the image when the volume has none.
+TNS_ZIP_NAME="tns_public_objects.csv.zip"
+TNS_ZIP_DST="$RUNTIME_DIR/$TNS_ZIP_NAME"
+TNS_ZIP_SRC="/app/ingest/cache/$TNS_ZIP_NAME"
+if [ -f "$TNS_ZIP_DST" ]; then
+    echo "[entrypoint] TNS public ZIP present: $TNS_ZIP_DST ($(wc -c < "$TNS_ZIP_DST") bytes)"
+elif [ -f "$TNS_ZIP_SRC" ]; then
+    tmp="$RUNTIME_DIR/.$TNS_ZIP_NAME.seed.$$"
+    if cp -a "$TNS_ZIP_SRC" "$tmp" 2>/dev/null && mv -f "$tmp" "$TNS_ZIP_DST" 2>/dev/null; then
+        echo "[entrypoint] seeded TNS public ZIP into runtime ($(wc -c < "$TNS_ZIP_DST") bytes)"
+    else
+        rm -f "$tmp" 2>/dev/null || true
+        echo "[entrypoint] WARNING: could not seed $TNS_ZIP_NAME into runtime"
+    fi
+else
+    echo "[entrypoint] WARNING: $TNS_ZIP_NAME missing from image and runtime — EnrichQueue cannot create events from TNS"
+fi
 
 exec "$@"
