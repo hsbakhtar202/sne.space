@@ -3943,16 +3943,28 @@ def render_story_mode(
     elif "ii" in claimedtype.lower():
         solar_lum = "~1.0 to 5.0 Billion Suns"
 
-    # Velocity calculation
-    vel_km = 10000.0
-    vel_pct = 3.3
+    # Velocity calculation. analyze_velocity returns km_s/pct_c=None when the
+    # event is unclassified / unmeasured — do not invent a class mean here, and
+    # never pass None into numeric format specs (that 500s the story page).
+    vel_km = None
+    vel_pct = None
     try:
         from faq_engine import analyze_velocity
         vel_res = analyze_velocity(meta, claimedtype)
-        vel_km = vel_res.get("km_s", 10000.0)
-        vel_pct = vel_res.get("pct_c", 3.3)
+        raw_km = vel_res.get("km_s")
+        raw_pct = vel_res.get("pct_c")
+        if raw_km is not None:
+            vel_km = float(raw_km)
+        if raw_pct is not None:
+            vel_pct = float(raw_pct)
     except Exception:
         pass
+    if vel_km is not None and vel_pct is not None:
+        vel_km_html = f"~{vel_km:,.0f} km/s"
+        vel_pct_html = f"~{vel_pct:.1f}% Speed of Light"
+    else:
+        vel_km_html = "Not measured"
+        vel_pct_html = "No spectrum / unclassified"
 
     # Constellation
     const_name, const_eng = "Deep Space", "Celestial Sphere"
@@ -5355,8 +5367,8 @@ def render_story_mode(
         </div>
         <div class="stat-card-mini">
           <div class="stat-mini-hdr"><span>🚀</span> Shock Velocity</div>
-          <div class="stat-mini-val">~{vel_km:,.0f} km/s</div>
-          <div class="stat-mini-sub">~{vel_pct:.1f}% Speed of Light</div>
+          <div class="stat-mini-val">{vel_km_html}</div>
+          <div class="stat-mini-sub">{vel_pct_html}</div>
         </div>
         <div class="stat-card-mini">
           <div class="stat-mini-hdr"><span>🌌</span> Host Galaxy</div>

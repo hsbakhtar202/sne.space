@@ -42,6 +42,8 @@ services:
       - sne_data:/data/astrocats/astrocats/supernovae/output
       # Mutable runtime JSON only. Deliberately NOT mounting serve/www/assets/:
       # that would hide version-controlled CSS/JS behind an old volume.
+      # Drop tns_public_objects.csv.zip into this volume to refresh the TNS
+      # public catalog without rebuilding (see resolve_tns_public_zip).
       - sne_runtime:/data/sne-runtime
     # Memory guardrails sized for the measured footprint: ~250-350 MB RSS after
     # the SQLite-index change (was ~974 MB), plus headroom for the 96 MB page

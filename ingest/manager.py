@@ -452,9 +452,15 @@ def enrich_event(
                 logger.warning(f"Error loading {file_path}: {e}")
 
         if not event_data:
-            # Fetch row from TNS
+            # Fetch row from TNS (requires local public-objects ZIP). Missing ZIP
+            # must not raise into EnrichQueue — return False and keep serving.
             bare_name = clean_name[2:] if clean_name.startswith(("SN", "AT")) else clean_name
-            rows = list(stream_tns_rows(target_names={bare_name}, classified_only=False))
+            try:
+                rows = list(stream_tns_rows(target_names={bare_name}, classified_only=False))
+            except FileNotFoundError as exc:
+                logger.warning("TNS public catalog unavailable for %s: %s", object_name, exc)
+                print(f"Error: {exc}", flush=True)
+                return False
             if not rows:
                 print(f"Error: Could not find '{object_name}' in TNS database or local catalog.")
                 return False

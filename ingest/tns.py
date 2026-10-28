@@ -3,6 +3,7 @@ import csv
 import io
 import json
 import logging
+import os
 import re
 import zipfile
 from pathlib import Path
@@ -19,6 +20,7 @@ from ingest.wiserep import convert_wiserep_to_astrocats_spectra, search_wiserep_
 
 logger = logging.getLogger(__name__)
 
+_REPO_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_ZIP_PATH = Path("ingest/cache/tns_public_objects.csv.zip")
 OSC_SCHEMA_URL = "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md"
 OSC_BIBCODE = "2017ApJ...835...64G"
@@ -26,17 +28,57 @@ OSC_REFERENCE = "Guillochon et al. (2017)"
 OSC_URL = "https://sne.space"
 
 
+def resolve_tns_public_zip(zip_path: Optional[Path] = None) -> Path:
+    """Locate the TNS public-objects ZIP across env, runtime volume, and repo paths.
+
+    Production images historically omitted ``ingest/cache/`` via ``.dockerignore``,
+    so a CWD-relative default alone 404s EnrichQueue. Prefer an explicit env path,
+    then the durable runtime volume, then absolute repo-relative locations.
+
+    An explicit ``zip_path`` argument is strict (no fallback): callers that pass a
+    path mean that path.
+    """
+    if zip_path is not None:
+        return Path(zip_path)
+
+    candidates: List[Path] = []
+    env_zip = (os.environ.get("SNE_TNS_PUBLIC_ZIP") or "").strip()
+    if env_zip:
+        candidates.append(Path(env_zip))
+    runtime_dir = (os.environ.get("SNE_RUNTIME_DIR") or "").strip()
+    if runtime_dir:
+        candidates.append(Path(runtime_dir) / "tns_public_objects.csv.zip")
+    candidates.extend(
+        [
+            _REPO_ROOT / "ingest" / "cache" / "tns_public_objects.csv.zip",
+            Path("/app/ingest/cache/tns_public_objects.csv.zip"),
+            Path("ingest/cache/tns_public_objects.csv.zip"),
+            DEFAULT_ZIP_PATH,
+        ]
+    )
+    seen: Set[str] = set()
+    for cand in candidates:
+        key = str(cand)
+        if key in seen:
+            continue
+        seen.add(key)
+        if cand.is_file():
+            return cand
+    return candidates[0] if candidates else DEFAULT_ZIP_PATH
+
+
 def stream_tns_rows(
-    zip_path: Path = DEFAULT_ZIP_PATH,
+    zip_path: Optional[Path] = None,
     target_years: Optional[Set[str]] = None,
     classified_only: bool = True,
     target_names: Optional[Set[str]] = None
 ) -> Generator[Dict[str, str], None, None]:
     """Stream filtered rows from the TNS public objects CSV archive."""
-    if not zip_path.is_file():
-        raise FileNotFoundError(f"TNS ZIP archive not found at {zip_path}")
+    resolved = resolve_tns_public_zip(zip_path)
+    if not resolved.is_file():
+        raise FileNotFoundError(f"TNS ZIP archive not found at {resolved}")
 
-    with zipfile.ZipFile(zip_path, "r") as z:
+    with zipfile.ZipFile(resolved, "r") as z:
         with z.open("tns_public_objects.csv", "r") as f:
             # Skip timestamp header line
             f.readline()
