@@ -68,6 +68,23 @@ except Exception:
     except Exception:
         get_blockbuster_article = None
 
+# Aladin Lite used to load from aladin.cds.unistra.fr as a classic blocking
+# <script>. That Strasbourg host is frequently unreachable from US networks and
+# stalls DOMContentLoaded for ~60–75s. Serve the npm build from jsDelivr as an
+# ES module (deferred, non-blocking); CSS is injected by the library itself.
+ALADIN_JS_CDN = "https://cdn.jsdelivr.net/npm/aladin-lite@3.8.2/dist/aladin.js"
+ALADIN_LOADER_HTML = f"""  <script type="module">
+try {{
+  const mod = await import("{ALADIN_JS_CDN}");
+  window.A = mod && (mod.default || mod);
+  window.dispatchEvent(new Event("aladin-ready"));
+}} catch (err) {{
+  console.warn("Aladin Lite CDN load failed:", err);
+  window.dispatchEvent(new Event("aladin-failed"));
+}}
+</script>
+"""
+
 try:
     from astro_engine import (
         enrich_transient_astrophysics,
@@ -1253,18 +1270,17 @@ def render_pro_cockpit(
             f"https://www.legacysurvey.org/viewer/cutout.jpg?ra={ra_deg:.6f}&dec={dec_deg:.6f}"
             f"&layer=ls-dr10&pixscale=0.262&size=350"
         )
+        # Prefer Legacy Survey / NASA SkyView cutouts — CDS hips2fits (alasky)
+        # is often unreachable from US networks and previously blanked these panels.
         panstarrs_url = (
-            f"https://alasky.cds.unistra.fr/hips-image-services/hips2fits?hips=CDS%2FP%2FPanSTARRS%2FDR1%2Fcolor-z-zg-g"
-            f"&ra={ra_deg:.6f}&dec={dec_deg:.6f}&width=350&height=350&fov=0.08&format=jpg"
+            f"https://www.legacysurvey.org/viewer/cutout.jpg?ra={ra_deg:.6f}&dec={dec_deg:.6f}"
+            f"&layer=ps1&pixscale=0.262&size=350"
         )
         dss_url = (
-            f"https://alasky.cds.unistra.fr/hips-image-services/hips2fits?hips=CDS%2FP%2FDSS2%2Fcolor"
-            f"&ra={ra_deg:.6f}&dec={dec_deg:.6f}&width=350&height=350&fov=0.08&format=jpg"
-        )
-        skyview_dss_url = (
             f"https://skyview.gsfc.nasa.gov/current/cgi/runquery.pl?survey=DSS2+Red"
             f"&position={ra_deg:.6f},{dec_deg:.6f}&pixels=350&size=0.08&return=jpeg"
         )
+        skyview_dss_url = dss_url
         # DESI DR10 covers declination <= +32 deg. For northern targets (dec > 32 deg),
         # Pan-STARRS1 DR1 provides high-resolution 0.25"/pix optical coverage:
         if dec_deg > 32.0:
@@ -1455,9 +1471,8 @@ def render_pro_cockpit(
   <link rel="webmcp-manifest" href="/.well-known/webmcp" type="application/json">
   <link rel="mcp-manifest" href="/.well-known/mcp.json" type="application/json">
   <link rel="describedby" href="/llms.txt" type="text/markdown">
-  <link rel="stylesheet" href="https://aladin.cds.unistra.fr/AladinLite/api/v3/latest/aladin.css" />
   <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
-  <script src="https://aladin.cds.unistra.fr/AladinLite/api/v3/latest/aladin.js"></script>
+{ALADIN_LOADER_HTML}
   <script type="application/ld+json">
   {{
     "@context": "https://schema.org",
@@ -2995,7 +3010,8 @@ def render_pro_cockpit(
       }} catch (e) {{}}
     }}
 
-    if (RA_DEG !== null && DEC_DEG !== null && typeof A !== 'undefined') {{
+    function bootCockpitAladin() {{
+      if (RA_DEG === null || DEC_DEG === null || typeof A === 'undefined' || !A) return;
       const initAladin = () => {{
         try {{
           // Automatically select the most HD optical survey available for this declination
@@ -3069,11 +3085,13 @@ def render_pro_cockpit(
         }}
       }};
       if (A.init && typeof A.init.then === 'function') {{
-        A.init.then(initAladin);
+        A.init.then(initAladin).catch(function(err) {{ console.warn('Aladin A.init failed:', err); }});
       }} else {{
         initAladin();
       }}
     }}
+    if (typeof A !== 'undefined' && A) bootCockpitAladin();
+    else window.addEventListener('aladin-ready', bootCockpitAladin, {{ once: true }});
 
     document.addEventListener('keydown', function(e) {{
       if (e.key === 'Escape') {{
@@ -4266,8 +4284,7 @@ def render_story_mode(
   <link rel="webmcp-manifest" href="/.well-known/webmcp" type="application/json">
   <link rel="mcp-manifest" href="/.well-known/mcp.json" type="application/json">
   <link rel="describedby" href="/llms.txt" type="text/markdown">
-  <link rel="stylesheet" href="https://aladin.cds.unistra.fr/AladinLite/api/v3/latest/aladin.css" />
-  <script src="https://aladin.cds.unistra.fr/AladinLite/api/v3/latest/aladin.js"></script>
+{ALADIN_LOADER_HTML}
 {story_article_jsonld}
 {story_faq_jsonld}
   <style>
@@ -5770,7 +5787,8 @@ def render_story_mode(
       }} catch (e) {{}}
     }}
 
-    if (STORY_RA !== null && STORY_DEC !== null && typeof A !== 'undefined') {{
+    function bootStoryAladin() {{
+      if (STORY_RA === null || STORY_DEC === null || typeof A === 'undefined' || !A) return;
       const initStoryAladin = () => {{
         try {{
           // Highest-definition optical survey (Pan-STARRS DR1 color north of Dec -30°, DSS2 color fallback)
@@ -5844,11 +5862,13 @@ def render_story_mode(
         }}
       }};
       if (A.init && typeof A.init.then === 'function') {{
-        A.init.then(initStoryAladin);
+        A.init.then(initStoryAladin).catch(function(err) {{ console.warn('Story Aladin A.init failed:', err); }});
       }} else {{
         initStoryAladin();
       }}
     }}
+    if (typeof A !== 'undefined' && A) bootStoryAladin();
+    else window.addEventListener('aladin-ready', bootStoryAladin, {{ once: true }});
 
     document.addEventListener('keydown', function(e) {{
       if (e.key === 'Escape') {{
