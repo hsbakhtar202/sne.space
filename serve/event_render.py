@@ -95,10 +95,11 @@ try {{
   }};
   // Full HiPS root URLs (not CDS IDs) — Aladin fetches /properties + tiles
   // from China-VO and never needs alasky.cds.unistra.fr.
+  // Always default to DSS2 color: all-sky (moc_sky_fraction=1). BASS DR3 only
+  // covers ~15% of the sky; using it for Dec>=-5 left polar/high-Dec fields
+  // (e.g. Dec~+80) as a black rectangle with only the target pin drawn.
   window.sneAladinDefaultSurveyUrl = function(dec) {{
-    const H = window.SNE_ALADIN_HIPS;
-    if (typeof dec === "number" && isFinite(dec) && dec >= -5.0) return H.bass;
-    return H.dss2;
+    return window.SNE_ALADIN_HIPS.dss2;
   }};
   window.sneAladinSurvey = function(urlOrId) {{
     if (!window.A) return urlOrId;
@@ -2415,7 +2416,7 @@ def render_pro_cockpit(
       <div class="panel">
         <h2 class="panel-title">
           <span>Interactive Sky Field (Aladin)</span>
-          <span class="cutout-tag active" style="cursor:default;border-color:rgba(56,189,248,0.4);background:rgba(56,189,248,0.12);color:#38bdf8;font-size:0.7rem;">✨ Optical HiPS (China-VO mirror)</span>
+          <span class="cutout-tag active" style="cursor:default;border-color:rgba(56,189,248,0.4);background:rgba(56,189,248,0.12);color:#38bdf8;font-size:0.7rem;">✨ DSS2 Optical (China-VO mirror)</span>
         </h2>
         <div class="aladin-custom-box">
           <div id="aladin-lite-div" style="width:100%;height:100%;"></div>
@@ -2930,10 +2931,11 @@ def render_pro_cockpit(
         const H = window.SNE_ALADIN_HIPS || {{}};
         const mapped = ({{
           'P/DSS2/color': H.dss2,
-          'P/PanSTARRS/DR1/color-z-zg-g': H.bass || H.dss2,
+          'P/PanSTARRS/DR1/color-z-zg-g': H.dss2,
           'P/SDSS9/color': H.sdss9,
           'P/2MASS/color': H.twomass,
           'P/allWISE/color': H.wise,
+          'P/BASS/DR3': H.bass,
         }})[surveyId] || surveyId;
         const layer = (typeof window.sneAladinSurvey === 'function') ? window.sneAladinSurvey(mapped) : mapped;
         window.aladinInstance.setImageSurvey(layer);
@@ -5374,7 +5376,7 @@ def render_story_mode(
       <div id="story-top-hud" style="position:absolute;top:10px;left:10px;right:10px;display:flex;align-items:center;z-index:30;pointer-events:auto;">
         <!-- Default State: Deep Field info -->
         <div id="story-hud-default" style="display:flex;align-items:center;background:rgba(7,10,19,0.85);backdrop-filter:blur(8px);border:1px solid rgba(56,189,248,0.3);color:#38bdf8;font-family:monospace;font-size:0.75rem;padding:5px 12px;border-radius:6px;box-shadow:0 2px 10px rgba(0,0,0,0.5);">
-          <span>🔭 Deep Field (~2.1′ FOV) · Optical HiPS (China-VO mirror)</span>
+          <span>🔭 Deep Field (~2.1′ FOV) · DSS2 Optical (China-VO mirror)</span>
         </div>
 
         <!-- Selected State: Replaces default, highlighted cyan background with close '×' -->
