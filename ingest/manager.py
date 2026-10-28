@@ -685,6 +685,20 @@ def enrich_event(
                 except Exception:
                     pass
         print(f"Updated {file_path.name} with enriched broker data.")
+        # Homepage /api/transients reads CatalogStore + published-updates overlay.
+        # Without a publish here, enriched maxappmag/photometry stay invisible in
+        # the table even though the event page shows them.
+        try:
+            from ingest.publication import publish_event_paths
+            pub = publish_event_paths([file_path])
+            if pub.get("state") == "failed":
+                logger.warning(
+                    "catalog publish after enrich failed for %s: %s",
+                    file_path.name,
+                    pub.get("error"),
+                )
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("catalog publish after enrich raised for %s: %s", file_path.name, exc)
         return True
 
 
