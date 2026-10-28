@@ -1,0 +1,10 @@
+{
+  "detections": [
+    {"mjd": 60968.1, "magpsf": 18.50, "sigmapsf": 0.05, "fid": 1, "candid": 900001, "ra": 150.0, "dec": 10.0},
+    {"mjd": 60969.1, "magpsf": 17.80, "sigmapsf": 0.04, "fid": 2, "candid": 900002, "ra": 150.0, "dec": 10.0},
+    {"mjd": 60970.1, "magpsf": 17.20, "sigmapsf": 0.03, "fid": 1, "candid": 900003, "ra": 150.0, "dec": 10.0}
+  ],
+  "non_detections": [
+    {"mjd": 60967.1, "diffmaglim": 20.5, "fid": 1}
+  ]
+}

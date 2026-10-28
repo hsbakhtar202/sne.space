@@ -1142,6 +1142,87 @@ def test_edge_cases(base: str) -> None:
 BASE = "http://127.0.0.1:8091"
 
 
+
+# ---------------------------------------------------------------------------
+# Data-integrity audit gate (scientific fabrication)
+# ---------------------------------------------------------------------------
+def test_data_integrity_audit() -> None:
+    """Fail acceptance if the catalog still contains scientific fabrications.
+
+    Runs the offline auditor against a representative sample (recent + classic).
+    Full-catalog sweeps belong in cron; acceptance needs a fast hard gate.
+    """
+    from serve.audit_data_integrity import audit_event, OUTPUT_DIR
+    import json
+    from pathlib import Path
+
+    # Prefer a curated regression set; fall back to a small OUTPUT_DIR sample.
+    names = [
+        "AT2026agpl", "SN2011fe", "SN1987A", "AT2017gfo",
+    ]
+    # Also include up to 40 files from the newest year folders if present.
+    sample_files: list[Path] = []
+    root = Path(OUTPUT_DIR) if OUTPUT_DIR else Path("output")
+    if root.is_dir():
+        # Output folders are named sne-YYYY-YYYY (not bare digits).
+        year_dirs = sorted(
+            (p for p in root.iterdir() if p.is_dir() and p.name.startswith("sne-")),
+            reverse=True,
+        )[:3]
+        for year in year_dirs:
+            sample_files.extend(sorted(year.glob("*.json"))[:40])
+    checked = 0
+    dirty = 0
+    examples: list[str] = []
+    seen = set()
+    for fpath in sample_files:
+        try:
+            raw = json.loads(fpath.read_text(encoding="utf-8"))
+        except Exception:
+            continue
+        if not isinstance(raw, dict) or not raw:
+            continue
+        name = next(iter(raw))
+        if name in seen:
+            continue
+        seen.add(name)
+        meta = raw[name] if isinstance(raw[name], dict) else raw
+        viol = audit_event(name, meta)
+        checked += 1
+        if viol:
+            dirty += 1
+            if len(examples) < 5:
+                examples.append(f"{name}: {viol[0].get('rule')}")
+    # Always also check the curated names if their files exist
+    for name in names:
+        if name in seen:
+            continue
+        # search
+        hits = list(root.rglob(f"{name}.json")) if root.is_dir() else []
+        if not hits:
+            continue
+        try:
+            raw = json.loads(hits[0].read_text(encoding="utf-8"))
+            meta = raw.get(name, raw)
+            viol = audit_event(name, meta if isinstance(meta, dict) else {})
+            checked += 1
+            if viol:
+                dirty += 1
+                if len(examples) < 5:
+                    examples.append(f"{name}: {viol[0].get('rule')}")
+        except Exception as e:
+            record("data_integrity_audit", False, f"{name} audit error: {e}")
+            return
+
+    ok = dirty == 0 and checked > 0
+    record(
+        "data_integrity_audit",
+        ok,
+        f"checked={checked} dirty={dirty}" + (f" examples={examples}" if examples else ""),
+    )
+
+
+
 def main() -> int:
     global BASE
     ap = argparse.ArgumentParser()
@@ -1157,6 +1238,7 @@ def main() -> int:
     tests = [
         ("no_network_ordinary_requests", lambda: test_no_network(BASE)),
         ("no_repeated_enrichment", lambda: test_no_repeated_enrichment(BASE)),
+        ("data_integrity_audit", test_data_integrity_audit),
         ("persistence_across_restart", lambda: test_persistence(BASE)),
         ("no_rapid_retry_storm", lambda: test_no_retry_storm(BASE)),
         ("cache_hit_skips_render", lambda: test_cache_hit_skips_render(BASE)),

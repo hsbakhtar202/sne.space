@@ -69,14 +69,28 @@ except Exception:
         get_blockbuster_article = None
 
 try:
-    from astro_engine import enrich_transient_astrophysics, calc_cosmology, get_milkyway_extinction
+    from astro_engine import (
+        enrich_transient_astrophysics,
+        calc_cosmology,
+        get_milkyway_extinction,
+        compute_target_altitude,
+    )
 except Exception:
     try:
-        from serve.astro_engine import enrich_transient_astrophysics, calc_cosmology, get_milkyway_extinction
+        from serve.astro_engine import (
+            enrich_transient_astrophysics,
+            calc_cosmology,
+            get_milkyway_extinction,
+            compute_target_altitude,
+        )
     except Exception:
         enrich_transient_astrophysics = None
         calc_cosmology = None
         get_milkyway_extinction = None
+
+        def compute_target_altitude(*_a, **_k):  # type: ignore[misc]
+            """Fallback when astro_engine is unavailable: no altitude claim."""
+            return None
 
 
 
@@ -281,6 +295,90 @@ def generate_bibtex(name: str, meta: dict) -> str:
     return "\n\n".join(entries)
 
 
+def _parse_lifecycle_ymd(date_str: str) -> datetime | None:
+    """Parse a leading YYYY/MM/DD (or YYYY-MM-DD), ignoring trailing annotations."""
+    if not date_str or date_str == "—":
+        return None
+    m = re.match(r"\s*(\d{4})\s*[-/]\s*(\d{1,2})\s*[-/]\s*(\d{1,2})", str(date_str))
+    if not m:
+        return None
+    try:
+        y, mo, d = (int(g) for g in m.groups())
+        if 1 <= y <= 9999 and 1 <= mo <= 12 and 1 <= d <= 31:
+            return datetime(y, mo, d, tzinfo=timezone.utc)
+    except Exception:
+        return None
+    return None
+
+
+def _mjd_to_date_str(mjd: float | None) -> str:
+    if mjd is None:
+        return "—"
+    try:
+        unix_ts = (float(mjd) - 40587.0) * 86400.0
+        dt = datetime.fromtimestamp(unix_ts, tz=timezone.utc)
+        return f"{dt.strftime('%Y/%m/%d')} (MJD {float(mjd):.1f})"
+    except Exception:
+        return f"MJD {float(mjd):.2f}"
+
+
+def _model_domain_for_type(ctype: str, event_name: str = "") -> tuple[str | None, float, float | None]:
+    """Return (model_name, max_valid_rest_days, dm) for a class.
+
+    dm is None here; callers compute dm only when t_rest is inside the domain.
+    Unclassified / unknown types have no validated decay model.
+    """
+    c = (ctype or "").strip().lower()
+    unclass = {"", "—", "none", "unknown", "unclassified", "at", "other", "candidate"}
+    if c in unclass:
+        return None, 0.0, None
+    if "kilonova" in c or "at2017gfo" in (event_name or "").lower():
+        return "r-process kilonova decay model", 30.0, None
+    if "ia" in c:
+        return "Type Ia Phillips + Co-56 decay model", 300.0, None
+    if "ib" in c or "ic" in c or "iib" in c:
+        return "Stripped-envelope Co-56 decay model", 300.0, None
+    if "iin" in c or "slsn" in c or "magnetar" in c:
+        return "CSM/Magnetar interaction decay model", 365.0, None
+    if "iip" in c or "ii-p" in c or ("ii" in c and "iin" not in c and "iib" not in c):
+        return "Type II plateau + Co-56 decay model", 365.0, None
+    return None, 0.0, None
+
+
+def _compute_dm(ctype: str, t_rest: float, event_name: str = "") -> float | None:
+    """Compute delta-magnitude only for class-specific models inside their domain.
+
+    Returns None for unclassified types (no generic decay slope is invented).
+    """
+    model_name, max_days, _ = _model_domain_for_type(ctype, event_name)
+    if model_name is None or t_rest < 0 or t_rest > max_days:
+        return None
+    c = (ctype or "").strip().lower()
+    if "kilonova" in c or "at2017gfo" in (event_name or "").lower():
+        return 0.35 * t_rest
+    if "ia" in c:
+        if t_rest <= 15.0:
+            return 0.0
+        if t_rest <= 40.0:
+            return 0.08 * (t_rest - 15.0)
+        return 2.0 + 0.015 * (t_rest - 40.0)
+    if "ib" in c or "ic" in c or "iib" in c:
+        if t_rest <= 15.0:
+            return 0.0
+        if t_rest <= 45.0:
+            return 0.07 * (t_rest - 15.0)
+        return 2.1 + 0.016 * (t_rest - 45.0)
+    if "iin" in c or "slsn" in c or "magnetar" in c:
+        return 0.006 * t_rest
+    if "iip" in c or "ii-p" in c or ("ii" in c and "iin" not in c and "iib" not in c):
+        if t_rest <= 90.0:
+            return 0.005 * t_rest
+        if t_rest <= 120.0:
+            return 0.45 + 0.06 * (t_rest - 90.0)
+        return 2.25 + 0.0098 * (t_rest - 120.0)
+    return None
+
+
 def get_transient_lifecycle(
     meta: dict,
     tel_guidance: str = "",
@@ -289,30 +387,35 @@ def get_transient_lifecycle(
     redshift: str = "",
     claimedtype: str = "",
 ) -> dict:
-    """Analyze the observational lifecycle state and compute physical transient detectability.
+    """Lifecycle state with scientifically constrained brightness claims.
 
-    Science-based engine utilizing:
-    1. Cosmological time dilation: t_rest = delta_t_obs / (1 + z)
-    2. Class-specific radioactive / CSM light curve decay models:
-       - Type Ia: Nickel-56 / Cobalt-56 exponential decay tail
-       - Type II-P: Recombination plateau (slow ~0.005 mag/day) followed by Cobalt tail
-       - Type Ib/c: Stripped envelope radioactive decay
-       - Type IIn / SLSN: Circumstellar interaction / central magnetar engine
-       - Kilonovae: Rapid r-process decay
-    3. Instrument aperture comparison:
-       Calculates m_current = m_peak + dm(t_rest, type) and determines exactly which
-       ground telescopes (binoculars, 4", 8"-12", CMOS camera, 2m, 10m Keck/VLT) or space
-       observatories (HST/JWST) could resolve it at peak vs. tonight.
+    Distinguishes:
+      - observed magnitude (with timestamp)
+      - cataloged / estimated peak (only when multi-epoch or independent catalog peak)
+      - model-predicted current magnitude (only inside a validated class domain)
+
+    Outside the model domain, with a single photometry point, or when unclassified,
+    returns m_current=None and states "No reliable current brightness estimate".
+    Never manufactures a light curve, rise, decline, or peak from one detection.
+    Never labels an event "below detection limits" without an upper limit or an
+    in-domain model prediction against an explicit threshold (m > 25).
     """
     now = datetime.now(timezone.utc)
     now_mjd = 2440587.5 + now.timestamp() / 86400.0 - 2400000.5
+    now_date_str = now.strftime("%Y/%m/%d")
 
     disc_date = get_val(meta, "discoverdate")
     max_date = get_val(meta, "maxdate")
     maxappmag_str = get_val(meta, "maxappmag")
-    ref_date = max_date if max_date != "—" else disc_date
 
-    # Parse Redshift z
+    # Reject pre-discovery maxdate artifacts (>60d before discovery).
+    disc_dt = _parse_lifecycle_ymd(disc_date)
+    max_dt = _parse_lifecycle_ymd(max_date)
+    if disc_dt and max_dt and (disc_dt - max_dt).days > 60:
+        ref_date = disc_date
+    else:
+        ref_date = max_date if max_date != "—" else disc_date
+
     z_val = 0.0
     if redshift and redshift != "—":
         try:
@@ -323,120 +426,251 @@ def get_transient_lifecycle(
             pass
 
     ctype = claimedtype.lower() if claimedtype else get_val(meta, "claimedtype").lower()
+    unclass = ctype.lower() in {"", "—", "none", "unknown", "unclassified", "at", "other", "candidate"}
 
-    # Days since explosion / discovery
     days_since = None
-    if ref_date != "—":
-        try:
-            parts = [int(p) for p in re.split(r"[-/]", ref_date) if p.isdigit()]
-            if parts:
-                y = parts[0]
-                m = parts[1] if len(parts) > 1 else 1
-                d = parts[2] if len(parts) > 2 else 1
-                if 1 <= y <= 9999 and 1 <= m <= 12 and 1 <= d <= 31:
-                    dt = datetime(y, m, d, tzinfo=timezone.utc)
-                    days_since = (now - dt).days
-                elif y < 1:
-                    days_since = 1000000
-        except Exception:
-            pass
+    ref_dt = _parse_lifecycle_ymd(ref_date)
+    if ref_dt is not None:
+        days_since = (now - ref_dt).days
+    else:
+        m_mjd = re.search(r"MJD\s*([0-9.]+)", str(ref_date))
+        if m_mjd:
+            try:
+                days_since = int(now_mjd - float(m_mjd.group(1)))
+            except Exception:
+                pass
 
-    if days_since is None:
-        photo = meta.get("photometry", [])
-        mjds = []
-        for p in photo:
-            if "time" in p:
-                try:
-                    mjds.append(float(p["time"]))
-                except Exception:
-                    pass
-        if mjds:
-            days_since = int(now_mjd - max(mjds))
+    # Photometry extraction — candidate/unverified associations are retained on
+    # disk but excluded from derived scientific brightness claims.
+    try:
+        from ingest.association_policy import scientific_photometry, is_candidate_point
+    except Exception:  # noqa: BLE001
+        def scientific_photometry(pts):  # type: ignore
+            return list(pts or [])
+        def is_candidate_point(_p):  # type: ignore
+            return False
+
+    photo_raw = meta.get("photometry") or []
+    if not isinstance(photo_raw, list):
+        photo_raw = []
+    photo_science = scientific_photometry(photo_raw)
+    n_candidate_pts = sum(1 for p in photo_raw if isinstance(p, dict) and is_candidate_point(p))
+    detections: list[tuple[float | None, float, str]] = []
+    has_upper_limits = False
+    for p in photo_science:
+        if not isinstance(p, dict):
+            continue
+        is_uplim = bool(p.get("upperlimit", False)) or str(p.get("magnitude", "")).startswith(">")
+        if is_uplim:
+            has_upper_limits = True
+            continue
+        try:
+            mag = float(p["magnitude"])
+            t = float(p["time"]) if p.get("time") is not None else None
+            band = str(p.get("band") or "other")
+            detections.append((t, mag, band))
+        except Exception:
+            continue
+
+    # Drop pre-discovery archival points when discovery epoch is known
+    disc_mjd = None
+    if disc_dt is not None:
+        disc_mjd = 40587.0 + disc_dt.timestamp() / 86400.0
+    outburst_pts = detections
+    if disc_mjd is not None and detections:
+        filtered = [pt for pt in detections if pt[0] is None or pt[0] >= disc_mjd - 60.0]
+        if filtered:
+            outburst_pts = filtered
+
+    if days_since is None and outburst_pts:
+        timed = [pt[0] for pt in outburst_pts if pt[0] is not None]
+        if timed:
+            days_since = int(now_mjd - max(timed))
 
     host_target = f"host galaxy ({host_name})" if host_name and host_name != "—" else "host galaxy"
+    years = (days_since / 365.25) if days_since is not None else None
+    time_str = (
+        f"{years:.1f} years ago" if years is not None and years >= 1.5
+        else (f"{days_since} days ago" if days_since is not None else "unknown epoch")
+    )
+    t_rest = max(0.0, float(days_since) / (1.0 + z_val)) if days_since is not None else None
+
+    # Peak / observed magnitudes
+    maxappmag_raw = meta.get("maxappmag")
+    maxappmag_derived = False
+    maxappmag_single_epoch = False
+    if isinstance(maxappmag_raw, list) and maxappmag_raw and isinstance(maxappmag_raw[0], dict):
+        maxappmag_derived = bool(maxappmag_raw[0].get("derived"))
+        maxappmag_single_epoch = bool(maxappmag_raw[0].get("single_epoch"))
+
+    has_independent_catalog_peak = maxappmag_str != "—" and not maxappmag_derived
+    num_detections = len(outburst_pts)
+    has_multi_epoch_lc = num_detections >= 2
+    is_single_epoch_only = num_detections == 1 and not has_independent_catalog_peak
+
+    m_peak = None
+    if maxappmag_str != "—" and not (maxappmag_derived and is_single_epoch_only and num_detections == 0):
+        try:
+            m_peak = float(re.sub(r"[^\d.]", "", maxappmag_str))
+        except Exception:
+            m_peak = None
+    if m_peak is None and outburst_pts:
+        m_peak = min(pt[1] for pt in outburst_pts)
+
+    m_observed = None
+    m_observed_date = None
+    latest_obs_mag = None
+    latest_obs_date = None
+    brightest_obs_date = None
+    trend = None
+    if outburst_pts:
+        timed_pts = [pt for pt in outburst_pts if pt[0] is not None]
+        if timed_pts:
+            timed_pts.sort(key=lambda x: x[0])
+            latest = timed_pts[-1]
+            brightest = min(timed_pts, key=lambda x: x[1])
+            latest_obs_mag = latest[1]
+            latest_obs_date = _mjd_to_date_str(latest[0])
+            brightest_obs_date = _mjd_to_date_str(brightest[0])
+            m_observed = latest_obs_mag
+            m_observed_date = latest_obs_date
+            if len(timed_pts) >= 2:
+                first_m, last_m = timed_pts[0][1], timed_pts[-1][1]
+                if last_m < first_m - 0.05:
+                    trend = "brightening"
+                elif last_m > first_m + 0.05:
+                    trend = "fading"
+                else:
+                    trend = "flat"
+        else:
+            m_observed = m_peak
+            m_observed_date = ref_date
+
+    # Case: no magnitude at all
+    if m_peak is None and m_observed is None:
+        badge = (
+            f'<span class="type-pill" style="background:#1e293b;color:#94a3b8;border:1px solid #334155;">'
+            f'● Recently Discovered (+{days_since}d)</span>'
+            if days_since is not None and days_since < 60
+            else '<span class="type-pill" style="background:#1e293b;color:#94a3b8;border:1px solid #334155;">'
+                 '● Brightness Unmeasured</span>'
+        )
+        notice = (
+            '<div style="margin-bottom:0.75rem;padding:0.5rem 0.75rem;background:rgba(148,163,184,0.12);'
+            'border-left:3px solid #94a3b8;border-radius:4px;font-size:0.78rem;line-height:1.4;color:#cbd5e1;">'
+            f'<strong>Brightness not measured:</strong> discovered {time_str} ({ref_date}). '
+            'No calibrated photometry is published. '
+            '<strong>No reliable current brightness estimate</strong> is available.'
+            '</div>'
+        )
+        story = (
+            '<div style="background:rgba(148,163,184,0.06);border:1px solid rgba(148,163,184,0.25);'
+            'border-left:4px solid #94a3b8;padding:1.25rem;border-radius:6px;margin:1rem 0;">'
+            '<h3 style="margin:0 0 0.5rem 0;color:#e2e8f0;font-size:1.05rem;">Can I see it tonight? '
+            '<span style="color:#94a3b8;">Unknown — no measured brightness.</span></h3>'
+            f'<p style="margin:0;color:#cbd5e1;line-height:1.6;">Discovered <strong>{time_str}</strong> ({ref_date}). '
+            '<strong>No reliable current brightness estimate</strong> — no photometry has been published.</p></div>'
+        )
+        return {
+            "phase": "unmeasured",
+            "days_since": days_since,
+            "t_rest": round(t_rest, 1) if t_rest is not None else None,
+            "m_peak": None,
+            "m_current": None,
+            "m_observed": None,
+            "m_observed_date": None,
+            "magnitude_kind": "unmeasured",
+            "peak_confirmed": False,
+            "time_str": time_str,
+            "ref_date": ref_date,
+            "badge_html": badge,
+            "cockpit_notice": notice,
+            "story_guidance_html": story,
+            "tel_table_html": "",
+            "measured": False,
+            "model_name": None,
+            "model_valid_days": 0.0,
+        }
 
     if days_since is None:
         return {
             "phase": "unknown",
             "days_since": None,
             "ref_date": ref_date,
+            "m_peak": m_peak,
+            "m_current": None,
+            "m_observed": m_observed,
+            "m_observed_date": m_observed_date,
+            "magnitude_kind": "observed" if m_observed is not None else "unmeasured",
+            "peak_confirmed": has_multi_epoch_lc or has_independent_catalog_peak,
             "m_current_est": None,
             "badge_html": '<span class="type-pill" style="background:#1e293b;color:#94a3b8;border:1px solid #334155;">● Epoch Uncataloged</span>',
             "cockpit_notice": (
                 '<div style="margin-bottom:0.75rem;padding:0.5rem 0.75rem;background:rgba(100,116,139,0.12);'
                 'border-left:3px solid #64748b;border-radius:4px;font-size:0.78rem;line-height:1.4;color:#cbd5e1;">'
-                '<strong>Target Ephemeris:</strong> Plots nightly altitude and airmass for target coordinates. Verify transient brightness before observing.'
+                '<strong>Epoch uncataloged:</strong> Discovery date unrecorded. '
+                '<strong>No reliable current brightness estimate</strong> without a known outburst epoch.'
                 '</div>'
             ),
             "story_guidance_html": (
                 '<div style="background:rgba(255,255,255,0.03);border:1px solid var(--border);padding:1.25rem;border-radius:6px;margin:1rem 0;">'
-                f'<p style="margin:0;color:var(--text-muted);line-height:1.6;">Discovery epoch unrecorded in public catalog. Peak brightness rated at magnitude {maxappmag_str}.</p>'
-                '</div>'
+                '<p style="margin:0;color:var(--text-muted);line-height:1.6;">Discovery epoch unrecorded. '
+                '<strong>No reliable current brightness estimate</strong>.</p></div>'
             ),
+            "tel_table_html": "",
+            "measured": m_observed is not None,
+            "model_name": None,
+            "model_valid_days": 0.0,
         }
 
-    # Rest frame days accounting for cosmological time dilation
-    t_rest = max(0.0, float(days_since) / (1.0 + z_val))
-
-    # Peak apparent magnitude
-    m_peak = None
-    if maxappmag_str != "—":
+    model_name, max_valid_days, _ = _model_domain_for_type(ctype, event_name)
+    # Class-template decay slopes are educational context only. They must NOT
+    # produce an object-specific "tonight" magnitude. An event-specific current
+    # brightness is shown only when the record carries an explicit fitted
+    # prediction with uncertainty and validity metadata.
+    m_predicted = None
+    pred_meta = None
+    raw_pred = meta.get("brightness_prediction") or meta.get("current_magnitude_fit")
+    if isinstance(raw_pred, list) and raw_pred:
+        raw_pred = raw_pred[0]
+    if isinstance(raw_pred, dict):
         try:
-            m_peak = float(re.sub(r"[^\d.]", "", maxappmag_str))
+            cand = float(raw_pred.get("value") or raw_pred.get("magnitude"))
+            unc = raw_pred.get("e_magnitude") or raw_pred.get("uncertainty")
+            valid_to = raw_pred.get("valid_until_mjd") or raw_pred.get("valid_until")
+            ref_epoch = raw_pred.get("reference_epoch_mjd") or raw_pred.get("reference_epoch")
+            fit_name = raw_pred.get("model") or raw_pred.get("code") or "event-specific fit"
+            # Require uncertainty + reference epoch + model name for any tonight claim.
+            if unc is not None and ref_epoch is not None and fit_name:
+                in_range = True
+                if valid_to is not None:
+                    try:
+                        in_range = float(now_mjd) <= float(valid_to)
+                    except Exception:
+                        in_range = False
+                if in_range and -30.0 <= cand <= 30.0:
+                    m_predicted = round(cand, 2)
+                    pred_meta = {
+                        "model": str(fit_name),
+                        "uncertainty": float(unc),
+                        "reference_epoch": ref_epoch,
+                        "valid_until": valid_to,
+                        "filters": raw_pred.get("filters") or raw_pred.get("band"),
+                    }
         except Exception:
-            pass
-    if m_peak is None:
-        photo = meta.get("photometry", [])
-        valid_mags = []
-        for p in photo:
-            if "magnitude" in p and not p.get("upperlimit", False):
-                try:
-                    valid_mags.append(float(p["magnitude"]))
-                except Exception:
-                    pass
-        m_peak = min(valid_mags) if valid_mags else 18.0
+            m_predicted = None
+            pred_meta = None
 
-    # Class-dependent delta magnitude decay calculation based on standard supernova light curve physics
-    if "ia" in ctype:
-        # Type Ia: Phillips relation early decline + Co-56 tail
-        if t_rest <= 15.0:
-            dm = 0.0
-        elif t_rest <= 40.0:
-            dm = 0.08 * (t_rest - 15.0)
-        else:
-            dm = 2.0 + 0.015 * (t_rest - 40.0)
-    elif "iip" in ctype or "ii-p" in ctype or ("ii" in ctype and "iin" not in ctype and "iib" not in ctype):
-        # Type II-P: Hydrogen recombination plateau for ~90-100 days, then Co-56 tail
-        if t_rest <= 90.0:
-            dm = 0.005 * t_rest
-        elif t_rest <= 120.0:
-            dm = 0.45 + 0.06 * (t_rest - 90.0)
-        else:
-            dm = 2.25 + 0.0098 * (t_rest - 120.0)
-    elif "iin" in ctype or "slsn" in ctype or "magnetar" in ctype:
-        # Circumstellar medium (CSM) shock interaction or central magnetar spin-down engine
-        dm = 0.006 * t_rest
-    elif "ib" in ctype or "ic" in ctype or "iib" in ctype:
-        # Stripped-envelope core-collapse
-        if t_rest <= 15.0:
-            dm = 0.0
-        elif t_rest <= 45.0:
-            dm = 0.07 * (t_rest - 15.0)
-        else:
-            dm = 2.1 + 0.016 * (t_rest - 45.0)
-    elif "kilonova" in ctype or "at2017gfo" in event_name.lower():
-        # Rapid radioactive r-process decay
-        dm = 0.35 * t_rest
-    else:
-        # Generic transient decay
-        if t_rest <= 20.0:
-            dm = 0.04 * t_rest
-        else:
-            dm = 0.8 + 0.014 * (t_rest - 20.0)
+    can_predict = m_predicted is not None and pred_meta is not None
+    m_current = m_predicted if can_predict else None
+    magnitude_kind = (
+        "event_fit_predicted" if can_predict
+        else ("observed_single_epoch" if is_single_epoch_only
+              else ("observed" if m_observed is not None else "no_reliable_estimate"))
+    )
+    peak_confirmed = has_multi_epoch_lc or has_independent_catalog_peak
 
-    m_current = round(m_peak + dm, 2)
-
-    # Telescope Aperture Matrix definition
+    # Telescope matrix — never claim "below detection limits" without evidence
     telescopes = [
         ("Naked Eye", 6.0, "Dark sky site (Bortle 1–3) with no optical aid"),
         ("Binoculars (50mm)", 9.5, "Standard 7x50 or 10x50 handheld binoculars"),
@@ -445,243 +679,269 @@ def get_transient_lifecycle(
         ("Amateur CMOS Rig", 19.5, "Cooled monochrome/color CMOS camera with multi-hour stack"),
         ("2m–3m Research Telescope", 22.0, "University or regional observatory (e.g. Palomar 60\", Calar Alto)"),
         ("Giant 8m–10m Observatories", 25.0, "Keck (10m), VLT (8.2m), Gemini, Subaru optical imaging"),
-        ("Space Observatories Only", 30.0, "Hubble Space Telescope (WFC3) / JWST (NIRCam deep stack)")
+        ("Space Observatories Only", 30.0, "Hubble Space Telescope (WFC3) / JWST (NIRCam deep stack)"),
     ]
 
-    # Evaluate telescope requirements
-    peak_tel_needed = "Space Observatories Only"
-    for t_name, limit, desc in telescopes:
-        if m_peak <= limit:
-            peak_tel_needed = t_name
-            break
+    def _tel_for(mag: float | None) -> str:
+        if mag is None:
+            return "Unknown (no reliable magnitude)"
+        for t_name, limit, _desc in telescopes:
+            if mag <= limit:
+                return t_name
+        return "Space Observatories Only"
 
-    current_tel_needed = "Extinguished from ground (requires space telescopes: HST / JWST)"
-    for t_name, limit, desc in telescopes:
-        if m_current <= limit:
-            current_tel_needed = t_name
-            break
+    peak_tel = _tel_for(m_peak)
+    current_tel = _tel_for(m_current)
 
-    is_ground_detectable = m_current <= 25.0
+    # Altitude / window clause
+    _alt = None
+    try:
+        _ra = ra_to_deg(get_val(meta, "ra"))
+        _dec = dec_to_deg(get_val(meta, "dec"))
+        _alt = compute_target_altitude(_ra, _dec)
+    except Exception:
+        _alt = None
+    visible_now = _alt is None or _alt > 0.0
+    window_clause = (
+        "Use the window below to plan observations tonight."
+        if visible_now
+        else "It is below the horizon right now; use the window below to find the next observable slot."
+    )
 
-    # Build telescope comparison HTML table
-    tel_rows = []
-    for t_name, limit, desc in telescopes:
-        peak_ok = m_peak <= limit
-        now_ok = m_current <= limit
-        peak_badge = '<span style="color:#34d399;font-weight:700;">✅ Detectable</span>' if peak_ok else '<span style="color:#64748b;">❌ Below limit</span>'
-        now_badge = '<span style="color:#34d399;font-weight:700;">✅ Detectable</span>' if now_ok else '<span style="color:#64748b;">❌ Below limit</span>'
-        tel_rows.append(f"""
-        <tr>
-          <td style="padding:0.45rem 0.6rem;font-weight:600;color:#f1f5f9;border-bottom:1px solid rgba(255,255,255,0.05);">{t_name}<div style="font-size:0.75rem;color:var(--text-muted);font-weight:400;">{desc}</div></td>
-          <td style="padding:0.45rem 0.6rem;text-align:center;font-family:monospace;color:var(--accent);border-bottom:1px solid rgba(255,255,255,0.05);">m &le; {limit:.1f}</td>
-          <td style="padding:0.45rem 0.6rem;text-align:center;border-bottom:1px solid rgba(255,255,255,0.05);">{peak_badge}</td>
-          <td style="padding:0.45rem 0.6rem;text-align:center;border-bottom:1px solid rgba(255,255,255,0.05);">{now_badge}</td>
-        </tr>
-        """)
-    tel_table_html = f"""
-    <div style="overflow-x:auto;margin:1rem 0;background:rgba(15,23,42,0.6);border:1px solid var(--border);border-radius:6px;">
-      <table style="width:100%;border-collapse:collapse;font-size:0.83rem;text-align:left;">
-        <thead>
-          <tr style="background:rgba(255,255,255,0.04);border-bottom:1px solid var(--border);color:var(--text-muted);">
-            <th style="padding:0.5rem 0.6rem;">Instrument Class &amp; Aperture</th>
-            <th style="padding:0.5rem 0.6rem;text-align:center;">Sensitivity Limit</th>
-            <th style="padding:0.5rem 0.6rem;text-align:center;">At Peak Maximum (m={m_peak:.2f})</th>
-            <th style="padding:0.5rem 0.6rem;text-align:center;">Tonight (Est. m&approx;{m_current:.1f})</th>
-          </tr>
-        </thead>
-        <tbody>
-          {"".join(tel_rows)}
-        </tbody>
-      </table>
-    </div>
-    """
-
-    years = days_since / 365.25
-    time_str = f"{years:.1f} years ago" if years >= 1.5 else f"{days_since} days ago"
-
-    if years >= 30:
-        badge = f'<span class="type-pill" style="background:#1e1b4b;color:#c084fc;border:1px solid #4338ca;">● Remnant Era ({int(years)}y)</span>'
-        cockpit_notice = (
-            f'<div style="margin-bottom:0.75rem;padding:0.5rem 0.75rem;background:rgba(192,132,252,0.1);'
-            f'border-left:3px solid #c084fc;border-radius:4px;font-size:0.78rem;line-height:1.4;color:#e9d5ff;">'
-            f'<strong>Remnant Era Target:</strong> This supernova exploded {int(years)} years ago ({ref_date}). '
-            f'The original optical transient is extinguished; telescope pointing at these coordinates observes the '
-            f'expanding remnant nebula or {host_target}.'
-            f'</div>'
+    def _build_tel_table(col1_label: str, col2_label: str, mag1: float | None, mag2: float | None) -> str:
+        rows = []
+        for t_name, limit, desc in telescopes:
+            if mag1 is None:
+                peak_badge = '<span style="color:#94a3b8;">—</span>'
+            elif mag1 <= limit:
+                peak_badge = '<span style="color:#34d399;font-weight:700;">✅ Reachable</span>'
+            else:
+                peak_badge = f'<span style="color:#64748b;">Requires larger aperture (limit m &le; {limit:.1f})</span>'
+            if mag2 is None:
+                now_badge = '<span style="color:#94a3b8;">No reliable estimate</span>'
+            elif mag2 <= limit:
+                now_badge = '<span style="color:#34d399;font-weight:700;">✅ Reachable</span>'
+            else:
+                # Only assert "below limit" when mag2 is a validated in-domain prediction
+                if can_predict and mag2 > 25.0:
+                    now_badge = (
+                        f'<span style="color:#64748b;">Model predicts m&asymp;{mag2:.1f} '
+                        f'(fainter than m&le;{limit:.1f} threshold)</span>'
+                    )
+                else:
+                    now_badge = f'<span style="color:#64748b;">Requires larger aperture (limit m &le; {limit:.1f})</span>'
+            rows.append(
+                f'<tr>'
+                f'<td style="padding:0.45rem 0.6rem;font-weight:600;color:#f1f5f9;border-bottom:1px solid rgba(255,255,255,0.05);">'
+                f'{t_name}<div style="font-size:0.75rem;color:var(--text-muted);font-weight:400;">{desc}</div></td>'
+                f'<td style="padding:0.45rem 0.6rem;text-align:center;font-family:monospace;color:var(--accent);border-bottom:1px solid rgba(255,255,255,0.05);">m &le; {limit:.1f}</td>'
+                f'<td style="padding:0.45rem 0.6rem;text-align:center;border-bottom:1px solid rgba(255,255,255,0.05);">{peak_badge}</td>'
+                f'<td style="padding:0.45rem 0.6rem;text-align:center;border-bottom:1px solid rgba(255,255,255,0.05);">{now_badge}</td>'
+                f'</tr>'
+            )
+        return (
+            '<div style="overflow-x:auto;margin:1rem 0;background:rgba(15,23,42,0.6);border:1px solid var(--border);border-radius:6px;">'
+            '<table style="width:100%;border-collapse:collapse;font-size:0.83rem;text-align:left;">'
+            '<thead><tr style="background:rgba(255,255,255,0.04);border-bottom:1px solid var(--border);color:var(--text-muted);">'
+            '<th style="padding:0.5rem 0.6rem;">Instrument Class &amp; Aperture</th>'
+            '<th style="padding:0.5rem 0.6rem;text-align:center;">Sensitivity Limit</th>'
+            f'<th style="padding:0.5rem 0.6rem;text-align:center;">{col1_label}</th>'
+            f'<th style="padding:0.5rem 0.6rem;text-align:center;">{col2_label}</th>'
+            '</tr></thead><tbody>' + "".join(rows) + '</tbody></table></div>'
         )
-        story_guidance = (
-            f'<div style="background:rgba(192,132,252,0.05);border:1px solid rgba(192,132,252,0.25);border-left:4px solid #c084fc;padding:1.25rem;border-radius:6px;margin:1rem 0;">'
-            f'<h3 style="margin:0 0 0.5rem 0;color:#f3e8ff;font-size:1.05rem;">Can I see it tonight? <span style="color:#c084fc;">Only as an expanding historical remnant.</span></h3>'
-            f'<p style="margin:0 0 0.75rem 0;color:var(--text-muted);line-height:1.6;">'
-            f'The optical supernova exploded <strong>{int(years)} years ago</strong> ({ref_date}). The bright transient outburst has long since ceased, '
-            f'leaving behind an expanding gaseous shell or pulsar wind nebula emitting in radio, X-rays, and faint nebular optical lines.'
-            f'</p>'
-            f'<p style="margin:0;color:var(--text-muted);line-height:1.6;">'
-            f'<strong>Historical Maximum:</strong> At peak in {ref_date}, it reached magnitude {m_peak:.2f} ({peak_tel_needed}). Pointing here tonight observes the {host_target}.'
-            f'</p>'
-            f'{tel_table_html}'
-            f'</div>'
+
+    # -------- Single-epoch path (Requirement 3) --------
+    if is_single_epoch_only:
+        obs_date = m_observed_date or ref_date
+        obs_mag = m_observed if m_observed is not None else m_peak
+        tel_table = _build_tel_table(
+            f"Observed Single-Epoch Detection (m={obs_mag:.2f} on {obs_date})",
+            "Current Brightness Tonight",
+            obs_mag,
+            None,
         )
-        return {
-            "phase": "remnant",
-            "days_since": days_since,
-            "t_rest": round(t_rest, 1),
-            "m_peak": m_peak,
-            "m_current": m_current,
-            "time_str": time_str,
-            "ref_date": ref_date,
-            "badge_html": badge,
-            "cockpit_notice": cockpit_notice,
-            "story_guidance_html": story_guidance,
-            "tel_table_html": tel_table_html,
-        }
-    elif 180 < days_since <= 1100:
-        badge = f'<span class="type-pill" style="background:#082f49;color:#7dd3fc;border:1px solid #0369a1;">● Recent supernova (+{days_since}d)</span>'
-        cockpit_notice = (
+        phase = "recent_unconfirmed" if days_since < 60 else "single_epoch"
+        badge = (
+            f'<span class="type-pill" style="background:#082f49;color:#7dd3fc;border:1px solid #0369a1;">'
+            f'● Recently Discovered (+{days_since}d)</span>'
+            if days_since < 60
+            else f'<span class="type-pill" style="background:#1e293b;color:#94a3b8;border:1px solid #334155;">'
+                 f'● Single-Epoch Record (+{days_since}d)</span>'
+        )
+        notice = (
             f'<div style="margin-bottom:0.75rem;padding:0.5rem 0.75rem;background:rgba(14,165,233,0.12);'
             f'border-left:3px solid #38bdf8;border-radius:4px;font-size:0.78rem;line-height:1.4;color:#e0f2fe;">'
-            f'<strong>Recent survey supernova:</strong> Discovered {time_str} ({ref_date}, rest-frame +{t_rest:.1f}d). '
-            f'The optical peak has passed. Estimated brightness is now <span style="font-weight:700;color:#7dd3fc;">m &approx; {m_current:.1f}</span> '
-            f'({current_tel_needed}). This is a modern event, not a historical remnant. The sky panel is the host field.'
+            f'<strong>Single-epoch observation:</strong> observed '
+            f'<span style="font-weight:700;color:#7dd3fc;">m = {obs_mag:.2f}</span> on {obs_date} ({peak_tel}). '
+            f'Only 1 calibrated detection is on record, so no rise, peak, decline, or light curve can be established. '
+            f'<strong>No reliable current brightness estimate</strong> is available tonight. {window_clause}'
             f'</div>'
         )
-        story_guidance = (
+        story = (
             f'<div style="background:rgba(14,165,233,0.06);border:1px solid rgba(56,189,248,0.3);border-left:4px solid #38bdf8;padding:1.25rem;border-radius:6px;margin:1rem 0;">'
-            f'<h3 style="margin:0 0 0.5rem 0;color:#e0f2fe;font-size:1.05rem;">Can I see it tonight? <span style="color:#7dd3fc;">The outburst is recent, and the flash has faded.</span></h3>'
+            f'<h3 style="margin:0 0 0.5rem 0;color:#e0f2fe;font-size:1.05rem;">Can I see it tonight? '
+            f'<span style="color:#7dd3fc;">Unknown — single-epoch observation only.</span></h3>'
             f'<p style="margin:0 0 0.75rem 0;color:#e2e8f0;line-height:1.6;">'
-            f'This is one of the newer supernovae in the catalog, discovered <strong>{time_str}</strong> ({ref_date}). '
-            f'It is not an ancient explosion. The radioactive tail has dropped the estimated brightness by &Delta;m &approx; {dm:.1f} '
-            f'to about <strong>magnitude {m_current:.1f}</strong>, which is past the window of binoculars and small backyard telescopes.'
-            f'</p>'
+            f'Discovered <strong>{days_since} days ago</strong> ({ref_date}). '
+            f'<strong>Observed</strong> magnitude m = {obs_mag:.2f} on {obs_date}. '
+            f'A single photometry point is not evidence of a peak, rise, or decline.</p>'
             f'<p style="margin:0;color:#cbd5e1;line-height:1.6;">'
-            f'<strong>What that brightness means:</strong> {current_tel_needed}. Coordinates tonight still point at the {host_target}.'
-            f'</p>'
-            f'{tel_table_html}'
-            f'</div>'
+            f'<strong>Current brightness:</strong> No reliable current brightness estimate.</p>'
+            f'{tel_table}</div>'
         )
         return {
-            "phase": "recent",
+            "phase": phase,
             "days_since": days_since,
-            "t_rest": round(t_rest, 1),
+            "t_rest": round(t_rest, 1) if t_rest is not None else None,
             "m_peak": m_peak,
-            "m_current": m_current,
+            "m_current": None,
+            "m_observed": obs_mag,
+            "m_observed_date": obs_date,
+            "magnitude_kind": "observed_single_epoch",
+            "peak_confirmed": False,
             "time_str": time_str,
             "ref_date": ref_date,
             "badge_html": badge,
-            "cockpit_notice": cockpit_notice,
-            "story_guidance_html": story_guidance,
-            "tel_table_html": tel_table_html,
+            "cockpit_notice": notice,
+            "story_guidance_html": story,
+            "tel_table_html": tel_table,
+            "measured": True,
+            "measured_points": 1,
+            "model_name": model_name,
+            "model_valid_days": max_valid_days,
+            "candidate_photometry_excluded": n_candidate_pts,
         }
-    elif days_since > 180 or not is_ground_detectable:
-        badge = f'<span class="type-pill" style="background:#1e293b;color:#94a3b8;border:1px solid #334155;">● Archived outburst (+{days_since}d)</span>'
-        cockpit_notice = (
-            f'<div style="margin-bottom:0.75rem;padding:0.5rem 0.75rem;background:rgba(100,116,139,0.12);'
-            f'border-left:3px solid #64748b;border-radius:4px;font-size:0.78rem;line-height:1.4;color:#cbd5e1;">'
-            f'⚠️ <strong>Coordinate Pointing Only:</strong> The supernova exploded {time_str} ({ref_date}, rest-frame phase +{t_rest:.1f}d). '
-            f'Based on standard radioactive decay physics, it has faded to <span style="color:#f87171;font-weight:600;">m &approx; {m_current:.1f}</span> (beyond ground telescope limits). '
-            f'Telescope pointing tonight observes the <strong>{host_target}</strong>, not the vanished transient.'
-            f'</div>'
+
+    # -------- Multi-epoch / cataloged peak --------
+    peak_label = (
+        f"Cataloged Peak (m={m_peak:.2f} on {ref_date})"
+        if peak_confirmed and m_peak is not None
+        else (f"Brightest Observed (m={m_peak:.2f})" if m_peak is not None else "Peak unknown")
+    )
+    if can_predict and m_current is not None and pred_meta is not None:
+        current_label = (
+            f"Event-Fit Tonight (m={m_current:.2f}&plusmn;{pred_meta['uncertainty']:.2f}, "
+            f"{pred_meta['model']})"
         )
-        story_guidance = (
-            f'<div style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-left:4px solid #64748b;padding:1.25rem;border-radius:6px;margin:1rem 0;">'
-            f'<h3 style="margin:0 0 0.5rem 0;color:#f1f5f9;font-size:1.05rem;">Can I see it tonight? <span style="color:#f87171;">No — this supernova is physically extinguished.</span></h3>'
-            f'<p style="margin:0 0 0.75rem 0;color:var(--text-muted);line-height:1.6;">'
-            f'Supernovae are brief, explosive cosmic catastrophes. They brighten over days to weeks and then permanently fade into darkness as their radioactive '
-            f'nickel-56 and cobalt-56 fuel decays. This explosion occurred <strong>{time_str}</strong> ({ref_date}). '
-            f'Accounting for cosmological time dilation at redshift z = {z_val:.4f}, the rest-frame age is <strong>+{t_rest:.1f} days</strong>. '
-            f'By standard radioactive decay templates, its optical brightness has decayed by &Delta;m &approx; {dm:.1f} magnitudes to an estimated <strong>magnitude {m_current:.1f}</strong>, '
-            f'rendering the transient undetectable to all ground-based observatories.'
-            f'</p>'
-            f'<p style="margin:0;color:var(--text-muted);line-height:1.6;">'
-            f'<strong>Instrument Breakdown:</strong> At its maximum brightness in {ref_date}, it reached magnitude {m_peak:.2f} ({peak_tel_needed}). '
-            f'Tonight, pointing a telescope at these coordinates will reveal only the background {host_target}.'
-            f'</p>'
-            f'{tel_table_html}'
-            f'</div>'
-        )
-        return {
-            "phase": "extinguished",
-            "days_since": days_since,
-            "t_rest": round(t_rest, 1),
-            "m_peak": m_peak,
-            "m_current": m_current,
-            "time_str": time_str,
-            "ref_date": ref_date,
-            "badge_html": badge,
-            "cockpit_notice": cockpit_notice,
-            "story_guidance_html": story_guidance,
-            "tel_table_html": tel_table_html,
-        }
-    elif days_since >= 60:
-        badge = f'<span class="type-pill" style="background:#451a03;color:#fb923c;border:1px solid #9a3412;">● Late Fading (+{days_since}d)</span>'
-        cockpit_notice = (
-            f'<div style="margin-bottom:0.75rem;padding:0.5rem 0.75rem;background:rgba(245,158,11,0.12);'
-            f'border-left:3px solid #f59e0b;border-radius:4px;font-size:0.78rem;line-height:1.4;color:#fde68a;">'
-            f'📉 <strong>Late Fading Tail:</strong> Discovered {days_since} days ago ({ref_date}, rest-frame +{t_rest:.1f}d). '
-            f'Currently decaying along its radioactive tail at estimated <span style="font-weight:700;color:#fbbf24;">m &approx; {m_current:.1f}</span> '
-            f'({current_tel_needed}). Check airmass window below.'
-            f'</div>'
-        )
-        story_guidance = (
-            f'<div style="background:rgba(245,158,11,0.05);border:1px solid rgba(245,158,11,0.25);border-left:4px solid #f59e0b;padding:1.25rem;border-radius:6px;margin:1rem 0;">'
-            f'<h3 style="margin:0 0 0.5rem 0;color:#fde68a;font-size:1.05rem;">Can I see it tonight? <span style="color:#fbbf24;">Fading in late-time nebular phase.</span></h3>'
-            f'<p style="margin:0 0 0.75rem 0;color:#e2e8f0;line-height:1.6;">'
-            f'Discovered <strong>{days_since} days ago</strong> ({ref_date}), this supernova has passed peak luminosity and has decayed by &Delta;m &approx; {dm:.1f} magnitudes to an estimated <strong>magnitude {m_current:.1f}</strong>.'
-            f'</p>'
-            f'<p style="margin:0;color:#cbd5e1;line-height:1.6;">'
-            f'<strong>Viewing Guidance:</strong> {current_tel_needed}.'
-            f'</p>'
-            f'{tel_table_html}'
-            f'</div>'
-        )
-        return {
-            "phase": "fading",
-            "days_since": days_since,
-            "t_rest": round(t_rest, 1),
-            "m_peak": m_peak,
-            "m_current": m_current,
-            "time_str": time_str,
-            "ref_date": ref_date,
-            "badge_html": badge,
-            "cockpit_notice": cockpit_notice,
-            "story_guidance_html": story_guidance,
-            "tel_table_html": tel_table_html,
-        }
     else:
+        current_label = "Current Brightness Tonight"
+    tel_table = _build_tel_table(peak_label, current_label, m_peak, m_current)
+
+    no_est = "<strong>No reliable current brightness estimate</strong>"
+    if can_predict and m_current is not None and pred_meta is not None:
+        unc = pred_meta["uncertainty"]
+        fit = pred_meta["model"]
+        band_bit = f", band {pred_meta['filters']}" if pred_meta.get("filters") else ""
+        current_clause = (
+            f'<strong>Event-specific fit</strong> brightness tonight: '
+            f'<span style="font-weight:700;color:#34d399;">m = {m_current:.2f} &plusmn; {unc:.2f}</span> '
+            f'(as of {now_date_str} UTC via {fit}{band_bit}). '
+            f'Instrument guidance: {current_tel}.'
+        )
+        if m_current > 25.0:
+            current_clause += (
+                f' This fitted prediction is fainter than the m&le;25.0 ground 8m–10m threshold.'
+            )
+    else:
+        current_clause = (
+            f'{no_est} — no event-specific brightness fit with documented uncertainty '
+            f'is published for this object. Class-average decay templates are not used '
+            f'as object-specific predictions.'
+        )
+        if latest_obs_mag is not None and latest_obs_date:
+            current_clause += (
+                f' Latest <strong>observed</strong> magnitude: m = {latest_obs_mag:.2f} on {latest_obs_date}.'
+            )
+        if has_upper_limits:
+            current_clause += ' Published upper limits (nondetections) exist in the photometry record.'
+
+    obs_bits = []
+    if m_peak is not None and peak_confirmed:
+        obs_bits.append(f'<strong>Cataloged/observed peak</strong>: m = {m_peak:.2f} on {ref_date}')
+    if latest_obs_mag is not None and latest_obs_date and (
+        brightest_obs_date is None or latest_obs_date != brightest_obs_date or latest_obs_mag != m_peak
+    ):
+        obs_bits.append(f'<strong>Latest observed</strong>: m = {latest_obs_mag:.2f} on {latest_obs_date}')
+    obs_summary = ". ".join(obs_bits) + ("." if obs_bits else "")
+
+    # Phase selection
+    if years is not None and years >= 30:
+        phase = "remnant"
+        badge = f'<span class="type-pill" style="background:#1e1b4b;color:#c084fc;border:1px solid #4338ca;">● Remnant Era ({int(years)}y)</span>'
+        heading = "Only as an expanding historical remnant."
+        color = "#c084fc"
+    elif days_since > 180:
+        phase = "archived"
+        badge = f'<span class="type-pill" style="background:#1e293b;color:#94a3b8;border:1px solid #334155;">● Archived Outburst (+{days_since}d)</span>'
+        heading = "No reliable current brightness estimate."
+        color = "#94a3b8"
+    elif has_multi_epoch_lc and trend == "fading" and days_since >= 60:
+        phase = "fading"
+        badge = f'<span class="type-pill" style="background:#451a03;color:#fb923c;border:1px solid #9a3412;">● Late Fading (+{days_since}d)</span>'
+        heading = "Multi-epoch photometry shows fading; no fitted tonight magnitude."
+        color = "#fbbf24"
+    elif has_multi_epoch_lc and days_since < 60:
+        phase = "active"
         badge = f'<span class="type-pill" style="background:#064e3b;color:#34d399;border:1px solid #059669;">● Active Outburst (+{days_since}d)</span>'
-        cockpit_notice = (
-            f'<div style="margin-bottom:0.75rem;padding:0.5rem 0.75rem;background:rgba(16,185,129,0.12);'
-            f'border-left:3px solid #10b981;border-radius:4px;font-size:0.78rem;line-height:1.4;color:#a7f3d0;">'
-            f'✨ <strong>Active Transient Alert:</strong> Discovered only {days_since} days ago ({ref_date}, rest-frame +{t_rest:.1f}d)! '
-            f'Currently in active outburst at estimated <span style="font-weight:700;color:#34d399;">m &approx; {m_current:.1f}</span> '
-            f'({current_tel_needed}). Use the window below to plan observations tonight.'
-            f'</div>'
-        )
-        story_guidance = (
-            f'<div style="background:rgba(16,185,129,0.05);border:1px solid rgba(16,185,129,0.25);border-left:4px solid #10b981;padding:1.25rem;border-radius:6px;margin:1rem 0;">'
-            f'<h3 style="margin:0 0 0.5rem 0;color:#a7f3d0;font-size:1.05rem;">Can I see it tonight? <span style="color:#34d399;">Yes — this supernova is currently in active outburst!</span></h3>'
-            f'<p style="margin:0 0 0.75rem 0;color:#e2e8f0;line-height:1.6;">'
-            f'Discovered only <strong>{days_since} days ago</strong> ({ref_date}), this supernova is actively radiating near peak luminosity at an estimated <strong>magnitude {m_current:.1f}</strong>.'
-            f'</p>'
-            f'<p style="margin:0;color:#cbd5e1;line-height:1.6;">'
-            f'<strong>Instrument Recommendation:</strong> {current_tel_needed}.'
-            f'</p>'
-            f'{tel_table_html}'
-            f'</div>'
-        )
-        return {
-            "phase": "active",
-            "days_since": days_since,
-            "t_rest": round(t_rest, 1),
-            "m_peak": m_peak,
-            "m_current": m_current,
-            "time_str": time_str,
-            "ref_date": ref_date,
-            "badge_html": badge,
-            "cockpit_notice": cockpit_notice,
-            "story_guidance_html": story_guidance,
-            "tel_table_html": tel_table_html,
-        }
+        heading = "Multi-epoch light curve supports an ongoing outburst."
+        color = "#34d399"
+    elif days_since < 60:
+        phase = "recent_unconfirmed"
+        badge = f'<span class="type-pill" style="background:#082f49;color:#7dd3fc;border:1px solid #0369a1;">● Recently Discovered (+{days_since}d)</span>'
+        heading = "Recently discovered — trend depends on available data."
+        color = "#7dd3fc"
+    else:
+        phase = "recent"
+        badge = f'<span class="type-pill" style="background:#082f49;color:#7dd3fc;border:1px solid #0369a1;">● Recent Supernova (+{days_since}d)</span>'
+        heading = "Recent event — current brightness constrained by available data."
+        color = "#7dd3fc"
+
+    trend_clause = ""
+    if trend and has_multi_epoch_lc:
+        trend_clause = f' Observed detections are currently <strong>{trend}</strong> across the light curve.'
+
+    notice = (
+        f'<div style="margin-bottom:0.75rem;padding:0.5rem 0.75rem;background:rgba(15,23,42,0.5);'
+        f'border-left:3px solid {color};border-radius:4px;font-size:0.78rem;line-height:1.4;color:#e2e8f0;">'
+        f'<strong>Discovered {time_str}</strong> ({ref_date}, rest-frame +{(t_rest or 0):.1f}d). '
+        f'{obs_summary} {current_clause}{trend_clause} {window_clause}'
+        f'</div>'
+    )
+    story = (
+        f'<div style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-left:4px solid {color};'
+        f'padding:1.25rem;border-radius:6px;margin:1rem 0;">'
+        f'<h3 style="margin:0 0 0.5rem 0;color:#f1f5f9;font-size:1.05rem;">Can I see it tonight? '
+        f'<span style="color:{color};">{heading}</span></h3>'
+        f'<p style="margin:0 0 0.75rem 0;color:#e2e8f0;line-height:1.6;">'
+        f'Discovered <strong>{days_since} days ago</strong> ({ref_date}). {obs_summary}</p>'
+        f'<p style="margin:0 0 0.75rem 0;color:#cbd5e1;line-height:1.6;">{current_clause}{trend_clause}</p>'
+        f'{tel_table}</div>'
+    )
+
+    return {
+        "phase": phase,
+        "days_since": days_since,
+        "t_rest": round(t_rest, 1) if t_rest is not None else None,
+        "m_peak": m_peak,
+        "m_current": m_current,
+        "m_observed": m_observed if m_observed is not None else m_peak,
+        "m_observed_date": m_observed_date or ref_date,
+        "magnitude_kind": magnitude_kind,
+        "peak_confirmed": peak_confirmed,
+        "time_str": time_str,
+        "ref_date": ref_date,
+        "badge_html": badge,
+        "cockpit_notice": notice,
+        "story_guidance_html": story,
+        "tel_table_html": tel_table,
+        "measured": True,
+        "measured_points": num_detections,
+        "model_name": model_name,
+        "model_valid_days": max_valid_days,
+        "dm": None,  # class-template dm is never attached to an object-specific prediction
+        "fit_meta": pred_meta,
+    }
+
 
 
 def format_cosmic_neighbors_panel(
@@ -890,12 +1150,24 @@ def render_pro_cockpit(
         elif dist_ly_str != "Millions of Light-Years":
             lumdist_display = f"{lumdist} (~{dist_ly_str})"
 
+    # Show provenance for derived values. A coordinate-formula estimate and a real
+    # dust-map measurement produce identical-looking numbers; without a label the
+    # reader cannot tell which they are looking at. meta["ebv"][0] carries the
+    # "derived" flag and "source_name" set by astro_engine.
     ebv_display = ebv
     ebv_raw = meta.get("ebv")
     if isinstance(ebv_raw, list) and ebv_raw and isinstance(ebv_raw[0], dict):
         a_v_val = ebv_raw[0].get("a_v")
+        src_name = str(ebv_raw[0].get("source_name") or "")
+        derived = bool(ebv_raw[0].get("derived"))
         if a_v_val:
             ebv_display = f"{ebv} (A<sub>V</sub> = {a_v_val:.2f} mag)"
+        if derived:
+            _src = src_name.replace("&", "&amp;") if src_name else "coordinate model"
+            ebv_display += (
+                f'<div style="font-size:0.72rem;color:var(--text-muted);margin-top:2px;">'
+                f"derived from galactic coordinates ({_src}), not a dust-map measurement</div>"
+            )
 
     maxabsmag_display = maxabsmag
     maxabs_raw = meta.get("maxabsmag")
@@ -905,6 +1177,29 @@ def render_pro_cockpit(
             maxabsmag_display = f"{maxabsmag} ({dered_str})"
 
     lifecycle = get_transient_lifecycle(meta, host_name=host, event_name=name, redshift=redshift, claimedtype=claimedtype)
+
+    # Peak Apparent Mag label: never call a single detection a "peak".
+    maxappmag_label = "Peak Apparent Mag"
+    maxappmag_cell = maxappmag
+    if maxappmag != "—":
+        if lifecycle.get("magnitude_kind") == "observed_single_epoch" or (
+            lifecycle.get("peak_confirmed") is False and lifecycle.get("measured_points", 0) == 1
+        ):
+            maxappmag_label = "Observed Mag (single-epoch)"
+            obs_date = lifecycle.get("m_observed_date") or lifecycle.get("ref_date") or "—"
+            maxappmag_cell = (
+                f"{maxappmag}"
+                f'<div style="font-size:0.72rem;color:var(--text-muted);margin-top:2px;">'
+                f"observed {obs_date}; not a confirmed peak (1 detection)</div>"
+            )
+        elif lifecycle.get("peak_confirmed"):
+            maxappmag_label = "Peak Apparent Mag"
+            ref = lifecycle.get("ref_date") or "—"
+            maxappmag_cell = (
+                f"{maxappmag}"
+                f'<div style="font-size:0.72rem;color:var(--text-muted);margin-top:2px;">'
+                f"cataloged/observed peak ({ref})</div>"
+            )
 
     # MOSFiT Theoretical Models & Magnetar Engine Fit
     models_data = meta.get("models", [])
@@ -2058,7 +2353,7 @@ def render_pro_cockpit(
           <tr><th>Redshift (z)</th><td>{redshift}</td></tr>
           <tr><th>Recession Velocity</th><td>{velocity}</td></tr>
           <tr><th>Luminosity Distance</th><td>{lumdist_display}</td></tr>
-          <tr><th>Peak Apparent Mag</th><td>{maxappmag}</td></tr>
+          <tr><th>{maxappmag_label}</th><td>{maxappmag_cell}</td></tr>
           <tr><th>Peak Absolute Mag</th><td>{maxabsmag_display}</td></tr>
           <tr><th>MW Dust E(B-V)</th><td>{ebv_display}</td></tr>
           <tr><th>Host Galaxy</th><td>{host}</td></tr>
@@ -2797,7 +3092,7 @@ def render_pro_cockpit(
 
     function renderLightCurve() {{
       if (!PHOTO_DATA || PHOTO_DATA.length === 0) {{
-        document.getElementById('plot-lc').innerHTML = '<div style="color:#94a3b8;padding:2.5rem;text-align:center;line-height:1.6;"><div style="font-size:1.8rem;margin-bottom:0.5rem;">📉</div><div style="font-weight:600;color:#e2e8f0;margin-bottom:0.35rem;font-size:1rem;">Photometric Time-Series Pending Archive Ingestion</div><div style="font-size:0.85rem;color:#64748b;max-width:480px;margin:0 auto;">This transient has cataloged peak brightness but full multi-epoch calibrated light curves have not been downlinked to the open archives yet. Check upstream brokers or literature citations below.</div></div>';
+        document.getElementById('plot-lc').innerHTML = '<div style="color:#94a3b8;padding:2.5rem;text-align:center;line-height:1.6;"><div style="font-size:1.8rem;margin-bottom:0.5rem;">📉</div><div style="font-weight:600;color:#e2e8f0;margin-bottom:0.35rem;font-size:1rem;">No Photometry Available</div><div style="font-size:0.85rem;color:#64748b;max-width:480px;margin:0 auto;">No calibrated photometry has been published for this transient yet, so no light curve can be drawn. This is an absence of data, not a pending download \u2014 check the upstream broker or the literature citations below for the first reported detection.</div></div>';
         return;
       }}
       // Group by band
@@ -3685,23 +3980,49 @@ def render_story_mode(
 
     lifecycle = get_transient_lifecycle(meta, tel_guidance=tel_guidance, host_name=host, event_name=name, redshift=redshift, claimedtype=claimedtype)
 
+    maxappmag_label = "Peak Apparent Mag"
+    maxappmag_cell = maxappmag
+    if maxappmag != "—":
+        if lifecycle.get("magnitude_kind") == "observed_single_epoch" or (
+            lifecycle.get("peak_confirmed") is False and lifecycle.get("measured_points", 0) == 1
+        ):
+            maxappmag_label = "Observed Mag (single-epoch)"
+            obs_date = lifecycle.get("m_observed_date") or lifecycle.get("ref_date") or "—"
+            maxappmag_cell = (
+                f"{maxappmag}"
+                f'<div style="font-size:0.72rem;color:var(--text-muted);margin-top:2px;">'
+                f"observed {obs_date}; not a confirmed peak (1 detection)</div>"
+            )
+        elif lifecycle.get("peak_confirmed"):
+            ref = lifecycle.get("ref_date") or "—"
+            maxappmag_cell = (
+                f"{maxappmag}"
+                f'<div style="font-size:0.72rem;color:var(--text-muted);margin-top:2px;">'
+                f"cataloged/observed peak ({ref})</div>"
+            )
+
     # Type explanation
+    _ct_low = (claimedtype or "").strip().lower()
+    _unclass_story = _ct_low in {"", "—", "none", "unknown", "unclassified", "at", "other", "candidate"}
     type_expl = (
+        "An unclassified astronomical transient: a changing source was detected, but without a spectrum "
+        "its physical nature (thermonuclear, core-collapse, or otherwise) is not established."
+        if _unclass_story else
         "A catastrophic stellar explosion marking the violent end of a star's lifecycle."
     )
-    if "Ia" in claimedtype:
+    if (not _unclass_story) and ("Ia" in claimedtype or "ia" in _ct_low):
         type_expl = (
             "A thermonuclear detonation of a carbon-oxygen white dwarf star. In a tight binary system, "
             "the dense white dwarf siphoned matter from its companion until reaching the Chandrasekhar limit (1.4 solar masses), "
             "igniting runaway nuclear fusion that completely obliterated the star."
         )
-    elif "II" in claimedtype:
+    elif (not _unclass_story) and ("II" in claimedtype or ("ii" in _ct_low and "ia" not in _ct_low)):
         type_expl = (
             "A core-collapse explosion of a massive supergiant star (at least 8 times heavier than our Sun). "
             "Having exhausted its nuclear fuel, the iron core collapsed under gravity in a fraction of a second, "
             "rebounding into a cosmic shockwave that blew the star apart."
         )
-    elif "Ib" in claimedtype or "Ic" in claimedtype:
+    elif (not _unclass_story) and ("Ib" in claimedtype or "Ic" in claimedtype or "ib" in _ct_low or "ic" in _ct_low):
         type_expl = (
             "A stripped-envelope core-collapse supernova. A massive star blew off its outer hydrogen (and helium) layers "
             "via ferocious stellar winds or binary interaction before its core collapsed."

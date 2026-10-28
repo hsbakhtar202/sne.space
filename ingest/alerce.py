@@ -8,6 +8,11 @@ import urllib.request
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
+try:
+    from ingest import provider_quota
+except Exception:  # noqa: BLE001
+    provider_quota = None  # type: ignore
+
 logger = logging.getLogger(__name__)
 
 CACHE_DIR = Path("ingest/cache/alerce")
@@ -36,15 +41,20 @@ def find_ztf_object_by_coords(
         except Exception:
             pass
 
-    url = f"https://api.alerce.online/ztf/v1/objects/?ra={ra_deg:.5f}&dec={dec_deg:.5f}&radius={radius_arcsec:.1f}&page_size=3"
+    alerce_base = (os.environ.get("SNE_ALERCE_BASE") or "https://api.alerce.online/ztf/v1").rstrip("/")
+    url = f"{alerce_base}/objects/?ra={ra_deg:.5f}&dec={dec_deg:.5f}&radius={radius_arcsec:.1f}&page_size=3"
     headers = {
         "User-Agent": "OpenSupernovaCatalog-Ingest/2.0 (https://sne.space)",
         "Accept": "application/json",
     }
+    if provider_quota is not None:
+        provider_quota.acquire("alerce")
     req = urllib.request.Request(url, headers=headers)
     try:
         with urllib.request.urlopen(req, timeout=timeout) as resp:
             if resp.status == 200:
+                if provider_quota is not None:
+                    provider_quota.record_success("alerce")
                 data = json.loads(resp.read().decode("utf-8"))
                 items = data.get("items", [])
                 if items and items[0].get("oid"):
@@ -88,22 +98,40 @@ def get_alerce_lightcurve(
             except Exception as e:
                 logger.debug(f"Cache read error for {ztf_oid}: {e}")
 
-    url = f"https://api.alerce.online/ztf/v1/objects/{ztf_oid}/lightcurve"
+    # Reject malformed OIDs (e.g. unsplit internal-name blobs).
+    ztf_oid = str(ztf_oid or "").strip().split()[0]
+    if not (ztf_oid.startswith("ZTF") and len(ztf_oid) >= 12):
+        return None
+    alerce_base = (os.environ.get("SNE_ALERCE_BASE") or "https://api.alerce.online/ztf/v1").rstrip("/")
+    url = f"{alerce_base}/objects/{ztf_oid}/lightcurve"
     headers = {
         "User-Agent": "OpenSupernovaCatalog-Ingest/2.0 (https://sne.space)",
         "Accept": "application/json",
     }
+    if provider_quota is not None:
+        provider_quota.acquire("alerce")
     req = urllib.request.Request(url, headers=headers)
     try:
         with urllib.request.urlopen(req, timeout=timeout) as resp:
             if resp.status == 200:
+                if provider_quota is not None:
+                    provider_quota.record_success("alerce")
                 data = json.loads(resp.read().decode("utf-8"))
                 tmp_path = cache_path.with_name(f".{cache_path.name}.tmp.{os.getpid()}")
                 tmp_path.write_text(json.dumps(data), encoding="utf-8")
                 os.replace(tmp_path, cache_path)
                 return data
     except urllib.error.HTTPError as e:
-        if e.code == 404:
+        if e.code == 429:
+            reset = None
+            try:
+                reset = float(e.headers.get("x-rate-limit-reset") or e.headers.get("retry-after") or 0) or None
+            except Exception:
+                reset = None
+            if provider_quota is not None:
+                provider_quota.record_429("alerce", reset)
+            logger.warning(f"ALeRCE 429 for {ztf_oid}; backing off")
+        elif e.code == 404:
             logger.debug(f"ALeRCE 404 for {ztf_oid}")
         else:
             logger.warning(f"ALeRCE HTTP {e.code} for {ztf_oid}: {e.reason}")
@@ -116,56 +144,97 @@ def get_alerce_lightcurve(
 def convert_alerce_to_astrocats_photometry(
     alerce_data: Dict[str, Any],
     source_alias: str,
-    include_non_detections: bool = False
+    include_non_detections: bool = True,
+    include_detections: bool = True,
 ) -> List[Dict[str, Any]]:
-    """Convert ALeRCE detections and non-detections into AstroCats photometry format."""
+    """Convert ALeRCE light-curve payload into AstroCats photometry entries.
+
+    Detections and non-detections stay distinguishable:
+      - detections: ``kind="detection"``, magnitude = magpsf, optional candid
+      - non-detections: ``kind="non_detection"``, ``upperlimit=True``,
+        magnitude = diffmaglim (limit, not a flux measurement)
+
+    Forced photometry is NOT mixed in here — ALeRCE exposes it via a separate
+    endpoint and must be ingested explicitly if ever required.
+    """
     photometry: List[Dict[str, Any]] = []
 
-    detections = alerce_data.get("detections", [])
-    for d in detections:
-        mjd = d.get("mjd")
-        mag = d.get("magpsf")
-        e_mag = d.get("sigmapsf")
-        fid = d.get("fid")
-
-        if mjd is None or mag is None:
-            continue
-
-        band = FID_TO_BAND.get(fid, str(fid) if fid else "")
-        photo_entry: Dict[str, Any] = {
-            "time": f"{mjd:.5f}",
-            "magnitude": f"{mag:.4f}",
-            "band": band,
-            "telescope": "ZTF",
-            "instrument": "ZTF",
-            "u_time": "MJD",
-            "source": source_alias,
-        }
-        if e_mag is not None and e_mag > 0:
-            photo_entry["e_magnitude"] = f"{e_mag:.4f}"
-
-        photometry.append(photo_entry)
+    if include_detections:
+        for d in alerce_data.get("detections", []) or []:
+            if not isinstance(d, dict):
+                continue
+            mjd = d.get("mjd")
+            mag = d.get("magpsf")
+            e_mag = d.get("sigmapsf")
+            fid = d.get("fid")
+            if mjd is None or mag is None:
+                continue
+            band = FID_TO_BAND.get(fid, str(fid) if fid else "")
+            photo_entry: Dict[str, Any] = {
+                "time": f"{float(mjd):.5f}",
+                "magnitude": f"{float(mag):.4f}",
+                "band": band,
+                "telescope": "ZTF",
+                "instrument": "ZTF",
+                "u_time": "MJD",
+                "source": source_alias,
+                "kind": "detection",
+                "survey": "ZTF",
+                "provider": "ALeRCE",
+            }
+            candid = d.get("candid") or d.get("candid_alert")
+            if candid is not None:
+                photo_entry["candid"] = str(candid)
+            if e_mag is not None:
+                try:
+                    if float(e_mag) > 0:
+                        photo_entry["e_magnitude"] = f"{float(e_mag):.4f}"
+                except Exception:
+                    pass
+            # Provenance for association checks
+            if d.get("ra") is not None and d.get("dec") is not None:
+                photo_entry["ra"] = f"{float(d['ra']):.6f}"
+                photo_entry["dec"] = f"{float(d['dec']):.6f}"
+            photometry.append(photo_entry)
 
     if include_non_detections:
-        non_detections = alerce_data.get("non_detections", [])
-        for nd in non_detections:
+        for nd in alerce_data.get("non_detections", []) or []:
+            if not isinstance(nd, dict):
+                continue
             mjd = nd.get("mjd")
             diffmaglim = nd.get("diffmaglim")
             fid = nd.get("fid")
             if mjd is None or diffmaglim is None:
                 continue
-
             band = FID_TO_BAND.get(fid, str(fid) if fid else "")
             photometry.append({
-                "time": f"{mjd:.5f}",
-                "magnitude": f"{diffmaglim:.4f}",
+                "time": f"{float(mjd):.5f}",
+                "magnitude": f"{float(diffmaglim):.4f}",
                 "upperlimit": True,
+                "kind": "non_detection",
                 "band": band,
                 "telescope": "ZTF",
+                "instrument": "ZTF",
                 "u_time": "MJD",
                 "source": source_alias,
+                "survey": "ZTF",
+                "provider": "ALeRCE",
             })
 
-    # Sort chronologically by MJD time
     photometry.sort(key=lambda x: float(x["time"]))
     return photometry
+
+
+def photometry_dedupe_key(p: Dict[str, Any]) -> Tuple:
+    """Stable identity for merging photometry without collapsing detections into limits."""
+    candid = p.get("candid")
+    if candid:
+        return ("candid", str(candid))
+    kind = "non_detection" if (p.get("upperlimit") or p.get("kind") == "non_detection") else "detection"
+    try:
+        t = round(float(p.get("time", 0)), 5)
+    except Exception:
+        t = 0.0
+    return (kind, t, str(p.get("band") or ""), str(p.get("telescope") or ""))
+
+

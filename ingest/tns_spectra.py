@@ -78,7 +78,8 @@ def search_tns_spectra(
             except Exception as e:
                 logger.debug(f"Cache read error for TNS {clean_name}: {e}")
 
-    url = f"https://www.wis-tns.org/object/{clean_name}"
+    tns_object_base = (os.environ.get("SNE_TNS_OBJECT_BASE") or "https://www.wis-tns.org/object").rstrip("/")
+    url = f"{tns_object_base}/{clean_name}"
     headers = {"User-Agent": TNS_USER_AGENT, "Accept": "text/html,application/xhtml+xml"}
     req = urllib.request.Request(url, headers=headers)
 
@@ -124,7 +125,8 @@ def search_tns_spectra(
         ascii_url = ascii_m.group(1).strip()
         if not ascii_url.startswith("http"):
             if ascii_url.startswith("/"):
-                ascii_url = f"https://www.wis-tns.org{ascii_url}"
+                tns_web = (os.environ.get("SNE_TNS_WEB_BASE") or "https://www.wis-tns.org").rstrip("/")
+                ascii_url = f"{tns_web}{ascii_url}"
             else:
                 continue
 

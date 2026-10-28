@@ -896,6 +896,108 @@ class CatalogStore:
             "events": rows.get("event_count"),
             "built_at": rows.get("built_at"),
             "schema_version": rows.get("schema_version"),
+            "overlay_mtime": rows.get("overlay_mtime"),
             "db_bytes": size,
             "db_path": str(self.db_path),
         }
+
+    def upsert_catalog_items(self, items: Iterable[dict[str, Any]]) -> int:
+        """Incrementally replace catalog rows without a full 110k rebuild.
+
+        Opens a short-lived read-write connection (WAL). Thread-local read
+        handles are dropped afterward so the next lookup sees new rows.
+        Idempotent: re-upserting the same items yields the same rows.
+        """
+        rows_in: list[tuple] = []
+        for item in items:
+            if not isinstance(item, dict):
+                continue
+            row = _row_from_catalog_item(item)
+            if row is not None:
+                rows_in.append(row)
+        if not rows_in:
+            return 0
+
+        with self._build_lock:
+            if not self.db_path.is_file():
+                # No base index yet — caller should build() first.
+                return 0
+            conn = sqlite3.connect(str(self.db_path), timeout=60.0)
+            try:
+                conn.execute("PRAGMA journal_mode=WAL")
+                conn.execute("PRAGMA synchronous=NORMAL")
+                fts_enabled = False
+                try:
+                    conn.execute(
+                        "SELECT 1 FROM sqlite_master WHERE type='table' AND name='key_trigrams'"
+                    ).fetchone()
+                    fts_enabled = True
+                except sqlite3.Error:
+                    fts_enabled = False
+
+                for row in rows_in:
+                    name = row[0]
+                    conn.execute("DELETE FROM keys WHERE name = ?", (name,))
+                    conn.execute("DELETE FROM key_lengths WHERE name = ?", (name,))
+                    if fts_enabled:
+                        try:
+                            conn.execute("DELETE FROM key_trigrams WHERE name = ?", (name,))
+                        except sqlite3.Error:
+                            pass
+                    conn.execute(
+                        "INSERT OR REPLACE INTO events VALUES "
+                        "(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                        row,
+                    )
+                    key_rows: set[tuple[str, str]] = set()
+                    for k in (_norm_key(name), _norm_key(name).replace(" ", "")):
+                        if k:
+                            key_rows.add((k, name))
+                    for alias in json.loads(row[1]):
+                        ak = _norm_key(alias)
+                        if ak:
+                            key_rows.add((ak, name))
+                            key_rows.add((ak.replace(" ", ""), name))
+                    for k, n in sorted(key_rows):
+                        conn.execute(
+                            "INSERT OR REPLACE INTO keys(key, name) VALUES (?,?)", (k, n)
+                        )
+                        conn.execute(
+                            "INSERT OR REPLACE INTO key_lengths(key, name, length) "
+                            "VALUES (?,?,?)",
+                            (k, n, len(k)),
+                        )
+                        if fts_enabled and len(k) >= 3:
+                            try:
+                                conn.execute(
+                                    "INSERT INTO key_trigrams(key, name) VALUES (?,?)",
+                                    (k, n),
+                                )
+                            except sqlite3.Error:
+                                pass
+
+                conn.execute(
+                    "INSERT OR REPLACE INTO meta VALUES ('overlay_mtime', ?)",
+                    (str(time.time()),),
+                )
+                conn.execute(
+                    "INSERT OR REPLACE INTO meta VALUES ('built_at', ?)",
+                    (str(int(time.time())),),
+                )
+                # Keep event_count as max(existing, distinct names) — upserts
+                # of existing rows must not inflate the counter.
+                try:
+                    n = conn.execute("SELECT COUNT(*) FROM events").fetchone()[0]
+                    conn.execute(
+                        "INSERT OR REPLACE INTO meta VALUES ('event_count', ?)",
+                        (str(int(n)),),
+                    )
+                except sqlite3.Error:
+                    pass
+                conn.commit()
+            finally:
+                conn.close()
+
+            self._ready = True
+            self.close()  # force readers to reopen
+            return len(rows_in)

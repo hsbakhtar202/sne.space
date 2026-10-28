@@ -236,8 +236,12 @@ def build_event_dict(
     if enrich_alerce:
         ztf_oid = None
         for a in alias_list:
-            if a.startswith("ZTF") and len(a) >= 12:
-                ztf_oid = a
+            # Internal-name fields can be space/comma joined; take a clean ZTF token.
+            for token in str(a).replace(",", " ").split():
+                if token.startswith("ZTF") and len(token) >= 12 and " " not in token:
+                    ztf_oid = token
+                    break
+            if ztf_oid:
                 break
 
         if not ztf_oid and ra_val is not None and dec_val is not None:

@@ -285,6 +285,43 @@ def eq_to_gal(ra_deg: float, dec_deg: float) -> tuple[float, float]:
     return round(math.degrees(l_rad), 3), round(math.degrees(b_rad), 3)
 
 
+def compute_target_altitude(
+    ra_deg: float | None,
+    dec_deg: float | None,
+    when: "datetime | None" = None,
+    site_lat: float = 20.7,
+    site_lon: float = -156.3,
+) -> float | None:
+    """Approximate the target's altitude in degrees for a given UTC instant.
+
+    Mirrors the sidereal-time math the client-side airmass chart uses so a
+    server-rendered sentence cannot contradict the chart beneath it. The default
+    site is Haleakala (Maui), matching the observing site used by the front-end
+    planner. Returns None when coordinates are unavailable, so callers can skip
+    the check rather than guess.
+    """
+    if ra_deg is None or dec_deg is None:
+        return None
+    try:
+        from datetime import datetime as _dt, timezone as _tz
+
+        moment = when or _dt.now(_tz.utc)
+        # Julian date from the Unix epoch, then GMST in degrees (same formula as JS).
+        now_jd = (moment.timestamp() / 86400.0) + 2440587.5
+        gmst = (280.46061837 + 360.98564736629 * (now_jd - 2451545.0)) % 360.0
+        lst = (gmst + site_lon) % 360.0
+        hour_angle = math.radians(lst - ra_deg)
+        lat_r = math.radians(site_lat)
+        dec_r = math.radians(dec_deg)
+        sin_alt = (
+            math.sin(lat_r) * math.sin(dec_r)
+            + math.cos(lat_r) * math.cos(dec_r) * math.cos(hour_angle)
+        )
+        return round(math.degrees(math.asin(max(-1.0, min(1.0, sin_alt)))), 2)
+    except Exception:
+        return None
+
+
 def get_milkyway_extinction(ra_deg: float, dec_deg: float, allow_network: bool = False) -> dict[str, Any]:
     """Obtain Milky Way Galactic foreground extinction E(B-V) via NASA IPAC IRSA DUST service with local cache.
 
@@ -503,8 +540,37 @@ def _compute_host_offsets(
     }
 
 
-def extract_photometry_peaks(photometry: list, dist_mod: float | None = None, a_v: float | None = None) -> dict[str, Any]:
-    """Find brightest observed apparent magnitude, peak date, and derive absolute magnitudes."""
+def _ymd_to_mjd(date_str: str | None) -> float | None:
+    """Convert a YYYY/MM/DD (or YYYY-MM-DD) string to MJD."""
+    if not date_str or date_str == "—":
+        return None
+    m = re.match(r"\s*(\d{4})\s*[-/]\s*(\d{1,2})\s*[-/]\s*(\d{1,2})", str(date_str))
+    if not m:
+        return None
+    try:
+        from datetime import datetime, timezone
+        y, mo, d = int(m.group(1)), int(m.group(2)), int(m.group(3))
+        if 1 <= y <= 9999 and 1 <= mo <= 12 and 1 <= d <= 31:
+            dt = datetime(y, mo, d, tzinfo=timezone.utc)
+            return 40587.0 + dt.timestamp() / 86400.0
+    except Exception:
+        return None
+    return None
+
+
+def extract_photometry_peaks(
+    photometry: list,
+    dist_mod: float | None = None,
+    a_v: float | None = None,
+    discover_mjd: float | None = None,
+) -> dict[str, Any]:
+    """Find brightest observed apparent magnitude, peak date, and derive absolute magnitudes.
+
+    If ``discover_mjd`` is supplied, pre-discovery alerts more than 60 days prior to
+    discovery are excluded when selecting the outburst peak (provided at least one
+    detection exists within the outburst window), preventing archival host-galaxy
+    variability from masquerading as the supernova peak epoch.
+    """
     if not photometry:
         return {
             "maxappmag": "—",
@@ -513,11 +579,22 @@ def extract_photometry_peaks(photometry: list, dist_mod: float | None = None, a_
             "maxabsmag": "—",
             "maxabsmag_dered": "—",
             "is_prepeak": False,
+            "num_detections": 0,
+            "single_epoch": False,
         }
+
+    try:
+        from ingest.association_policy import is_candidate_point
+    except Exception:  # noqa: BLE001
+        def is_candidate_point(_p):  # type: ignore
+            return False
 
     valid_pts = []
     for p in photometry:
         if not isinstance(p, dict):
+            continue
+        # Quarantined / unverified associations do not define catalog peak.
+        if is_candidate_point(p):
             continue
         is_uplim = bool(p.get("upperlimit", False)) or str(p.get("magnitude", "")).startswith(">")
         if is_uplim:
@@ -545,10 +622,36 @@ def extract_photometry_peaks(photometry: list, dist_mod: float | None = None, a_
             "maxabsmag": "—",
             "maxabsmag_dered": "—",
             "is_prepeak": False,
+            "num_detections": 0,
+            "single_epoch": False,
         }
 
+    # Filter out archival/host alerts >60d before discovery.
+    # If EVERY detection is pre-discovery archival, do not promote those points
+    # to an outburst peak — return an empty peak instead of a host-variability epoch.
+    candidate_pts = valid_pts
+    if discover_mjd is not None:
+        outburst_pts = [
+            pt for pt in valid_pts
+            if pt["time"] is None or pt["time"] >= (discover_mjd - 60.0)
+        ]
+        if outburst_pts:
+            candidate_pts = outburst_pts
+        else:
+            return {
+                "maxappmag": "—",
+                "maxdate": "—",
+                "maxband": "—",
+                "maxabsmag": "—",
+                "maxabsmag_dered": "—",
+                "is_prepeak": False,
+                "num_detections": 0,
+                "single_epoch": False,
+                "all_pre_discovery": True,
+            }
+
     # Minimum magnitude is maximum brightness in astronomical magnitude scale
-    brightest = min(valid_pts, key=lambda x: x["mag"])
+    brightest = min(candidate_pts, key=lambda x: x["mag"])
     m_peak = brightest["mag"]
     b_band = brightest["band"]
     b_err = f" ± {brightest['err']:.2f}" if brightest["err"] is not None else ""
@@ -587,6 +690,8 @@ def extract_photometry_peaks(photometry: list, dist_mod: float | None = None, a_
         "maxabsmag_dered": maxabsmag_dered_str,
         "peak_mag_num": m_peak,
         "peak_mjd": brightest["time"],
+        "num_detections": len(candidate_pts),
+        "single_epoch": len(candidate_pts) == 1,
     }
 
 
@@ -681,32 +786,68 @@ def enrich_transient_astrophysics(name: str, meta: dict, allow_network: bool = F
     a_v = extinction_data["a_v"] if extinction_data else None
 
     # 7. Derive Photometric Peaks & Absolute Magnitude
-    photometry = meta.get("photometry", [])
-    peaks = extract_photometry_peaks(photometry, dist_mod=dist_mod, a_v=a_v)
+    disc_raw = (
+        meta.get("discoverdate", [{}])[0].get("value")
+        if isinstance(meta.get("discoverdate"), list) and meta.get("discoverdate")
+        else meta.get("discoverdate")
+    )
+    discover_mjd = _ymd_to_mjd(str(disc_raw)) if disc_raw else None
 
-    if not meta.get("maxappmag") and peaks["maxappmag"] != "—":
+    photometry = meta.get("photometry", [])
+    peaks = extract_photometry_peaks(
+        photometry, dist_mod=dist_mod, a_v=a_v, discover_mjd=discover_mjd
+    )
+
+    # Check if an existing maxdate on disk is a pre-discovery artifact (>60d before discovery)
+    existing_maxdate_raw = (
+        meta.get("maxdate", [{}])[0].get("value")
+        if isinstance(meta.get("maxdate"), list) and meta.get("maxdate")
+        else meta.get("maxdate")
+    )
+    existing_max_mjd = _ymd_to_mjd(str(existing_maxdate_raw)) if existing_maxdate_raw else None
+    pre_discovery_artifact = (
+        discover_mjd is not None
+        and existing_max_mjd is not None
+        and (discover_mjd - existing_max_mjd) > 60.0
+    )
+
+    if (not meta.get("maxappmag") or pre_discovery_artifact) and peaks["maxappmag"] != "—":
         meta["maxappmag"] = [
             {
                 "value": peaks["maxappmag"],
                 "derived": True,
                 "band": peaks["maxband"],
+                "single_epoch": bool(peaks.get("single_epoch", False)),
             }
         ]
+    elif isinstance(meta.get("maxappmag"), list) and meta["maxappmag"] and isinstance(meta["maxappmag"][0], dict):
+        if meta["maxappmag"][0].get("derived") and peaks.get("single_epoch"):
+            meta["maxappmag"][0]["single_epoch"] = True
 
-    if not meta.get("maxdate") and peaks["maxdate"] != "—":
+    if (not meta.get("maxdate") or pre_discovery_artifact) and peaks["maxdate"] != "—":
         meta["maxdate"] = [
             {
                 "value": peaks["maxdate"],
                 "derived": True,
+                "single_epoch": bool(peaks.get("single_epoch", False)),
             }
         ]
+    elif pre_discovery_artifact and disc_raw:
+        # Prefer discovery epoch over a cleared/empty peak when all photometry
+        # was archival host variability before discovery.
+        meta["maxdate"] = [{"value": str(disc_raw), "derived": True, "replaced_pre_discovery": True}]
+        if peaks.get("all_pre_discovery") and isinstance(meta.get("maxappmag"), list) and meta["maxappmag"]:
+            # Drop the archival-host "peak" magnitude that predated discovery.
+            if isinstance(meta["maxappmag"][0], dict) and meta["maxappmag"][0].get("derived"):
+                meta["maxappmag"] = []
 
-    if not meta.get("maxabsmag") and peaks["maxabsmag"] != "—":
+    if (not meta.get("maxabsmag") or pre_discovery_artifact) and peaks["maxabsmag"] != "—":
         meta["maxabsmag"] = [
             {
                 "value": peaks["maxabsmag"],
                 "derived": True,
                 "dereddened": peaks["maxabsmag_dered"],
+                "single_epoch": bool(peaks.get("single_epoch", False)),
             }
         ]
 

@@ -33,6 +33,36 @@ serve/logs/*
 # Derived indexes (rebuilt on demand; never commit a 155 MB SQLite file)
 serve/www/astrocats/astrocats/supernovae/output/.index/
 
+# Runtime / ingest coordination (durable volumes in production; not source)
+serve/www/assets/event_locks/
+serve/www/assets/ingest_*.lock
+serve/www/assets/backfill_photometry_*.json
+serve/www/assets/backfill_photometry_*.jsonl
+serve/www/assets/published-updates.min.json
+serve/www/assets/publication_state.json
+serve/cache/
+
+# E2E local/docker artifacts (keep harness; drop generated volumes/logs)
+e2e/artifacts/data/
+e2e/artifacts/runtime/
+e2e/artifacts/*.log
+e2e/artifacts/docker_*.log
+e2e/artifacts/docker_*.txt
+e2e/artifacts/local_run.log
+e2e/artifacts/mock.log
+e2e/artifacts/server.log
+e2e/artifacts/*.out
+e2e/artifacts/healthz_*.json
+e2e/artifacts/volume_state_*.txt
+e2e/artifacts/recreate_consistency.json
+e2e/artifacts/catalog_bootstrap.txt
+e2e/artifacts/docker_stats.txt
+e2e/artifacts/docker_ps.txt
+e2e/artifacts/docker_timing.txt
+e2e/artifacts/docker_version.txt
+e2e/artifacts/docker_build.log
+
+
 # Large Astronomical Data Repositories (12GB+ / 110,000 JSONs)
 vendor/
 serve/www/astrocats/astrocats/supernovae/output/catalog.min.json
@@ -41,5 +71,6 @@ serve/www/astrocats/astrocats/supernovae/output/catalog.csv
 serve/www/astrocats/astrocats/supernovae/output/json/
 serve/www/wp-content/themes/astrocats-child-theme/astrocats-child-theme/node_modules/
 *.csv
+!e2e/fixtures/*.csv
 
 

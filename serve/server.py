@@ -1562,7 +1562,13 @@ _CATALOG_STORE_SOURCES: list[Path] = []
 
 
 def _catalog_source_files() -> list[Path]:
-    """Catalog JSON array sources, most authoritative first."""
+    """Catalog JSON array sources, most authoritative first.
+
+    ``published-updates.min.json`` is applied *after* primary via
+    ``CatalogStore.upsert_catalog_items`` (and live-table name merge). It is
+    listed here so fingerprint/staleness tracks overlay mtime, but full rebuild
+    still uses first-wins — upserts keep updated rows current without rebuild.
+    """
     out: list[Path] = []
     primary = DATA_OUT / "catalog.min.json"
     primary_gz = DATA_OUT / "catalog.min.json.gz"
@@ -1575,6 +1581,9 @@ def _catalog_source_files() -> list[Path]:
     recent = _runtime_asset("recent-catalog.min.json")
     if recent.is_file():
         out.append(recent)
+    published = _runtime_asset("published-updates.min.json")
+    if published.is_file():
+        out.append(published)
     return out
 
 
@@ -5096,14 +5105,23 @@ _LIVE_CATALOG: tuple[float, bytes, bytes] | None = None
 
 
 def _catalog_for_table() -> tuple[bytes, bytes] | None:
-    """March archive with post-March TNS rows prepended. Cached until that file changes."""
+    """Base catalog + recent prepend + published-updates name merge.
+
+    Cached until recent or published-updates mtime changes. Published updates
+    *replace* matching names so post-sync photometry counts are visible without
+    rewriting the 110k-object ``catalog.min.json``.
+    """
     global _LIVE_CATALOG
     base = WWW / "astrocats/astrocats/supernovae/output/catalog.min.json"
     base_gz = WWW / "astrocats/astrocats/supernovae/output/catalog.min.json.gz"
     recent = _runtime_asset("recent-catalog.min.json")
+    published = _runtime_asset("published-updates.min.json")
     if not base.is_file() and not base_gz.is_file():
         return None
-    stamp = recent.stat().st_mtime if recent.is_file() else 0.0
+    stamp = (
+        (recent.stat().st_mtime if recent.is_file() else 0.0),
+        (published.stat().st_mtime if published.is_file() else 0.0),
+    )
     with _LIVE_CATALOG_LOCK:
         if _LIVE_CATALOG and _LIVE_CATALOG[0] == stamp:
             return _LIVE_CATALOG[1], _LIVE_CATALOG[2]
@@ -5113,6 +5131,17 @@ def _catalog_for_table() -> tuple[bytes, bytes] | None:
             extra = recent.read_text(encoding="utf-8").strip()
             if extra.startswith("[") and extra.endswith("]") and len(extra) > 2:
                 raw = b"[" + extra[1:-1].encode("utf-8") + b"," + raw[1:]
+        if published.is_file() and raw.startswith(b"["):
+            try:
+                from ingest.catalog_publish import apply_overlay_to_catalog_list
+                overlay = json.loads(published.read_text(encoding="utf-8"))
+                if isinstance(overlay, list) and overlay:
+                    base_list = json.loads(raw)
+                    if isinstance(base_list, list):
+                        merged = apply_overlay_to_catalog_list(base_list, overlay)
+                        raw = json.dumps(merged, separators=(",", ":")).encode("utf-8")
+            except Exception as exc:  # noqa: BLE001
+                print(f"[catalog] published-updates merge skipped: {exc}", flush=True)
         packed = gzip.compress(raw, compresslevel=5)
         _LIVE_CATALOG = (stamp, raw, packed)
         return raw, packed
@@ -5124,6 +5153,12 @@ def _recent_tns_loop() -> None:
     project = str(ROOT.parent)
     if project not in sys.path:
         sys.path.insert(0, project)
+    # Production default 15 minutes; E2E / staging may set SNE_TNS_POLL_SECONDS.
+    try:
+        poll_s = float(os.environ.get("SNE_TNS_POLL_SECONDS") or str(15 * 60))
+    except ValueError:
+        poll_s = 15 * 60
+    poll_s = max(5.0, poll_s)
     while True:
         try:
             from ingest.pull_recent import pull_recent
@@ -5131,7 +5166,7 @@ def _recent_tns_loop() -> None:
             print(f"TNS recent pull stored {count} classified supernovae", flush=True)
         except Exception as exc:
             print(f"TNS recent pull failed: {exc}", flush=True)
-        time.sleep(15 * 60)
+        time.sleep(poll_s)
 
 
 def _warm_catalog_store() -> None:

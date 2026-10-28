@@ -1,0 +1,90 @@
+# Production-equivalent E2E stack with fixture providers.
+# Usage:
+#   docker compose -p sne-e2e -f docker-compose.e2e.yml up -d --build
+#   docker compose -p sne-e2e -f docker-compose.e2e.yml run --rm e2e-runner
+# Does NOT touch production volumes or deploy.
+services:
+  mock-providers:
+    image: python:3.11-slim-bookworm
+    working_dir: /app
+    volumes:
+      - ./:/app
+    command: ["python3", "e2e/mock_providers.py"]
+    environment:
+      - SNE_MOCK_PORT=18080
+    expose:
+      - "18080"
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:18080/healthz')"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+
+  sne-e2e:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        GIT_REVISION: e2e-local
+    depends_on:
+      mock-providers:
+        condition: service_healthy
+    environment:
+      - OSC_HOST=0.0.0.0
+      - OSC_PORT=8080
+      - PYTHONUNBUFFERED=1
+      - SNE_DATA_DIR=/data/astrocats/astrocats/supernovae/output
+      - SNE_RUNTIME_DIR=/data/sne-runtime
+      - SNE_TNS_SEARCH_BASE=http://mock-providers:18080/search
+      - SNE_ALERCE_BASE=http://mock-providers:18080/ztf/v1
+      - SNE_TNS_OBJECT_BASE=http://mock-providers:18080/object
+      - SNE_TNS_WEB_BASE=http://mock-providers:18080
+      - SNE_TNS_POLL_SECONDS=8
+      - SNE_SKIP_TNS_SPECTRA=0
+      - SNE_PAGE_CACHE_MB=32
+      - SNE_GIT_REVISION=e2e-local
+    volumes:
+      - sne_e2e_data:/data/astrocats/astrocats/supernovae/output
+      - sne_e2e_runtime:/data/sne-runtime
+    ports:
+      - "18081:8080"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080/healthz"]
+      interval: 5s
+      timeout: 3s
+      start_period: 40s
+      retries: 15
+    mem_limit: 1500m
+
+  e2e-runner:
+    image: python:3.11-slim-bookworm
+    working_dir: /app
+    depends_on:
+      sne-e2e:
+        condition: service_healthy
+      mock-providers:
+        condition: service_healthy
+    volumes:
+      - ./:/app
+      - sne_e2e_data:/data/astrocats/astrocats/supernovae/output
+      - sne_e2e_runtime:/data/sne-runtime
+      - ./e2e/artifacts:/artifacts
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - SNE_E2E_BASE=http://sne-e2e:8080
+      - SNE_DATA_DIR=/data/astrocats/astrocats/supernovae/output
+      - SNE_RUNTIME_DIR=/data/sne-runtime
+      - SNE_TNS_SEARCH_BASE=http://mock-providers:18080/search
+      - SNE_ALERCE_BASE=http://mock-providers:18080/ztf/v1
+      - SNE_TNS_OBJECT_BASE=http://mock-providers:18080/object
+      - SNE_TNS_WEB_BASE=http://mock-providers:18080
+      - SNE_MOCK_CONTROL=http://mock-providers:18080
+      - SNE_SKIP_TNS_SPECTRA=0
+      - SNE_E2E_ARTIFACTS=/artifacts
+      - SNE_E2E_DOCKER=1
+      - SNE_E2E_COMPOSE_PROJECT=sne-e2e
+    command: ["python3", "e2e/run_e2e.py"]
+
+volumes:
+  sne_e2e_data:
+  sne_e2e_runtime:

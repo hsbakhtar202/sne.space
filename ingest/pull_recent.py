@@ -19,6 +19,7 @@ if str(ROOT) not in sys.path:
 from ingest.coordinates import ra_dec_to_deg
 from ingest.manager import SUPERNOVAE_OUTPUT, atomic_write_json, get_target_repo_folder
 from ingest.tns import build_event_dict
+from ingest import provider_quota
 
 import time
 
@@ -62,20 +63,33 @@ def _atomic_write_text(path: Path, text: str) -> None:
         raise
 
 
+def _tns_search_base() -> str:
+    """Allow E2E / staging to point TNS search at a fixture mock."""
+    return (os.environ.get("SNE_TNS_SEARCH_BASE") or "https://www.wis-tns.org/search").rstrip("?")
+
+
 def _fetch_page(url: str) -> list[dict[str, str]]:
     """Fetch one TNS search page, honouring 429 reset headers."""
+    # Rewrite production TNS host when a fixture base is configured.
+    fixture_base = os.environ.get("SNE_TNS_SEARCH_BASE", "").strip()
+    if fixture_base and "wis-tns.org/search" in url:
+        q = url.split("?", 1)[1] if "?" in url else ""
+        url = fixture_base + (("?" + q) if q else "")
     req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 (sne.space Ingestion)"})
     for attempt in range(4):
         try:
+            provider_quota.acquire("tns")
             with urllib.request.urlopen(req, timeout=60) as resp:
                 text = resp.read().decode("utf-8", errors="replace")
+            provider_quota.record_success("tns")
             return list(csv.DictReader(io.StringIO(text)))
         except urllib.error.HTTPError as e:
             if e.code == 429:
                 try:
-                    reset_sec = float(e.headers.get("x-rate-limit-reset", "20")) + 1.0
+                    reset_sec = float(e.headers.get("x-rate-limit-reset", e.headers.get("Retry-After", "20"))) + 1.0
                 except (ValueError, TypeError):
                     reset_sec = 20.0 * (attempt + 1)
+                provider_quota.record_429("tns", reset_sec)
                 print(f"[TNS Search] Rate limit active. Sleeping {reset_sec:.1f}s for reset...", flush=True)
                 time.sleep(reset_sec)
                 continue
@@ -105,7 +119,7 @@ def fetch_classified(days: int = 40, max_pages: int = 40) -> list[dict[str, str]
             "page": str(page),
         })
         try:
-            batch = _fetch_page(f"https://www.wis-tns.org/search?{query}")
+            batch = _fetch_page(f"{_tns_search_base()}?{query}")
         except Exception as exc:
             print(f"[TNS Search] page {page} failed: {exc}", flush=True)
             break
@@ -144,7 +158,7 @@ def fetch_recent_discoveries(days: int = 7, max_pages: int = 5) -> list[dict[str
             "page": str(page),
         })
         try:
-            batch = _fetch_page(f"https://www.wis-tns.org/search?{query}")
+            batch = _fetch_page(f"{_tns_search_base()}?{query}")
         except Exception as exc:
             print(f"[TNS Discovery] page {page} failed: {exc}", flush=True)
             break
@@ -230,7 +244,42 @@ def pull_recent(days: int = 40) -> int:
     The homepage file is written from the TNS search rows first. Spectra and
     photometry enrichment happens afterward, so a slow or stuck enrich cannot
     leave the previous pull on disk.
+
+    Holds ``provider_quota.recent_ingest_priority()`` for the entire cycle so
+    historical backfill yields even when enrichment exceeds 120 seconds.
     """
+    with provider_quota.recent_ingest_priority():
+        return _pull_recent_body(days)
+
+
+def _auto_publish_paths(paths: list[Path]) -> None:
+    """Publish ingested event files into overlay + SQLite; durable pending on failure."""
+    if not paths:
+        return
+    try:
+        from ingest.publication import publish_event_paths, recover_pending
+        # Recover anything left pending from a prior crash first.
+        recover_pending()
+        result = publish_event_paths(paths)
+        print(
+            f"[Publish] auto-published {len(paths)} events "
+            f"(upserted={result.get('upserted')} state={result.get('state')})",
+            flush=True,
+        )
+    except Exception as exc:  # noqa: BLE001
+        print(f"[Publish] automatic publication failed: {exc}", flush=True)
+
+
+def _pull_recent_body(days: int = 40) -> int:
+    # Resume any interrupted publications before discovering new rows.
+    try:
+        from ingest.publication import recover_pending
+        recovered = recover_pending()
+        if recovered.get("recovered"):
+            print(f"[Publish] recovered {recovered['recovered']} pending publications", flush=True)
+    except Exception as exc:  # noqa: BLE001
+        print(f"[Publish] recover_pending skipped: {exc}", flush=True)
+
     items = fetch_classified(days=days)
 
     # Second lane: recent discoveries regardless of classification, so objects
@@ -292,13 +341,32 @@ def pull_recent(days: int = 40) -> int:
             except Exception:
                 pass
 
+    def _usable_photo_count(body: dict) -> int:
+        ph = body.get("photometry") or []
+        n = 0
+        for pt in ph:
+            if not isinstance(pt, dict):
+                continue
+            if pt.get("upperlimit") or str(pt.get("magnitude", "")).startswith(">"):
+                continue
+            if pt.get("magnitude") is None:
+                continue
+            n += 1
+        return n
+
     def _needs_enrich(cname_raw: str) -> bool:
+        """Re-enrich stubs: missing file, sparse photometry (<=1), or no spectra."""
         hit = on_disk.get(cname_raw)
         if hit is None:
             return True
         _path, ex_data = hit
         key = next(iter(ex_data), cname_raw)
-        return len(ex_data.get(key, {}).get("spectra", [])) == 0
+        body = ex_data.get(key, {}) if isinstance(ex_data, dict) else {}
+        if _usable_photo_count(body) <= 1:
+            return True
+        if len(body.get("spectra") or []) == 0:
+            return True
+        return False
 
     # Newest first so fresh discoveries are enriched before anything else.
     pending.sort(key=lambda p: p[1]["discoverydate"], reverse=True)
@@ -306,6 +374,7 @@ def pull_recent(days: int = 40) -> int:
     skipped = len(pending) - len(todo)
     print(f"[TNS Enrich] {len(todo)} need enrichment, {skipped} already enriched", flush=True)
 
+    published_paths: list[Path] = []
     for cname_raw, row, item in todo:
         year = int(row["discoverydate"][:4]) if row["discoverydate"][:4].isdigit() else 2026
         dest = get_target_repo_folder(year)
@@ -314,20 +383,25 @@ def pull_recent(days: int = 40) -> int:
         event = None
         cname = cname_raw
         try:
-            hit = on_disk.get(cname_raw)
-            if hit is not None:
-                _path, ex_data = hit
-                cname = next(iter(ex_data), cname_raw)
-                event = ex_data
-            if event is None:
-                cname, event = build_event_dict(
-                    row,
-                    enrich_alerce=True,
-                    enrich_wiserep=False,
-                    enrich_tns_spectra=True,
-                )
-                time.sleep(0.5)
-                atomic_write_json(dest / f"{cname}.json", event)
+            # Always rebuild with broker enrichment for todo items.
+            skip_spec = (os.environ.get("SNE_SKIP_TNS_SPECTRA") or "").strip() in {"1", "true", "yes"}
+            cname, event = build_event_dict(
+                row,
+                enrich_alerce=True,
+                enrich_wiserep=False,
+                enrich_tns_spectra=not skip_spec,
+            )
+            time.sleep(0.5)
+            from ingest.event_file_lock import event_file_lock
+            out_path = dest / f"{cname}.json"
+            with event_file_lock(out_path):
+                atomic_write_json(out_path, event)
+            published_paths.append(out_path)
+            try:
+                from ingest.publication import mark_ingested
+                mark_ingested(cname, out_path)
+            except Exception:
+                pass
             card = by_name.get(cname_raw)
             if card is not None and event is not None:
                 body = event.get(cname, {})
@@ -362,6 +436,8 @@ def pull_recent(days: int = 40) -> int:
             card["dec"] = dec[0]["value"]
 
     _publish(written)
+    # Automatic catalog/SQLite/UI publication — not a manual sync_corpus step.
+    _auto_publish_paths(published_paths)
     print(f"Wrote {len(written)} events into {SUPERNOVAE_OUTPUT}", flush=True)
     return len(written)
 

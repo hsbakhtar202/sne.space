@@ -11,6 +11,7 @@ from typing import Any, Dict, List, Optional, Set, Tuple
 
 from ingest.alerce import (
     convert_alerce_to_astrocats_photometry,
+    photometry_dedupe_key,
     find_ztf_object_by_coords,
     get_alerce_lightcurve,
 )
@@ -61,7 +62,11 @@ _enrich_meta_lock = threading.Lock()
 
 
 def get_object_lock(name: str) -> threading.Lock:
-    """Retrieve or create an in-process mutex lock for a specific supernova."""
+    """Retrieve or create an in-process mutex lock for a specific supernova.
+
+    Cross-process RMW also requires ``ingest.event_file_lock.event_file_lock``
+    around the reload→merge→write window (used by enrich_event / backfill / sync).
+    """
     with _enrich_meta_lock:
         if name not in _enrich_locks:
             _enrich_locks[name] = threading.Lock()
@@ -504,18 +509,18 @@ def enrich_event(
                         secondary=True,
                     )
                     photo = convert_alerce_to_astrocats_photometry(lc, source_alias=src_alias)
-                    print(f"Retrieved {len(photo)} photometry detections from ALeRCE.")
-                    # Merge into event photometry
-                    existing_pts = {
-                        (round(float(p.get("time", 0)), 3), p.get("band", ""))
+                    print(f"Retrieved {len(photo)} photometry points from ALeRCE "
+                          f"(detections+limits; kinds preserved).")
+                    existing_keys = {
+                        photometry_dedupe_key(p)
                         for p in event.get("photometry", [])
+                        if isinstance(p, dict)
                     }
                     for p in photo:
-                        t = round(float(p.get("time", 0)), 3)
-                        b = p.get("band", "")
-                        if (t, b) not in existing_pts:
+                        key = photometry_dedupe_key(p)
+                        if key not in existing_keys:
                             event.setdefault("photometry", []).append(p)
-                            existing_pts.add((t, b))
+                            existing_keys.add(key)
                     event["photometry"].sort(key=lambda x: float(x.get("time", 0)))
 
         # Fetch TNS and WISeREP spectra
@@ -642,14 +647,37 @@ def enrich_event(
                         "source": src,
                     }]
 
-        atomic_write_json(file_path, event_data)
-        # Keep flat json/ in sync if it exists
-        flat_json = SUPERNOVAE_OUTPUT / "json" / file_path.name
-        if flat_json.parent.is_dir():
+        from ingest.event_file_lock import event_file_lock
+        with event_file_lock(file_path):
+            # Re-read under lock so concurrent backfill/sync cannot be clobbered.
             try:
-                atomic_write_json(flat_json, event_data)
+                latest = json.loads(file_path.read_text(encoding="utf-8"))
+                if isinstance(latest, dict) and latest:
+                    # Prefer our enriched body but keep any photometry keys added
+                    # by a concurrent writer that we do not already have.
+                    from ingest.alerce import photometry_dedupe_key
+                    our_name = next(iter(event_data))
+                    if our_name in latest and isinstance(latest[our_name], dict):
+                        theirs = latest[our_name]
+                        ours = event_data[our_name]
+                        their_ph = [p for p in (theirs.get("photometry") or []) if isinstance(p, dict)]
+                        our_ph = [p for p in (ours.get("photometry") or []) if isinstance(p, dict)]
+                        keys = {photometry_dedupe_key(p) for p in our_ph}
+                        for p in their_ph:
+                            k = photometry_dedupe_key(p)
+                            if k not in keys:
+                                our_ph.append(p)
+                                keys.add(k)
+                        ours["photometry"] = our_ph
             except Exception:
                 pass
+            atomic_write_json(file_path, event_data)
+            flat_json = SUPERNOVAE_OUTPUT / "json" / file_path.name
+            if flat_json.parent.is_dir():
+                try:
+                    atomic_write_json(flat_json, event_data)
+                except Exception:
+                    pass
         print(f"Updated {file_path.name} with enriched broker data.")
         return True
 

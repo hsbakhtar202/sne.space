@@ -62,10 +62,24 @@ services:
         max-size: "20m"
         max-file: "3"
 
+  # Optional historical backfill sidecar. MUST mount the same sne_runtime and
+  # sne_data volumes so fcntl priority locks and corpus writes coordinate with
+  # the web service. Without a shared filesystem, fcntl cannot protect discovery.
+  # sne-backfill:
+  #   build: { context: ., dockerfile: Dockerfile }
+  #   command: ["python3", "-m", "ingest.backfill_photometry", "--years", "2025"]
+  #   environment:
+  #     - SNE_DATA_DIR=/data/astrocats/astrocats/supernovae/output
+  #     - SNE_RUNTIME_DIR=/data/sne-runtime
+  #   volumes:
+  #     - sne_data:/data/astrocats/astrocats/supernovae/output
+  #     - sne_runtime:/data/sne-runtime
+
 volumes:
   sne_logs:
   # Durable corpus. Back this up before any migration; see PATCH_PLAN.md.
   sne_data:
-  # Mutable runtime JSON (recent-events / recent-catalog). Small, but losing it
-  # makes the homepage serve a stale recent-list after every redeploy.
+  # Mutable runtime JSON (recent-events / recent-catalog) AND cross-process
+  # ingest priority locks (ingest_recent_priority.lock). Any backfill process
+  # MUST mount this same volume or set SNE_INGEST_LOCK_DIR to a shared path.
   sne_runtime:

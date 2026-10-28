@@ -1,0 +1,527 @@
+{
+  "generated_utc": "2026-10-28T05:37:18.266566+00:00",
+  "base_url": "http://sne-e2e:8080",
+  "event": "AT2025e2everify",
+  "gate": "PASS",
+  "passed": 67,
+  "failed": 0,
+  "total": 67,
+  "results": [
+    {
+      "test": "stack healthz",
+      "pass": true,
+      "detail": "{\"status\": \"ok\", \"uptime_seconds\": 40.5, \"revision\": \"e2e-local\"}"
+    },
+    {
+      "test": "A scheduler pull_recent ran",
+      "pass": true,
+      "detail": "returned=1"
+    },
+    {
+      "test": "A event JSON persisted",
+      "pass": true,
+      "detail": "/data/astrocats/astrocats/supernovae/output/sne-2025-2029/AT2025e2everify.json"
+    },
+    {
+      "test": "A has claimedtype",
+      "pass": true,
+      "detail": [
+        {
+          "value": "Ia",
+          "source": "1"
+        }
+      ]
+    },
+    {
+      "test": "A photometry detections from ALeRCE",
+      "pass": true,
+      "detail": "dets=4 lims=1"
+    },
+    {
+      "test": "A no duplicate candids",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "test": "A publication_state published",
+      "pass": true,
+      "detail": {
+        "error": null,
+        "fingerprint": {
+          "mtime_ns": 1793165808992832002,
+          "path": "/data/astrocats/astrocats/supernovae/output/sne-2025-2029/AT2025e2everify.json",
+          "sha1": "f4b0316d6275d9b4ebe89e48120fc6d177c72042",
+          "size": 4188
+        },
+        "generation": 52,
+        "ingest_status": "committed",
+        "ingested_at": 1793165809.0827703,
+        "name": "AT2025e2everify",
+        "publish_details": {
+          "upserted": 1
+        },
+        "publish_status": "published",
+        "published_at": 1793165809.1369216,
+        "updated_at": 1793165809.136989
+      }
+    },
+    {
+      "test": "A recent-events contains event",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "test": "A overlay/recent-catalog contains event",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "test": "A homepage HTTP 200",
+      "pass": true,
+      "detail": 200
+    },
+    {
+      "test": "A homepage lists event",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "test": "A catalog HTTP 200",
+      "pass": true,
+      "detail": 200
+    },
+    {
+      "test": "A catalog lists event",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "test": "A event page HTTP 200",
+      "pass": true,
+      "detail": "status=200 ttfb_ms=4.7"
+    },
+    {
+      "test": "A event page shows type/photometry",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "test": "A publication lag within 60s of commit",
+      "pass": true,
+      "detail": {
+        "provider_to_file_s": 1.3,
+        "file_to_publish_s": 0.0,
+        "provider_to_ui_s": 1.3,
+        "within_60s_of_commit": true
+      }
+    },
+    {
+      "test": "B second pull_recent ran",
+      "pass": true,
+      "detail": "returned=1"
+    },
+    {
+      "test": "B no candid duplicates after re-enrich",
+      "pass": true,
+      "detail": "n=3"
+    },
+    {
+      "test": "B photometry not wiped",
+      "pass": true,
+      "detail": "before=5 after=5"
+    },
+    {
+      "test": "B upper limits retained as non-detections",
+      "pass": true,
+      "detail": "lims=1"
+    },
+    {
+      "test": "B event page still 200",
+      "pass": true,
+      "detail": 200
+    },
+    {
+      "test": "C pull after classification fixture",
+      "pass": true,
+      "detail": "returned=1"
+    },
+    {
+      "test": "C claimedtype updated to SN II",
+      "pass": true,
+      "detail": "II"
+    },
+    {
+      "test": "C claimedtype is II-family",
+      "pass": true,
+      "detail": "II"
+    },
+    {
+      "test": "C alias list present",
+      "pass": true,
+      "detail": [
+        "2025e2everify",
+        "AT2025e2ealias",
+        "ZTF25e2everify",
+        "AT2025e2everify",
+        "SN2025e2everify",
+        "AT 2025e2everify"
+      ]
+    },
+    {
+      "test": "C alias AT2025e2ealias resolves",
+      "pass": true,
+      "detail": [
+        "2025e2everify",
+        "AT2025e2ealias",
+        "ZTF25e2everify",
+        "AT2025e2everify",
+        "SN2025e2everify",
+        "AT 2025e2everify"
+      ]
+    },
+    {
+      "test": "C event page HTTP 200",
+      "pass": true,
+      "detail": 200
+    },
+    {
+      "test": "C event page shows II",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "test": "C homepage still serves",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "test": "C catalog still serves",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "test": "C catalog lists II for event",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "test": "F 429 then recover returns rows",
+      "pass": true,
+      "detail": "n=1 elapsed=5.0s"
+    },
+    {
+      "test": "F pending detectable",
+      "pass": true,
+      "detail": [
+        "AT2025e2everify"
+      ]
+    },
+    {
+      "test": "F recover_pending republishes",
+      "pass": true,
+      "detail": {
+        "items": 1,
+        "overlay_path": "/data/sne-runtime/published-updates.min.json",
+        "upserted": 1,
+        "overlay_size": 1,
+        "published_names": [
+          "AT2025e2everify"
+        ],
+        "state": "published",
+        "recovered": 1
+      }
+    },
+    {
+      "test": "F discovery priority held during ingest",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "test": "F backfill waited for discovery",
+      "pass": true,
+      "detail": "waited=2.02s"
+    },
+    {
+      "test": "F failed publish remains explicit",
+      "pass": true,
+      "detail": "failed"
+    },
+    {
+      "test": "T crash-at-publishing raises",
+      "pass": true,
+      "detail": "SNE_PUBLISH_CRASH_AFTER=publishing"
+    },
+    {
+      "test": "T after publishing-crash status is publishing/pending/failed",
+      "pass": true,
+      "detail": "publishing"
+    },
+    {
+      "test": "T after publishing-crash not falsely published",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "test": "T recover after publishing-crash \u2192 published",
+      "pass": true,
+      "detail": {
+        "items": 1,
+        "overlay_path": "/data/sne-runtime/published-updates.min.json",
+        "upserted": 1,
+        "overlay_size": 1,
+        "published_names": [
+          "AT2025e2everify"
+        ],
+        "state": "published",
+        "recovered": 1
+      }
+    },
+    {
+      "test": "T sqlite-fail returns failed state",
+      "pass": true,
+      "detail": "injected SQLite/catalog publication failure"
+    },
+    {
+      "test": "T sqlite-fail leaves publish_status=failed",
+      "pass": true,
+      "detail": "failed"
+    },
+    {
+      "test": "T sqlite-fail does not claim published",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "test": "T event JSON intact after sqlite-fail",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "test": "T automatic retry after sqlite-fail \u2192 published",
+      "pass": true,
+      "detail": {
+        "items": 1,
+        "overlay_path": "/data/sne-runtime/published-updates.min.json",
+        "upserted": 1,
+        "overlay_size": 1,
+        "published_names": [
+          "AT2025e2everify"
+        ],
+        "state": "published",
+        "recovered": 1
+      }
+    },
+    {
+      "test": "T crash-at-pending raises",
+      "pass": true,
+      "detail": "SNE_PUBLISH_CRASH_AFTER=pending"
+    },
+    {
+      "test": "T pending marker durable after crash",
+      "pass": true,
+      "detail": "pending"
+    },
+    {
+      "test": "T recover after pending-crash",
+      "pass": true,
+      "detail": {
+        "error": null,
+        "fingerprint": {
+          "mtime_ns": 1793165813197832004,
+          "path": "/data/astrocats/astrocats/supernovae/output/sne-2025-2029/AT2025e2everify.json",
+          "sha1": "39bec0700f5dcedf8cd19612e9e961eaf4829477",
+          "size": 4262
+        },
+        "generation": 66,
+        "ingest_status": "committed",
+        "ingested_at": 1793165822.7390053,
+        "name": "AT2025e2everify",
+        "publish_details": {
+          "upserted": 1
+        },
+        "publish_status": "published",
+        "published_at": 1793165822.8320138,
+        "updated_at": 1793165822.8320813
+      }
+    },
+    {
+      "test": "S pull with spectra enabled",
+      "pass": true,
+      "detail": "returned=1"
+    },
+    {
+      "test": "S spectra ingested from fixture",
+      "pass": true,
+      "detail": "n_spectra=1"
+    },
+    {
+      "test": "S still published after spectra enrich",
+      "pass": true,
+      "detail": "published"
+    },
+    {
+      "test": "S pull survives spectra provider failure",
+      "pass": true,
+      "detail": "returned=1"
+    },
+    {
+      "test": "S photometry present despite spectra failure",
+      "pass": true,
+      "detail": "n_photo=5"
+    },
+    {
+      "test": "S publication not blocked by spectra failure",
+      "pass": true,
+      "detail": "published"
+    },
+    {
+      "test": "I test_no_fabrication",
+      "pass": true,
+      "detail": " m_current equals fitted value: got 16.2\n  [PASS] event fit: magnitude_kind is event_fit_predicted: got 'event_fit_predicted'\n  [PASS] ancient Ia: m_current is None (past 300d domain): got None t_rest=5522.6\n  [PASS] ancient Ia: notice states no reliable current brightness estimate\n  [PASS] 1-point stub needs enrich\n  [PASS] empty photo needs enrich\n  [PASS] rich multi-epoch with spectra does not need enrich\n  [PASS] multi-epoch without spectra still needs enrich\n\n=== 48/48 passed, 0 failed ===\n"
+    },
+    {
+      "test": "I audit_data_integrity sample",
+      "pass": true,
+      "detail": "=== DATA INTEGRITY AUDIT ===\nevents audited      : 50\nparse errors        : 0\nevents with issues  : 0\nevents clean        : 50\n\nRESULT: CLEAN - no fabricated claims detected\n"
+    },
+    {
+      "test": "I rendered page has no obvious fabrication phrases",
+      "pass": true,
+      "detail": 200
+    },
+    {
+      "test": "I quarantine policy importable / no silent promote required",
+      "pass": true,
+      "detail": "candidate_pts=0"
+    },
+    {
+      "test": "P cold-ish homepage samples recorded",
+      "pass": true,
+      "detail": {
+        "n": 5,
+        "p50": 0.6,
+        "p95": 0.7,
+        "max": 7.2
+      }
+    },
+    {
+      "test": "P homepage cached p95 < 300ms",
+      "pass": true,
+      "detail": {
+        "n": 30,
+        "p50": 0.6,
+        "p95": 0.7,
+        "max": 0.8
+      }
+    },
+    {
+      "test": "P event cached p95 < 500ms",
+      "pass": true,
+      "detail": {
+        "n": 20,
+        "p50": 1.4,
+        "p95": 1.7,
+        "max": 3.5
+      }
+    },
+    {
+      "test": "P catalog p95 recorded",
+      "pass": true,
+      "detail": {
+        "n": 15,
+        "p50": 13.9,
+        "p95": 20.8,
+        "max": 1704.4
+      }
+    },
+    {
+      "test": "P background publish during load",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "test": "P 20 concurrent homepage during publish p95 < 2000ms",
+      "pass": true,
+      "detail": {
+        "n": 20,
+        "p50": 11.4,
+        "p95": 14.0,
+        "max": 14.2
+      }
+    },
+    {
+      "test": "P zero HTTP 5xx in sample",
+      "pass": true,
+      "detail": [
+        200,
+        200,
+        200,
+        200
+      ]
+    },
+    {
+      "test": "P healthz revision captured",
+      "pass": true,
+      "detail": {
+        "status": "ok",
+        "uptime_seconds": 70.9,
+        "revision": "e2e-local"
+      }
+    }
+  ],
+  "extra": {
+    "docker": "1",
+    "A": {
+      "lag": {
+        "provider_to_file_s": 1.3,
+        "file_to_publish_s": 0.0,
+        "provider_to_ui_s": 1.3,
+        "within_60s_of_commit": true
+      },
+      "publication_state": {
+        "error": null,
+        "fingerprint": {
+          "mtime_ns": 1793165808992832002,
+          "path": "/data/astrocats/astrocats/supernovae/output/sne-2025-2029/AT2025e2everify.json",
+          "sha1": "f4b0316d6275d9b4ebe89e48120fc6d177c72042",
+          "size": 4188
+        },
+        "generation": 52,
+        "ingest_status": "committed",
+        "ingested_at": 1793165809.0827703,
+        "name": "AT2025e2everify",
+        "publish_details": {
+          "upserted": 1
+        },
+        "publish_status": "published",
+        "published_at": 1793165809.1369216,
+        "updated_at": 1793165809.136989
+      }
+    },
+    "B": {
+      "phot_before": 5,
+      "phot_after": 5
+    },
+    "C": {
+      "claimedtype": "II",
+      "aliases": [
+        "2025e2everify",
+        "AT2025e2ealias",
+        "ZTF25e2everify",
+        "AT2025e2everify",
+        "SN2025e2everify",
+        "AT 2025e2everify"
+      ]
+    }
+  },
+  "unverified_assumptions": [
+    "CDN / TLS / reverse-proxy production edge not simulated in Compose",
+    "Browser client caching not measured (server TTFB only)",
+    "Historical 2025 backfill corpus is independent of this E2E fixture volume"
+  ],
+  "environment": {
+    "SNE_E2E_DOCKER": "1",
+    "SNE_DATA_DIR": "/data/astrocats/astrocats/supernovae/output",
+    "SNE_RUNTIME_DIR": "/data/sne-runtime"
+  }
+}
