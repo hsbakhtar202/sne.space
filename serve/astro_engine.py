@@ -583,18 +583,9 @@ def extract_photometry_peaks(
             "single_epoch": False,
         }
 
-    try:
-        from ingest.association_policy import is_candidate_point
-    except Exception:  # noqa: BLE001
-        def is_candidate_point(_p):  # type: ignore
-            return False
-
     valid_pts = []
     for p in photometry:
         if not isinstance(p, dict):
-            continue
-        # Quarantined / unverified associations do not define catalog peak.
-        if is_candidate_point(p):
             continue
         is_uplim = bool(p.get("upperlimit", False)) or str(p.get("magnitude", "")).startswith(">")
         if is_uplim:
@@ -626,9 +617,7 @@ def extract_photometry_peaks(
             "single_epoch": False,
         }
 
-    # Filter out archival/host alerts >60d before discovery.
-    # If EVERY detection is pre-discovery archival, do not promote those points
-    # to an outburst peak — return an empty peak instead of a host-variability epoch.
+    # Filter out archival/host alerts >60d before discovery if outburst-era points exist
     candidate_pts = valid_pts
     if discover_mjd is not None:
         outburst_pts = [
@@ -637,18 +626,6 @@ def extract_photometry_peaks(
         ]
         if outburst_pts:
             candidate_pts = outburst_pts
-        else:
-            return {
-                "maxappmag": "—",
-                "maxdate": "—",
-                "maxband": "—",
-                "maxabsmag": "—",
-                "maxabsmag_dered": "—",
-                "is_prepeak": False,
-                "num_detections": 0,
-                "single_epoch": False,
-                "all_pre_discovery": True,
-            }
 
     # Minimum magnitude is maximum brightness in astronomical magnitude scale
     brightest = min(candidate_pts, key=lambda x: x["mag"])
@@ -731,7 +708,9 @@ def enrich_transient_astrophysics(name: str, meta: dict, allow_network: bool = F
     dist_mod = cosmo.get("dist_mod")
     da_mpc = cosmo.get("da_mpc")
 
-    # 3. Derive Recession Velocity if missing
+    # 3. Derive redshift Doppler-equivalent velocity if missing.
+    # This is NOT special-relativistic motion through space, and NEVER ejecta speed.
+    # Convention: v = c*((1+z)^2-1)/((1+z)^2+1)
     if z_val is not None and not meta.get("velocity"):
         v_kms = cosmo.get("velocity_kms", 0.0)
         meta["velocity"] = [
@@ -739,7 +718,9 @@ def enrich_transient_astrophysics(name: str, meta: dict, allow_network: bool = F
                 "value": f"{v_kms:,.0f}",
                 "derived": True,
                 "u_value": "km/s",
-                "kind": "heliocentric",
+                "kind": "redshift_doppler_equivalent",
+                "convention": "v=c*((1+z)^2-1)/((1+z)^2+1)",
+                "source": "spectroscopic redshift (Doppler-equivalent; not peculiar/ejecta velocity)",
             }
         ]
 
@@ -833,13 +814,7 @@ def enrich_transient_astrophysics(name: str, meta: dict, allow_network: bool = F
             }
         ]
     elif pre_discovery_artifact and disc_raw:
-        # Prefer discovery epoch over a cleared/empty peak when all photometry
-        # was archival host variability before discovery.
-        meta["maxdate"] = [{"value": str(disc_raw), "derived": True, "replaced_pre_discovery": True}]
-        if peaks.get("all_pre_discovery") and isinstance(meta.get("maxappmag"), list) and meta["maxappmag"]:
-            # Drop the archival-host "peak" magnitude that predated discovery.
-            if isinstance(meta["maxappmag"][0], dict) and meta["maxappmag"][0].get("derived"):
-                meta["maxappmag"] = []
+        meta["maxdate"] = [{"value": str(disc_raw), "derived": True}]
 
     if (not meta.get("maxabsmag") or pre_discovery_artifact) and peaks["maxabsmag"] != "—":
         meta["maxabsmag"] = [

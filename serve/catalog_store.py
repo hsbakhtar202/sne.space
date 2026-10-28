@@ -489,7 +489,44 @@ class CatalogStore:
                 except sqlite3.Error:
                     fts_enabled = False
 
-                seen: set[str] = set()
+                # Source merge policy (not naive first/last wins):
+                #   primary catalog   → seed
+                #   recent-catalog    → insert/update names absent from primary
+                #                      (TNS stubs refresh photo_count after enrich,
+                #                      but must not overwrite historical primary rows)
+                #   published-updates → always replace (enriched event JSON wins)
+                # First-wins across all sources previously let recent stubs
+                # (photolink=1) permanently shadow published-updates on rebuild.
+                by_name: dict[str, tuple] = {}
+                primary_names: set[str] = set()
+
+                def _src_kind(path: Path) -> str:
+                    n = path.name.lower()
+                    if "published-updates" in n:
+                        return "published"
+                    if "recent-catalog" in n:
+                        return "recent"
+                    return "primary"
+
+                for src in sources:
+                    if not src.is_file():
+                        continue
+                    kind = _src_kind(src)
+                    for item in _iter_json_array(src):
+                        row = _row_from_catalog_item(item) if isinstance(item, dict) else None
+                        if row is None:
+                            continue
+                        name = row[0]
+                        if kind == "published":
+                            by_name[name] = row
+                        elif kind == "recent":
+                            if name not in primary_names:
+                                by_name[name] = row
+                        else:
+                            if name not in by_name:
+                                by_name[name] = row
+                                primary_names.add(name)
+
                 pending_events: list[tuple] = []
                 pending_keys: list[tuple] = []
                 key_len_rows: list[tuple] = []
@@ -526,43 +563,30 @@ class CatalogStore:
                         pending_trigrams.clear()
                     conn.commit()
 
-                for src in sources:
-                    if not src.is_file():
-                        continue
-                    for item in _iter_json_array(src):
-                        row = _row_from_catalog_item(item) if isinstance(item, dict) else None
-                        if row is None:
-                            continue
-                        name = row[0]
-                        if name in seen:
-                            continue
-                        seen.add(name)
-                        pending_events.append(row)
+                for name, row in by_name.items():
+                    pending_events.append(row)
 
-                        key_rows = set()
-                        for k in (
-                            _norm_key(name),
-                            _norm_key(name).replace(" ", ""),
-                        ):
-                            if k:
-                                key_rows.add((k, name))
-                        for alias in json.loads(row[1]):
-                            ak = _norm_key(alias)
-                            if ak:
-                                key_rows.add((ak, name))
-                                key_rows.add((ak.replace(" ", ""), name))
-                        pending_keys.extend(sorted(key_rows))
-                        # File each key by length for cheap typo lookup. A miss
-                        # scans ~90k keys at most instead of 270k, and typical
-                        # lengths are far smaller.
-                        for k, n in key_rows:
-                            key_len_rows.append((k, n, len(k)))
-                            if fts_enabled and len(k) >= 3:
-                                pending_trigrams.append((k, n))
+                    key_rows = set()
+                    for k in (
+                        _norm_key(name),
+                        _norm_key(name).replace(" ", ""),
+                    ):
+                        if k:
+                            key_rows.add((k, name))
+                    for alias in json.loads(row[1]):
+                        ak = _norm_key(alias)
+                        if ak:
+                            key_rows.add((ak, name))
+                            key_rows.add((ak.replace(" ", ""), name))
+                    pending_keys.extend(sorted(key_rows))
+                    for k, n in key_rows:
+                        key_len_rows.append((k, n, len(k)))
+                        if fts_enabled and len(k) >= 3:
+                            pending_trigrams.append((k, n))
 
-                        count += 1
-                        if len(pending_events) >= 2000:
-                            _flush()
+                    count += 1
+                    if len(pending_events) >= 2000:
+                        _flush()
 
                 _flush()
 

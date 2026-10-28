@@ -1564,10 +1564,10 @@ _CATALOG_STORE_SOURCES: list[Path] = []
 def _catalog_source_files() -> list[Path]:
     """Catalog JSON array sources, most authoritative first.
 
-    ``published-updates.min.json`` is applied *after* primary via
-    ``CatalogStore.upsert_catalog_items`` (and live-table name merge). It is
-    listed here so fingerprint/staleness tracks overlay mtime, but full rebuild
-    still uses first-wins — upserts keep updated rows current without rebuild.
+    ``published-updates.min.json`` is listed last so a full CatalogStore rebuild
+    uses last-wins and enriched photolink/maxappmag replace the TNS stub rows
+    from ``recent-catalog.min.json``. Live ``upsert_catalog_items`` still updates
+    rows between rebuilds; fingerprint/staleness tracks overlay mtime.
     """
     out: list[Path] = []
     primary = DATA_OUT / "catalog.min.json"

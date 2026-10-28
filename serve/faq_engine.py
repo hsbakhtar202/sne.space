@@ -154,8 +154,12 @@ def get_lookback_geological_era(ly_millions: Optional[float]) -> str:
         return f"{ly_millions:.1f} million years ago during the Jurassic period when giant sauropod dinosaurs dominated the continents"
     elif ly_millions < 252.0:
         return f"{ly_millions:.1f} million years ago during the Triassic period as the earliest dinosaurs and mammals were just evolving"
-    else:
+    elif ly_millions < 541.0:
         return f"{ly_millions:.1f} million years ago during the Paleozoic era, long before the first dinosaurs appeared on Earth"
+    elif ly_millions < 1000.0:
+        return f"{ly_millions:.1f} million years ago during the Neoproterozoic, hundreds of millions of years before complex animal life diversified"
+    else:
+        return f"{ly_millions:.1f} million years ago in deep Precambrian time, well before multicellular animals dominated Earth"
 
 
 def calculate_solar_luminosities(max_abs_mag: str) -> str | None:
@@ -259,70 +263,85 @@ def analyze_spectra(meta: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def analyze_velocity(meta: Dict[str, Any], claimedtype: str) -> Dict[str, Any]:
-    """Extract or model blast wave expansion velocities and relativistic kinematics."""
+    """Return measured ejecta velocity only — never cosmological recession velocity.
+
+    ``meta["velocity"]`` may hold a derived redshift Doppler-equivalent speed
+    written by enrichment (kind=redshift_doppler_equivalent / recession /
+    heliocentric / derived). That is unrelated to blast-wave ejecta speed, which
+    must come from Doppler-shifted spectral lines. Class-typical means are not
+    returned as object measurements.
+    """
+    _empty = {
+        "is_measured": False,
+        "km_s": None,
+        "pct_c": None,
+        "earths_per_sec": None,
+        "mach": None,
+        "class_typical_kms": None,
+    }
+    _cosmo_kinds = {
+        "heliocentric",
+        "recession",
+        "redshift_doppler_equivalent",
+        "cosmological",
+        "hubble",
+        "cmb",
+    }
+
     vel_raw = meta.get("velocity", [])
     vel_val = None
     if isinstance(vel_raw, list) and vel_raw:
         first = vel_raw[0]
-        v_str = first.get("value", "") if isinstance(first, dict) else str(first)
-        try:
-            vel_val = float(re.sub(r"[^\d.-]", "", v_str))
-        except Exception:
-            pass
+        if isinstance(first, dict):
+            kind = str(first.get("kind") or "").lower().strip()
+            if first.get("derived") or kind in _cosmo_kinds:
+                vel_val = None
+            else:
+                v_str = first.get("value", "")
+                try:
+                    vel_val = float(re.sub(r"[^\d.-]", "", str(v_str)))
+                except Exception:
+                    vel_val = None
+        else:
+            try:
+                vel_val = float(re.sub(r"[^\d.-]", "", str(first)))
+            except Exception:
+                vel_val = None
     elif isinstance(vel_raw, (int, float)):
         vel_val = float(vel_raw)
-    elif isinstance(vel_raw, str):
+    elif isinstance(vel_raw, str) and vel_raw.strip():
         try:
             vel_val = float(re.sub(r"[^\d.-]", "", vel_raw))
         except Exception:
-            pass
+            vel_val = None
 
     is_measured = vel_val is not None and vel_val > 0
-
     if not is_measured:
+        # Optional class-typical scale for prose context only — never as a measurement.
         c_low = (claimedtype or "").lower().strip()
-        unclass = c_low in {"", "—", "none", "unknown", "unclassified", "at", "other", "candidate"}
-        if unclass:
-            # No class-characteristic velocity may be invented for unclassified events.
-            return {
-                "is_measured": False,
-                "km_s": None,
-                "pct_c": None,
-                "earths_per_sec": None,
-                "mach": None,
-            }
-        if "ia" in c_low:
-            vel_val = 11000.0  # Type Ia ~11,000 km/s
+        class_typical = None
+        if "ia" in c_low and "ii" not in c_low:
+            class_typical = 11000.0
         elif "ic-bl" in c_low or "broad" in c_low:
-            vel_val = 22000.0  # Broad-line Ic ~22,000 km/s
+            class_typical = 22000.0
         elif "ib" in c_low or "ic" in c_low:
-            vel_val = 12500.0  # Stripped-envelope ~12,500 km/s
+            class_typical = 12500.0
         elif "slsn" in c_low:
-            vel_val = 15000.0  # Superluminous ~15,000 km/s
+            class_typical = 15000.0
         elif "ii" in c_low:
-            vel_val = 8500.0   # Standard Type II ~8,500 km/s
-        else:
-            # Unknown but named type without a calibrated class mean: refuse to invent.
-            return {
-                "is_measured": False,
-                "km_s": None,
-                "pct_c": None,
-                "earths_per_sec": None,
-                "mach": None,
-            }
+            class_typical = 8500.0
+        out = dict(_empty)
+        out["class_typical_kms"] = class_typical
+        return out
 
     c_light = 299792.458  # km/s
-    pct_c = (vel_val / c_light) * 100.0
-    earth_diam = 12742.0  # km
-    earths_per_sec = vel_val / earth_diam
-    mach = vel_val / 0.343  # Mach number (speed of sound in air = 0.343 km/s)
-
     return {
-        "is_measured": is_measured,
+        "is_measured": True,
         "km_s": vel_val,
-        "pct_c": pct_c,
-        "earths_per_sec": earths_per_sec,
-        "mach": mach,
+        "pct_c": (vel_val / c_light) * 100.0,
+        "earths_per_sec": vel_val / 12742.0,
+        "mach": vel_val / 0.343,
+        "class_typical_kms": None,
     }
 
 
@@ -349,7 +368,13 @@ def analyze_sources(meta: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def analyze_cosmology(redshift_str: str, lumdist_str: str) -> Dict[str, Any]:
-    """Compute recession velocity and cosmic lookback metrics."""
+    """Compute recession velocity, luminosity distance, and lookback time separately.
+
+    Luminosity distance (converted to Mly) is *not* light-travel time. Lookback
+    time comes from flat ΛCDM integration and is reported independently.
+    Recession velocity uses the same relativistic Doppler-equivalent convention
+    as ``astro_engine.calc_cosmology`` (not bare ``c*z``).
+    """
     z = None
     if redshift_str != "—":
         try:
@@ -358,11 +383,23 @@ def analyze_cosmology(redshift_str: str, lumdist_str: str) -> Dict[str, Any]:
             pass
 
     recession_km_s = None
-    if z is not None:
-        recession_km_s = round(z * 299792.458, 1)
+    lookback_myr = None
+    if z is not None and z > 0:
+        try:
+            try:
+                from astro_engine import calc_cosmology
+            except ImportError:
+                from serve.astro_engine import calc_cosmology
+            cos = calc_cosmology(z)
+            recession_km_s = cos.get("velocity_kms")
+            lookback_myr = cos.get("lookback_myr")
+        except Exception:
+            # Fallback: relativistic Doppler-equivalent velocity only.
+            opz = 1.0 + z
+            recession_km_s = round(299792.458 * (opz * opz - 1.0) / (opz * opz + 1.0), 1)
 
     mpc = None
-    ly_millions = None
+    ly_millions = None  # luminosity-distance Mly — not lookback
     if lumdist_str != "—":
         try:
             mpc = float(re.sub(r"[^\d.]", "", lumdist_str))
@@ -375,6 +412,7 @@ def analyze_cosmology(redshift_str: str, lumdist_str: str) -> Dict[str, Any]:
         "recession_km_s": recession_km_s,
         "mpc": mpc,
         "ly_millions": ly_millions,
+        "lookback_myr": lookback_myr,
     }
 
 
@@ -408,7 +446,10 @@ def generate_supernova_faqs(
     vel_info = analyze_velocity(meta, claimedtype)
     src_info = analyze_sources(meta)
     const_name, const_eng = identify_constellation(ra_deg, dec_deg)
-    era_context = get_lookback_geological_era(cosmo["ly_millions"])
+    # Geological era uses lookback time (Myr), never luminosity-distance Mly.
+    era_context = get_lookback_geological_era(
+        cosmo.get("lookback_myr") if cosmo.get("lookback_myr") is not None else None
+    )
     solar_lum = calculate_solar_luminosities(maxabsmag)
 
     # Aliases
@@ -419,16 +460,23 @@ def generate_supernova_faqs(
         if val and val != name:
             aliases.append(val)
 
-    # Foreground dust
+    # Foreground dust — preserve provenance from enrichment when present
     ebv_val = "—"
+    ebv_source = None
     ebv_raw = meta.get("ebv", [])
     if isinstance(ebv_raw, list) and ebv_raw:
-        ebv_val = str(ebv_raw[0].get("value", "—") if isinstance(ebv_raw[0], dict) else ebv_raw[0])
+        first_ebv = ebv_raw[0]
+        if isinstance(first_ebv, dict):
+            ebv_val = str(first_ebv.get("value", "—"))
+            ebv_source = first_ebv.get("source_name") or first_ebv.get("source")
+        else:
+            ebv_val = str(first_ebv)
     elif isinstance(ebv_raw, str):
         ebv_val = ebv_raw
 
     c_lower = claimedtype.lower()
-    host_name = host if host != "—" else "an uncataloged host galaxy"
+    host_identified = host not in ("—", "", "none", "None", None)
+    host_name = host if host_identified else None
     disc_who = discoverer if discoverer != "—" else "an automated robotic transient sky survey"
 
     # =========================================================================
@@ -436,43 +484,43 @@ def generate_supernova_faqs(
     # =========================================================================
 
     # 1. Type & Progenitor Physics
-    if "ia" in c_lower:
+    if "ia" in c_lower and "ii" not in c_lower:
         type_ans = (
-            f"{name} is classified as a <strong>Type Ia Supernova</strong>—the complete thermonuclear detonation "
-            f"of an ultra-dense carbon-oxygen white dwarf star. In a binary system, the white dwarf siphoned material from "
-            f"a companion star (or merged with a second white dwarf) until reaching the Chandrasekhar limit (~1.4 solar masses). "
-            f"At this critical threshold, uncontrollable carbon and oxygen fusion detonated through the stellar interior in less than "
-            f"a second with supersonic speeds exceeding 10,000 km/s. Because their peak absolute luminosities follow remarkably consistent "
-            f"empirical relations (the Phillips relation), Type Ia supernovae serve as 'Standard Candles' for measuring cosmological distances "
-            f"and the accelerated expansion of the universe."
+            f"{name} is spectroscopically classified as a <strong>Type Ia supernova</strong>, consistent with a thermonuclear "
+            f"explosion involving a carbon-oxygen white dwarf. Type Ia events are used as distance indicators via empirical "
+            f"relations such as the Phillips relation, but that cosmological utility does not identify which binary channel "
+            f"(single-degenerate accretion, double-degenerate merger, or sub-Chandrasekhar detonation) produced "
+            f"<em>this</em> object."
         )
-    elif "iip" in c_lower or "ii-p" in c_lower or ("ii" in c_lower and "iin" not in c_lower and "iib" not in c_lower):
+    elif "tde" in c_lower or "tidal" in c_lower:
         type_ans = (
-            f"{name} is a <strong>Type II Core-Collapse Supernova</strong>, marking the death of an evolved red supergiant star "
-            f"(with an initial mass between 8 and 25 times our Sun) that preserved its vast outer hydrogen envelope. Having exhausted "
-            f"all nuclear fuel through successive stages of fusion (hydrogen, helium, carbon, neon, oxygen, and silicon), its inert iron core "
-            f"could no longer withstand gravitational pressure. In less than a quarter of a second, the iron core collapsed into nuclear density, "
-            f"triggering a catastrophic outward shockwave that blasted the star's outer layers into interstellar space."
-        )
-    elif "ib" in c_lower or "ic" in c_lower or "iib" in c_lower:
-        type_ans = (
-            f"{name} is a <strong>Stripped-Envelope Supernova (Type {claimedtype})</strong>. It originated from an extremely massive star "
-            f"(such as a Wolf-Rayet star) that violently shed its outer hydrogen (and in Type Ic, helium) layers via intense stellar winds "
-            f"or binary mass-transfer stripping prior to core collapse. Because the outer envelopes were lost before detonation, its spectra "
-            f"reveal the inner helium, carbon, and oxygen mantle moving at extreme velocities."
+            f"{name} is classified as a <strong>tidal disruption event (TDE)</strong>: a star was torn apart by a "
+            f"supermassive black hole's tidal field. This is not a stellar core-collapse or thermonuclear supernova; "
+            f"radioactive ⁵⁶Ni-powered light-curve models for supernovae do not apply by default."
         )
     elif "slsn" in c_lower or "superluminous" in c_lower:
         type_ans = (
-            f"{name} is a rare <strong>Superluminous Supernova (SLSN)</strong>, radiating 10 to 100 times more total light than a standard "
-            f"core-collapse supernova. Such titanic explosions are thought to be powered by an internal central engine—such as a newborn, "
-            f"rapidly spinning millisecond magnetar with a magnetic field exceeding 10¹⁴ Gauss, or the violent collision of expanding blast "
-            f"waves with dense circumstellar gas shells ejected shortly before the star died."
+            f"{name} is classified as a <strong>superluminous supernova (SLSN)</strong>. Proposed power sources include "
+            f"magnetar spin-down and ejecta–CSM interaction; which engine applies to this object is not established from "
+            f"the classification label alone."
+        )
+    elif "iip" in c_lower or "ii-p" in c_lower or ("ii" in c_lower and "iin" not in c_lower and "iib" not in c_lower):
+        type_ans = (
+            f"{name} is classified as a <strong>Type II supernova</strong>, consistent with core collapse of a massive star "
+            f"that retained hydrogen in its outer envelope. Typical progenitor mass ranges quoted for the class are "
+            f"model expectations, not a measured mass for this star."
+        )
+    elif "ib" in c_lower or "ic" in c_lower or "iib" in c_lower:
+        type_ans = (
+            f"{name} is a <strong>stripped-envelope supernova (Type {claimedtype})</strong>, consistent with core collapse "
+            f"after loss of the outer hydrogen (and for Ic, helium) envelope. The specific progenitor channel for this "
+            f"object is not uniquely determined by the spectral type alone."
         )
     elif c_lower and c_lower not in ("unclassified", "unknown", "—", "none", "at", "other", "candidate"):
         type_ans = (
-            f"{name} is cataloged as a <strong>Type {claimedtype} transient</strong>. It represents a catastrophic stellar explosion "
-            f"marking the terminal evolutionary endpoint of a star, liberating immense radiant energy and dispersing newly synthesized "
-            f"chemical elements into the host galaxy's interstellar medium."
+            f"{name} is cataloged as a <strong>Type {claimedtype} transient</strong>. Mechanism-specific claims "
+            f"(progenitor mass, nickel yield, remnant type) require more than this label and are not asserted here as "
+            f"object-specific measurements."
         )
     else:
         # Unclassified / unknown. Asserting a physical mechanism here would state a
@@ -494,27 +542,31 @@ def generate_supernova_faqs(
         "answer": type_ans,
     })
 
-    # 2. Pre-Explosion Evolutionary History
+    # 2. Pre-Explosion Evolutionary History — competing models, not object biography
     if "ia" in c_lower:
         pre_ans = (
-            f"The progenitor of {name} began billions of years ago as a modest intermediate-mass star (1 to 8 solar masses). After exhausting "
-            f"its core hydrogen and helium, it expelled its outer envelope as a glowing planetary nebula, leaving behind a dense carbon-oxygen "
-            f"white dwarf the size of Earth but with the mass of the Sun. For millions or billions of years, it orbited in a close binary system, "
-            f"gradually accreting hydrogen- and helium-rich gas from its stellar companion until gravitational compression pushed its core temperature "
-            f"past the threshold of runaway carbon ignition."
+            f"<strong>No unique progenitor history is established for {name}.</strong> "
+            f"Type Ia spectral classification is consistent with a thermonuclear explosion of a carbon-oxygen white dwarf, "
+            f"but it does not identify which binary pathway produced this event. Leading models include "
+            f"single-degenerate accretion toward the Chandrasekhar mass, double-degenerate white-dwarf mergers, "
+            f"and sub-Chandrasekhar helium-shell detonations. Distinguishing these requires population statistics, "
+            f"early-time spectra, or remnant searches that are not established for this individual object. "
+            f"Claims that this white dwarf accreted for millions of years, or that it approached 1.4 solar masses, "
+            f"are general theory—not documented facts about {name}."
         )
     elif c_lower and c_lower not in ("unclassified", "unknown", "—", "none", "at", "other", "candidate"):
         pre_ans = (
-            f"Before detonating as {name}, the progenitor lived a short, furious stellar life of roughly 10 to 30 million years. In its interior, "
-            f"temperatures and pressures reached astronomical extremes, burning through nuclear fuel in an 'onion-skin' arrangement of concentric shells: "
-            f"hydrogen burning into helium for millions of years, helium into carbon for hundreds of thousands of years, carbon into neon for centuries, "
-            f"oxygen into silicon for months, and silicon fusing into iron in mere days! Once iron filled the core, fusion could no longer extract energy, "
-            f"dooming the star to sudden gravitational collapse."
+            f"<strong>The specific progenitor of {name} has not been observed.</strong> "
+            f"Events of this spectroscopic class are generally associated with massive-star core collapse after "
+            f"successive nuclear burning stages (hydrogen → helium → carbon → neon → oxygen → silicon → iron). "
+            f"Typical lifetimes of such progenitors are tens of millions of years, but that is a class expectation—"
+            f"not a measured age or evolutionary track for this star. No pre-explosion imaging identification is "
+            f"cited in the available record for {name}."
         )
     else:
         pre_ans = (
             f"The progenitor of {name} cannot be identified without a classification. Stellar evolutionary history depends entirely on the "
-            f"explosion type: a Type Ia event would require a carbon-oxygen white dwarf accreting from a binary companion over billions of years, "
+            f"explosion type: a Type Ia event would require a carbon-oxygen white dwarf in a binary system, "
             f"whereas a core-collapse event would require a massive star exhausting its fuel within tens of millions of years. "
             f"These are mutually exclusive histories that produce different spectra and light curves. No progenitor or precursor has been "
             f"reported for this transient in the available literature."
@@ -530,13 +582,30 @@ def generate_supernova_faqs(
     # =========================================================================
 
     # 3. Cosmic Distance & Lookback Time
+    # Luminosity distance ≠ light-travel distance; keep them separate.
     if redshift != "—" or lumdist != "—":
+        lb = cosmo.get("lookback_myr")
+        if lb is not None and era_context and era_context != "deep cosmic time":
+            lookback_clause = (
+                f" Under a flat ΛCDM cosmology (H₀≈70 km/s/Mpc, Ωₘ≈0.3), the corresponding "
+                f"<strong>lookback time is ≈{lb:.0f} Myr</strong> — when the light set out "
+                f"<strong>{era_context}</strong>. Luminosity distance is larger than the light-travel "
+                f"distance because cosmic expansion stretches the path; the two must not be equated."
+            )
+        elif lb is not None:
+            lookback_clause = (
+                f" The cosmological lookback time at this redshift is ≈<strong>{lb:.0f} Myr</strong> "
+                f"(flat ΛCDM); that elapsed travel time is not equal to the luminosity-distance figure in light-years."
+            )
+        else:
+            lookback_clause = (
+                f" A lookback time is not computed here without a usable redshift; "
+                f"do not interpret the luminosity-distance light-year figure as travel time."
+            )
         dist_ans = (
-            f"{name} is located approximately <strong>{dist_ly_str}</strong> from Earth"
-            + (f" (cosmological redshift z = {redshift}, luminosity distance d_L = {lumdist})" if redshift != "—" else "")
-            + f". Because electromagnetic radiation travels at 299,792 km/s, the photons detected by modern telescopes began their cosmic voyage "
-            f"<strong>{era_context}</strong>. While that light traveled across intergalactic space, Earth's continents shifted and biological evolution "
-            f"shaped the history of our planet."
+            f"{name} has a luminosity distance of approximately <strong>{dist_ly_str}</strong>"
+            + (f" (redshift z = {redshift}, d_L = {lumdist})" if redshift != "—" else "")
+            + f".{lookback_clause}"
         )
     else:
         # No redshift and no luminosity distance -> the distance is simply unknown.
@@ -561,10 +630,14 @@ def generate_supernova_faqs(
         rec_val = cosmo["recession_km_s"]
         red_ans = (
             f"{name} exhibits a measured spectroscopic redshift of <strong>z = {z_val:.4f}</strong>. "
-            f"Under Hubble's Law, this redshift corresponds to an apparent recessional velocity of approximately "
-            f"<strong>{rec_val:,.1f} km/s</strong> away from our Milky Way galaxy. "
-            f"This redshift is not motion through space alone, but the stretching of light waves as the fabric of the universe itself expanded "
-            f"during the millions of years the photons traveled to our telescopes."
+            f"The cockpit reports a user-facing <strong>recession velocity</strong> of "
+            f"<strong>{rec_val:,.1f} km/s</strong>, computed as the "
+            f"<em>redshift Doppler-equivalent</em> "
+            f"v = c·((1+z)²−1)/((1+z)²+1). "
+            f"Cosmological redshift is not generally equivalent to special-relativistic motion through space; "
+            f"this number is a convenient velocity label for z, not a measured peculiar velocity and "
+            f"<strong>not</strong> supernova ejecta speed. "
+            f"Bare c·z (≈{z_val * 299792.458:,.0f} km/s) is a different low-z approximation and is not mixed here."
         )
     else:
         red_ans = (
@@ -627,6 +700,8 @@ def generate_supernova_faqs(
 
     # 6. Total Energy Release & Neutrino Flash
     _unclass = c_lower in ("", "—", "none", "unknown", "unclassified", "at", "other", "candidate")
+    _is_tde = "tde" in c_lower or "tidal" in c_lower
+    _is_slsn = "slsn" in c_lower or "superluminous" in c_lower
     if _unclass:
         energy_ans = (
             f"<strong>The total energy released by {name} is unknown.</strong> "
@@ -634,20 +709,30 @@ def generate_supernova_faqs(
             f"~10⁵¹ ergs mostly as kinetic energy, while a core-collapse event liberates ~10⁵³ ergs of which ~99% escapes "
             f"as neutrinos. Without a spectroscopic classification, neither figure applies to this transient."
         )
-    elif "ia" in c_lower:
+    elif _is_tde:
         energy_ans = (
-            f"The thermonuclear explosion of {name} released approximately <strong>10⁵¹ ergs of energy</strong> (1 Bethe or 1 foe), "
-            f"equivalent to 10²⁸ megatons of TNT! Virtually all of this energy was converted into the kinetic blast wave and the radioactive "
-            f"synthesis of heavy isotopes. Because Type Ia supernovae lack a gravitational core collapse into a neutron star, neutrino emission "
-            f"was minimal (~1%), and the blast converted its full binding energy into the kinetic destruction of the white dwarf."
+            f"<strong>No object-specific energy budget is published for {name}.</strong> "
+            f"Tidal disruption events are powered by accretion onto a supermassive black hole, not by the neutrino burst "
+            f"or ⁵⁶Ni decay that dominate supernova energy discussions. Class-scale estimates must not be quoted as "
+            f"measurements of this event."
+        )
+    elif "ia" in c_lower and "ii" not in c_lower:
+        energy_ans = (
+            f"Type Ia events are typically associated with a kinetic energy scale of order <strong>10⁵¹ ergs</strong>, "
+            f"with little neutrino emission compared to core-collapse. That is a class expectation—"
+            f"<strong>not a calorimetry measurement for {name}</strong>."
+        )
+    elif _is_slsn:
+        energy_ans = (
+            f"SLSN radiated energies can exceed ordinary supernovae by large factors, but the power source "
+            f"(magnetar, CSM interaction, or other) is model-dependent. "
+            f"<strong>No object-specific energy release is published for {name}</strong>."
         )
     else:
         energy_ans = (
-            f"A core-collapse explosion of the scale associated with {name}'s class typically liberates a staggering "
-            f"<strong>10⁵³ ergs of gravitational binding energy</strong>—more energy "
-            f"than our Sun will radiate across its entire 10-billion-year lifespan! Astonishingly, <strong>99% of this titanic energy was emitted "
-            f"within 10 seconds in the form of trillions of nearly massless neutrinos</strong>. Only about 1% (10⁵¹ ergs) drove the physical kinetic "
-            f"blast wave, and a mere 0.01% (10⁴⁹ ergs) was radiated as the visible starlight observed by telescopes."
+            f"Core-collapse events of this broad class are often discussed with a ~10⁵³ erg gravitational binding "
+            f"energy of which ~99% may escape as neutrinos—again a class scale, "
+            f"<strong>not a measured budget for {name}</strong>."
         )
     faqs.append({
         "category": "Explosion Energetics",
@@ -656,25 +741,29 @@ def generate_supernova_faqs(
     })
 
     # 7. Expansion Velocity & Blast Kinematics
-    v_km = vel_info["km_s"]
+    # Never reuse cosmological recession velocity as ejecta speed.
+    v_km = vel_info.get("km_s")
+    class_typ = vel_info.get("class_typical_kms")
     if v_km is None:
+        typical_note = (
+            f" Type {claimedtype} events typically show ejecta speeds of order "
+            f"~{class_typ:,.0f} km/s near maximum, but that class scale is not a measurement of {name}."
+            if class_typ
+            else ""
+        )
         vel_ans = (
             f"<strong>No ejecta velocity is measured for {name}.</strong> "
-            f"Expansion speed is obtained from Doppler shifts of spectral lines (typically thousands of km/s). "
-            f"Without a spectrum—or a classified type that would allow quoting a class-characteristic mean—"
-            f"no numerical blast velocity can be stated for this transient."
+            f"Blast-wave speed is obtained from Doppler shifts of spectral absorption features "
+            f"(e.g. Si II λ6355 for Type Ia), not from cosmological redshift. "
+            f"Any recession velocity derived from z describes Hubble flow, not the explosion debris."
+            f"{typical_note}"
         )
     else:
         v_pct = vel_info["pct_c"]
-        v_mach = vel_info["mach"]
-        v_earths = vel_info["earths_per_sec"]
-        vel_status = "measured spectroscopically" if vel_info["is_measured"] else "characteristic of this supernova class"
         vel_ans = (
-            f"The debris and shockwave of {name} erupted into space at an astounding velocity of approximately "
-            f"<strong>{v_km:,.0f} km/s</strong> ({vel_status}). "
-            f"This corresponds to roughly <strong>{v_pct:.1f}% of the speed of light</strong> (Mach {v_mach:,.0f} in air)! "
-            f"At this blistering speed, the expanding debris shell traverses the entire diameter of planet Earth in just "
-            f"<strong>{1.0 / v_earths:.2f} seconds</strong>, carving a giant bubble in the interstellar medium."
+            f"Spectroscopic line blueshifts imply an ejecta velocity of approximately "
+            f"<strong>{v_km:,.0f} km/s</strong> (~{v_pct:.1f}% of c) for {name}. "
+            f"This is distinct from cosmological recession velocity inferred from redshift."
         )
     faqs.append({
         "category": "Explosion Energetics",
@@ -694,20 +783,35 @@ def generate_supernova_faqs(
             f"but nickel yields and whether a shock-breakout flash occurred depend on the explosion mechanism. "
             f"No spectrum is published for this transient, so no ⁵⁶Ni mass or decay-powered light-curve narrative applies."
         )
-    elif "ia" in c_lower:
+    elif _is_tde:
         engine_ans = (
-            f"The brilliant light curve of {name} is energized by the radioactive decay of heavy isotopes synthesized during detonation. "
-            f"The blast produced approximately <strong>0.5 to 0.7 solar masses of radioactive Nickel-56 (⁵⁶Ni)</strong>. "
-            f"⁵⁶Ni decays with a half-life of <strong>6.075 days</strong> into Cobalt-56 (⁵⁶Co), emitting energetic gamma rays that heat the opaque "
-            f"expanding fireball to power the optical peak. Subsequently, ⁵⁶Co decays into stable Iron-56 (⁵⁶Fe) with a half-life of <strong>77.2 days</strong>, "
-            f"governing the smooth, exponential decline tail observed over the following year."
+            f"<strong>Radioactive ⁵⁶Ni decay is not the default power source for {name}.</strong> "
+            f"As a tidal disruption event, the optical light curve is generally discussed in terms of accretion and "
+            f"circularization physics, not the supernova ⁵⁶Ni → ⁵⁶Co → ⁵⁶Fe chain. "
+            f"No object-specific nickel mass applies."
+        )
+    elif "ia" in c_lower and "ii" not in c_lower:
+        engine_ans = (
+            f"After peak, Type Ia light curves are generally powered by the radioactive chain "
+            f"<strong>⁵⁶Ni → ⁵⁶Co → ⁵⁶Fe</strong> (half-lives ≈6.1 d and ≈77.2 d). "
+            f"Typical Type Ia events synthesize of order half a solar mass of freshly made "
+            f"<strong>Nickel-56</strong> (which later decays into Iron-56); that is a class expectation, "
+            f"<strong>not a measured nickel mass for {name}</strong>. Estimating M(⁵⁶Ni) for this object "
+            f"requires a bolometric light-curve fit that is not published here."
+        )
+    elif _is_slsn:
+        engine_ans = (
+            f"SLSN light curves may be powered by magnetar spin-down, CSM interaction, or (in some models) "
+            f"large ⁵⁶Ni masses. <strong>Which engine powers {name} is not established here</strong>, and no "
+            f"object-specific nickel mass is published."
         )
     else:
         engine_ans = (
-            f"While the initial flash of {name} was driven by shock breakout heating through the stellar envelope, its prolonged visibility over weeks "
-            f"and months was sustained by the radioactive decay of approximately <strong>0.05 to 0.15 solar masses of Nickel-56 (⁵⁶Ni)</strong> forged "
-            f"in the core shock. As ⁵⁶Ni decays into ⁵⁶Co (half-life: 6.1 days) and then into stable ⁵⁶Fe (half-life: 77.2 days), gamma rays and positrons "
-            f"thermalize within the expanding ejecta, preventing the debris from instantly freezing in the vacuum of space."
+            f"Classified core-collapse light curves are often sustained after peak by radioactive "
+            f"<strong>⁵⁶Ni → ⁵⁶Co → ⁵⁶Fe</strong> decay, with typical nickel yields of order "
+            f"0.05–0.15 solar masses—again a class scale, <strong>not a measured yield for {name}</strong>. "
+            f"Shock-breakout heating may dominate the earliest optical flash; without a published "
+            f"bolometric fit, neither nickel mass nor the dominant power source is established for this event."
         )
     faqs.append({
         "category": "Radioactive Engine",
@@ -720,19 +824,25 @@ def generate_supernova_faqs(
     # =========================================================================
 
     # 9. Chemical Elements Synthesized
-    if "ia" in c_lower:
+    if "ia" in c_lower and "ii" not in c_lower:
         elements_ans = (
-            f"As a thermonuclear Type Ia explosion, {name} functioned as a premier cosmic foundry for <strong>iron-peak elements</strong>. "
-            f"The detonation synthesized over <strong>half a solar mass of Iron-56 (⁵⁶Fe)</strong>—the exact element that forms Earth's dense metallic core "
-            f"and binds oxygen in human red blood cells! It also forged substantial quantities of silicon (producing the hallmark Si II λ6355 absorption dip), "
-            f"sulfur, calcium, argon, and titanium, enriching the interstellar clouds that condense into future planetary systems."
+            f"Type Ia explosions are efficient producers of <strong>iron-peak elements</strong> via thermonuclear burning. "
+            f"Models typically yield substantial <strong>⁵⁶Ni</strong> (which decays to stable <strong>⁵⁶Fe</strong>), "
+            f"plus silicon, sulfur, calcium, and related species—consistent with the Si II features used in classification. "
+            f"<strong>No object-specific nucleosynthetic yield has been published for {name}</strong>; "
+            f"asserting that this event synthesized half a solar mass of iron would overstate the evidence."
         )
-    elif "ii" in c_lower or "ib" in c_lower or "ic" in c_lower:
+    elif _is_tde:
         elements_ans = (
-            f"Core-collapse supernovae like {name} are the primary creators of life-sustaining elements in the cosmos. "
-            f"The explosion manufactured and dispersed immense reservoirs of <strong>oxygen</strong> (the single most abundant heavy element in the universe), "
-            f"alongside carbon, nitrogen, neon, magnesium, silicon, sulfur, and calcium (which builds terrestrial bones and teeth). In the ultra-dense, "
-            f"neutron-rich shockwave, rapid neutron capture (r-process nucleosynthesis) forged heavy elements like gold, platinum, and uranium."
+            f"<strong>{name} is a TDE, not a nucleosynthesis factory in the supernova sense.</strong> "
+            f"Observed abundances reflect debris from the disrupted star and accretion-flow physics; "
+            f"no supernova-style elemental yield is published for this object."
+        )
+    elif "ii" in c_lower or "ib" in c_lower or "ic" in c_lower or _is_slsn:
+        elements_ans = (
+            f"Events of {name}'s broad spectroscopic class are discussed in galactic chemical evolution as sources of "
+            f"oxygen-group and intermediate-mass elements (and, for some channels, iron-peak material). "
+            f"<strong>No measured elemental yields are published for {name}</strong>."
         )
     else:
         elements_ans = (
@@ -781,11 +891,11 @@ def generate_supernova_faqs(
 
     # 11. Remnant Evolution Across Millennia
     rem_future_ans = (
-        f"Over the coming millennia, the explosion site of {name} will undergo three dramatic evolutionary epochs: "
-        f"During the next few centuries (Free Expansion phase), the ejecta shell will continue expanding at thousands of km/s. "
-        f"Between 500 and 10,000 years (the Sedov-Taylor adiabatic phase), the forward shock will sweep up hundreds of solar masses of interstellar gas, "
-        f"heating it to tens of millions of degrees and glowing in bright thermal X-rays (similar to the famous Cygnus Loop or Cassiopeia A). "
-        f"Eventually, the cooling shock will compress nearby giant molecular clouds, triggering the gravitational collapse of new stars and solar systems!"
+        f"Supernova remnants in general evolve through free-expansion, Sedov–Taylor, and radiative phases over centuries to millennia, "
+        f"sometimes becoming bright X-ray shells and occasionally compressing nearby molecular clouds. "
+        f"<strong>These are standard remnant-evolution models, not forecasts measured for {name}</strong>. "
+        f"Whether this site will trigger star formation, reach particular X-ray temperatures, or match Cassiopeia A depends on "
+        f"local density and magnetic field—none of which are constrained by the data shown here."
     )
     faqs.append({
         "category": "Cosmic Remnant",
@@ -798,16 +908,25 @@ def generate_supernova_faqs(
     # =========================================================================
 
     # 12. Host Galaxy & Galactic Offset
-    if host_offset_str != "—":
+    if host_identified and host_offset_str != "—":
         host_ans = (
-            f"{name} occurred in <strong>{host_name}</strong>, located at an offset of <strong>{host_offset_str}</strong> from the galactic nucleus. "
-            f"In optical and infrared imaging, this positions the explosion within the galaxy's active stellar disk or spiral arms, where ongoing "
-            f"star formation constantly generates massive short-lived stellar progenitors."
+            f"{name} is associated with cataloged host <strong>{host_name}</strong> at an angular/physical offset of "
+            f"<strong>{host_offset_str}</strong> from the reported galactic center. "
+            f"That offset places the transient in the host's projected light distribution; it does not by itself "
+            f"prove which stellar population produced the progenitor."
+        )
+    elif host_identified:
+        host_ans = (
+            f"{name} is cataloged with host galaxy <strong>{host_name}</strong>. "
+            f"No secure nuclear offset is published in this record."
         )
     else:
         host_ans = (
-            f"{name} is associated with <strong>{host_name}</strong>. High-precision astrometry from optical sky surveys pins the explosion coordinates "
-            f"directly to the galaxy's underlying stellar population."
+            f"<strong>No host galaxy is identified for {name} in this catalog record.</strong> "
+            f"A blank host field means the association is unresolved here—it does not establish that the host is "
+            f"uncataloged, resolved in imaging, or securely linked by astrometry. "
+            f"Possible states (unidentified, hostless candidate, imaging detection without a catalog name, "
+            f"or a securely matched cataloged galaxy) require separate evidence that is not present in this field."
         )
     faqs.append({
         "category": "Galactic Environment",
@@ -832,11 +951,15 @@ def generate_supernova_faqs(
         try:
             ebv_num = float(re.sub(r"[^\d.]", "", ebv_val))
             av_num = ebv_num * 3.1
+            src_label = str(ebv_source) if ebv_source else "published extinction estimate"
+            # Do not attribute analytical disk models as Schlafly & Finkbeiner maps.
             dust_ans = (
-                f"Light from {name} passed through interstellar dust in the Milky Way, suffering a foreground color excess of "
-                f"<strong>E(B-V) = {ebv_num:.3f} magnitudes</strong> (based on Schlafly & Finkbeiner 2011 galactic recalibrations). "
-                f"This cosmic dust absorbs and scatters shorter blue wavelengths, dimming the transient by approximately "
-                f"<strong>A_V ≈ {av_num:.2f} magnitudes</strong> in visual light."
+                f"Along this line of sight, the catalog records a Milky Way foreground color excess of "
+                f"<strong>E(B−V) = {ebv_num:.4f} mag</strong> "
+                f"(source: <em>{src_label}</em>), corresponding to roughly "
+                f"<strong>A_V ≈ {av_num:.2f} mag</strong> for R_V = 3.1. "
+                f"Band-specific corrections (e.g. A_r) differ from A_V and should be applied when available. "
+                f"Map-based values (IRSA / Schlafly & Finkbeiner 2011) must not be claimed unless that map was actually queried."
             )
         except Exception:
             dust_ans = f"Milky Way foreground interstellar dust along this line of sight introduces an extinction of E(B-V) = {ebv_val}."
@@ -1069,7 +1192,8 @@ def generate_supernova_faqs(
         elif phase == "extinguished":
             obs_ans = (
                 f"{name} exploded <strong>{time_str}</strong> ({discoverdate}). Optical transient emission has completely faded along its radioactive "
-                f"decay curve. Today, pointing a telescope at these coordinates reveals the expanding remnant nebula or {host_name}; "
+                f"decay curve. Today, pointing a telescope at these coordinates reveals the expanding remnant nebula"
+                f"{f' or {host_name}' if host_name else ''}; "
                 f"the original optical transient is no longer detectable with amateur backyard equipment."
             )
         elif phase in ("active", "peak", "recent_unconfirmed"):
@@ -1266,40 +1390,44 @@ def generate_story_article_html(
     spec_info = analyze_spectra(meta)
     vel_info = analyze_velocity(meta, claimedtype)
     const_name, const_eng = identify_constellation(ra_deg, dec_deg)
-    era_context = get_lookback_geological_era(cosmo["ly_millions"])
+    era_context = get_lookback_geological_era(
+        cosmo.get("lookback_myr") if cosmo.get("lookback_myr") is not None else None
+    )
     solar_lum = calculate_solar_luminosities(maxabsmag)
 
     c_low = claimedtype.lower()
     is_ia = "ia" in c_low
-    host_name = host if host != "—" else "an uncataloged host galaxy"
+    host_identified = host not in ("—", "", "none", "None", None)
+    host_name = host if host_identified else None
+    host_phrase = f"<strong>{host_name}</strong>" if host_name else "an unidentified host environment"
     disc_who = discoverer if discoverer != "—" else "an automated sky survey"
 
-    # Progenitor narrative
+    # Progenitor narrative — models, not object biography
     _story_unclass = c_low in {"", "—", "none", "unknown", "unclassified", "at", "other", "candidate"}
     if is_ia:
-        progenitor_title = "The Thermonuclear Obliteration of a White Dwarf"
+        progenitor_title = "A Type Ia Thermonuclear Explosion"
         progenitor_p1 = (
-            f"In a binary star system located deep within <strong>{host_name}</strong>, a dense carbon-oxygen white dwarf—the dead stellar corpse "
-            f"of an ancient sun—orbited its stellar companion for millions of years. As it siphoned material across the gravitational saddle point, "
-            f"its mass relentlessly climbed toward the Chandrasekhar limit of 1.4 solar masses. At that fateful tipping point, uncontrollable carbon "
-            f"fusion ignited in the degenerate core, ripping the entire star apart in a thermonuclear detonation that left behind zero remnant."
+            f"<strong>{name}</strong> is spectroscopically classified as Type Ia, consistent with a thermonuclear "
+            f"white-dwarf explosion in {host_phrase}. Competing progenitor channels (single-degenerate accretion, "
+            f"double-degenerate merger, sub-Chandrasekhar detonations) remain open; an individual accretion history "
+            f"toward the Chandrasekhar mass is <em>not</em> established for this event."
         )
     elif _story_unclass:
         progenitor_title = "An Unclassified Astronomical Transient"
         progenitor_p1 = (
-            f"<strong>{name}</strong> was reported as a changing source associated with <strong>{host_name}</strong>, but it has not been "
+            f"<strong>{name}</strong> was reported as a changing source"
+            f"{f' associated with {host_phrase}' if host_name else ''}, but it has not been "
             f"spectroscopically classified. Without a spectrum, the progenitor cannot be identified: a thermonuclear white-dwarf detonation and "
             f"a core-collapse of a massive star are mutually exclusive histories that produce different spectra and light curves. "
             f"No progenitor, explosion mechanism, or remnant outcome is established for this object."
         )
     else:
-        progenitor_title = "The Iron Core Collapse of a Dying Supergiant"
+        progenitor_title = "A Core-Collapse Class Transient"
         progenitor_p1 = (
-            f"The progenitor of <strong>{name}</strong> was a mammoth supergiant star, shining with the furious vigor of an object at least "
-            f"8 to 25 times more massive than our Sun. For millions of years, it synthesized heavier and heavier elements in concentric onion-like shells: "
-            f"hydrogen burning into helium, helium into carbon, carbon into oxygen, neon, and silicon. But when silicon fused into iron, the stellar engine "
-            f"ran out of fuel. Iron fusion absorbs energy rather than liberating it; within fractions of a second, the iron core collapsed under its own "
-            f"gravity, rebounding into an immense cosmic shockwave that blasted the star into pieces."
+            f"<strong>{name}</strong> is classified in a core-collapse spectroscopic family. Events of this class are generally "
+            f"linked to the death of a massive star after successive nuclear burning stages, but "
+            f"<strong>no unique progenitor mass, lifetime, or pre-explosion identification is established for this object</strong>. "
+            f"The narrative of onion-shell fusion ending in iron-core collapse describes the class model, not a measured biography of {name}."
         )
 
     # Telescope guidance
@@ -1337,14 +1465,19 @@ def generate_story_article_html(
         <div class="article-chapter-num">CHAPTER II</div>
         <h2>A Message Across Deep Cosmic Time</h2>
         <p>
-          The light from {name} is a dispatch from an ancient past. Located approximately <strong>{dist_ly_str}</strong> away
-          {f" (redshift <code>z = {redshift}</code>)" if redshift != "—" else ""}, the photons detected by telescopes today began their journey
-          <strong>{era_context}</strong>.
+          {name} has a luminosity distance of approximately <strong>{dist_ly_str}</strong>
+          {f" (redshift <code>z = {redshift}</code>)" if redshift != "—" else ""}.
+          {"That figure is <em>not</em> the light-travel time: under flat ΛCDM the lookback time is ≈"
+           + f"<strong>{cosmo.get('lookback_myr'):.0f} Myr</strong>, when the light set out <strong>{era_context}</strong>."
+           if cosmo.get("lookback_myr") is not None and era_context and era_context != "deep cosmic time"
+           else (
+             f"The cosmological lookback time is ≈<strong>{cosmo.get('lookback_myr'):.0f} Myr</strong>."
+             if cosmo.get("lookback_myr") is not None
+             else "Lookback time is unavailable without a usable redshift; do not equate luminosity distance with travel time."
+           )}
         </p>
         <p>
-          While this burst of electromagnetic radiation traversed the cold void of intergalactic space at 299,792 kilometers per second,
-          continents on Earth drifted, mountain ranges rose, and entire ecosystems rose and fell. To look into a telescope at {name} is to gaze
-          directly into prehistoric cosmic time.
+          Luminosity distance incorporates cosmic expansion and exceeds the light-travel distance. The two quantities must be reported separately.
         </p>
       </div>
 
@@ -1390,12 +1523,12 @@ def generate_story_article_html(
         <p>
           {"Without a classification, the power source of " + name + " cannot be identified; radioactive ⁵⁶Ni decay powers many supernovae but is not established for this transient."
             if _story_unclass
-            else "Unlike a conventional terrestrial explosion that cools and goes dark in seconds, " + name + " shone brightly for weeks and months. The secret behind this prolonged celestial glow is nuclear physics: the extreme heat and pressure of detonation synthesized vast quantities of <strong>radioactive Nickel-56 (⁵⁶Ni)</strong>."}
+            else "After peak, many supernovae are powered by the radioactive chain <strong>⁵⁶Ni → ⁵⁶Co → ⁵⁶Fe</strong>. That is the standard model for Type "
+                 + claimedtype + " light curves; an object-specific nickel mass for " + name + " is not published here."}
         </p>
         <p>
-          With a half-life of <strong>6.075 days</strong>, Nickel-56 decays into Cobalt-56 (⁵⁶Co), emitting gamma rays and high-energy positrons
-          that heat the expanding ejecta from within. Cobalt-56 in turn decays with a half-life of <strong>77.2 days</strong> into stable Iron-56 (⁵⁶Fe),
-          powering the steady exponential radioactive tail observed in the light curve.
+          Nickel-56 decays to Cobalt-56 (half-life ≈6.1 days), then to stable Iron-56 (half-life ≈77.2 days), heating the ejecta from within.
+          Typical class yields must not be quoted as measured values for this event.
         </p>
       </div>
 
@@ -1404,12 +1537,13 @@ def generate_story_article_html(
         <div class="article-chapter-num">CHAPTER V</div>
         <h2>Cosmic Kiln: Seeding the Elements of Life</h2>
         <p>
-          Supernovae are the premier chemical foundries of our universe. {name} forged and liberated tons of newly synthesized elements:
-          {"rich supplies of iron, silicon, calcium, and sulfur that will one day seed the formation of rocky terrestrial worlds." if is_ia else "vast reservoirs of oxygen (the most abundant heavy element in living organisms), carbon, nitrogen, magnesium, and silicon."}
+          Supernovae enrich galaxies with heavy elements. Events of {name}'s class are associated with
+          {"iron-peak and intermediate-mass products (Ni/Fe, Si, S, Ca)" if is_ia else "oxygen-group and intermediate-mass products (O, C, Ne, Mg, Si)"}
+          in galactic chemical-evolution models.
+          <strong>No measured elemental yields are published for {name}</strong>.
         </p>
         <p>
-          As Carl Sagan famously observed, <em>"We are made of star-stuff."</em> The iron atoms that carry oxygen in human hemoglobin and the calcium in
-          our bones were originally forged in explosions identical to {name} billions of years ago.
+          As Carl Sagan observed, <em>"We are made of star-stuff"</em> — a statement about nucleosynthesis in general, not a claim that atoms from this specific remnant are identified in the Solar System.
         </p>
       </div>
 
@@ -1418,7 +1552,10 @@ def generate_story_article_html(
         <div class="article-chapter-num">CHAPTER VI</div>
         <h2>Galactic Setting in {const_name}</h2>
         <p>
-          {name} detonated inside <strong>{host_name}</strong>{f", positioned at an offset of <strong>{host_offset_str}</strong> from the galactic nucleus" if host_offset_str != "—" else ""}.
+          {f"{name} is associated with cataloged host {host_phrase}"
+            if host_name
+            else f"<strong>No host galaxy is identified</strong> for {name} in this catalog record"}
+          {f", at an offset of <strong>{host_offset_str}</strong> from the reported galactic center" if (host_name and host_offset_str != "—") else ""}.
           In our terrestrial sky, it resides in the constellation <strong>{const_name} ({const_eng})</strong> at Right Ascension <code>{ra_str}</code>
           and Declination <code>{dec_str}</code>.
         </p>

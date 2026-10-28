@@ -533,10 +533,15 @@ def get_transient_lifecycle(
     # Reject pre-discovery maxdate artifacts (>60d before discovery).
     disc_dt = _parse_lifecycle_ymd(disc_date)
     max_dt = _parse_lifecycle_ymd(max_date)
-    if disc_dt and max_dt and (disc_dt - max_dt).days > 60:
-        ref_date = disc_date
-    else:
-        ref_date = max_date if max_date != "—" else disc_date
+    peak_unusable = bool(disc_dt and max_dt and (disc_dt - max_dt).days > 60)
+    if peak_unusable:
+        max_date = "—"
+        max_dt = None
+
+    # Peak date is for phase; discovery date is for "discovered N days ago".
+    # Never reuse one as the other.
+    peak_date = max_date if max_date != "—" else "—"
+    ref_date = peak_date if peak_date != "—" else disc_date
 
     z_val = 0.0
     if redshift and redshift != "—":
@@ -550,17 +555,24 @@ def get_transient_lifecycle(
     ctype = claimedtype.lower() if claimedtype else get_val(meta, "claimedtype").lower()
     unclass = ctype.lower() in {"", "—", "none", "unknown", "unclassified", "at", "other", "candidate"}
 
-    days_since = None
-    ref_dt = _parse_lifecycle_ymd(ref_date)
-    if ref_dt is not None:
-        days_since = (now - ref_dt).days
-    else:
-        m_mjd = re.search(r"MJD\s*([0-9.]+)", str(ref_date))
+    def _days_from(ymd: str | None, dt):
+        if dt is not None:
+            return (now - dt).days
+        if not ymd or ymd == "—":
+            return None
+        m_mjd = re.search(r"MJD\s*([0-9.]+)", str(ymd))
         if m_mjd:
             try:
-                days_since = int(now_mjd - float(m_mjd.group(1)))
+                return int(now_mjd - float(m_mjd.group(1)))
             except Exception:
-                pass
+                return None
+        return None
+
+    days_since_discovery = _days_from(disc_date, disc_dt)
+    days_since_peak = _days_from(peak_date, max_dt) if peak_date != "—" else None
+    # Public "days since" / age badges use discovery. Rest-frame phase uses peak when known.
+    days_since = days_since_discovery
+    phase_days = days_since_peak if days_since_peak is not None else days_since_discovery
 
     # Photometry extraction — candidate/unverified associations are retained on
     # disk but excluded from derived scientific brightness claims.
@@ -604,10 +616,13 @@ def get_transient_lifecycle(
         if filtered:
             outburst_pts = filtered
 
-    if days_since is None and outburst_pts:
+    if days_since_discovery is None and outburst_pts:
         timed = [pt[0] for pt in outburst_pts if pt[0] is not None]
         if timed:
-            days_since = int(now_mjd - max(timed))
+            days_since_discovery = int(now_mjd - max(timed))
+            days_since = days_since_discovery
+            if phase_days is None:
+                phase_days = days_since_discovery
 
     host_target = f"host galaxy ({host_name})" if host_name and host_name != "—" else "host galaxy"
     years = (days_since / 365.25) if days_since is not None else None
@@ -615,7 +630,13 @@ def get_transient_lifecycle(
         f"{years:.1f} years ago" if years is not None and years >= 1.5
         else (f"{days_since} days ago" if days_since is not None else "unknown epoch")
     )
-    t_rest = max(0.0, float(days_since) / (1.0 + z_val)) if days_since is not None else None
+    # Rest-frame phase relative to cataloged peak when available, else discovery.
+    t_rest = (
+        max(0.0, float(phase_days) / (1.0 + z_val))
+        if phase_days is not None
+        else None
+    )
+    disc_date_label = disc_date if disc_date and disc_date != "—" else "unknown discovery date"
 
     # Peak / observed magnitudes
     maxappmag_raw = meta.get("maxappmag")
@@ -656,14 +677,34 @@ def get_transient_lifecycle(
             brightest_obs_date = _mjd_to_date_str(brightest[0])
             m_observed = latest_obs_mag
             m_observed_date = latest_obs_date
-            if len(timed_pts) >= 2:
-                first_m, last_m = timed_pts[0][1], timed_pts[-1][1]
-                if last_m < first_m - 0.05:
-                    trend = "brightening"
-                elif last_m > first_m + 0.05:
-                    trend = "fading"
+            # Same-band, time-ordered trend only. Cross-band comparisons are invalid.
+            # If the latest detection is stale (>14d), do not claim a "current" trend.
+            days_since_last_obs = int(now_mjd - latest[0]) if latest[0] is not None else None
+            if days_since_last_obs is not None and days_since_last_obs <= 14:
+                by_band: dict[str, list[tuple[float, float]]] = {}
+                for t, mag, band in timed_pts:
+                    by_band.setdefault(band or "other", []).append((t, mag))
+                # Prefer the band of the latest point; else any band with ≥2 points.
+                candidates = []
+                latest_band = latest[2] if len(latest) > 2 else "other"
+                if latest_band in by_band and len(by_band[latest_band]) >= 2:
+                    candidates = by_band[latest_band]
                 else:
-                    trend = "flat"
+                    for pts in by_band.values():
+                        if len(pts) >= 2:
+                            candidates = pts
+                            break
+                if len(candidates) >= 2:
+                    candidates.sort(key=lambda x: x[0])
+                    # Use the most recent pair in that band (not first-vs-last of whole LC).
+                    prev_m, last_m = candidates[-2][1], candidates[-1][1]
+                    if last_m < prev_m - 0.05:
+                        trend = "brightening"
+                    elif last_m > prev_m + 0.05:
+                        trend = "fading"
+                    else:
+                        trend = "flat"
+            # else: trend stays None — last photometry too old or cross-band only
         else:
             m_observed = m_peak
             m_observed_date = ref_date
@@ -680,7 +721,7 @@ def get_transient_lifecycle(
         notice = (
             '<div style="margin-bottom:0.75rem;padding:0.5rem 0.75rem;background:rgba(148,163,184,0.12);'
             'border-left:3px solid #94a3b8;border-radius:4px;font-size:0.78rem;line-height:1.4;color:#cbd5e1;">'
-            f'<strong>Brightness not measured:</strong> discovered {time_str} ({ref_date}). '
+            f'<strong>Brightness not measured:</strong> discovered {time_str} ({disc_date_label}). '
             'No calibrated photometry is published. '
             '<strong>No reliable current brightness estimate</strong> is available.'
             '</div>'
@@ -690,12 +731,14 @@ def get_transient_lifecycle(
             'border-left:4px solid #94a3b8;padding:1.25rem;border-radius:6px;margin:1rem 0;">'
             '<h3 style="margin:0 0 0.5rem 0;color:#e2e8f0;font-size:1.05rem;">Can I see it tonight? '
             '<span style="color:#94a3b8;">Unknown — no measured brightness.</span></h3>'
-            f'<p style="margin:0;color:#cbd5e1;line-height:1.6;">Discovered <strong>{time_str}</strong> ({ref_date}). '
+            f'<p style="margin:0;color:#cbd5e1;line-height:1.6;">Discovered <strong>{time_str}</strong> ({disc_date_label}). '
             '<strong>No reliable current brightness estimate</strong> — no photometry has been published.</p></div>'
         )
         return {
             "phase": "unmeasured",
             "days_since": days_since,
+            "days_since_discovery": days_since_discovery,
+            "days_since_peak": days_since_peak,
             "t_rest": round(t_rest, 1) if t_rest is not None else None,
             "m_peak": None,
             "m_current": None,
@@ -904,7 +947,7 @@ def get_transient_lifecycle(
             f'<h3 style="margin:0 0 0.5rem 0;color:#e0f2fe;font-size:1.05rem;">Can I see it tonight? '
             f'<span style="color:#7dd3fc;">Unknown — single-epoch observation only.</span></h3>'
             f'<p style="margin:0 0 0.75rem 0;color:#e2e8f0;line-height:1.6;">'
-            f'Discovered <strong>{days_since} days ago</strong> ({ref_date}). '
+            f'Discovered <strong>{days_since} days ago</strong> ({disc_date_label}). '
             f'<strong>Observed</strong> magnitude m = {obs_mag:.2f} on {obs_date}. '
             f'A single photometry point is not evidence of a peak, rise, or decline.</p>'
             f'<p style="margin:0;color:#cbd5e1;line-height:1.6;">'
@@ -1020,12 +1063,29 @@ def get_transient_lifecycle(
 
     trend_clause = ""
     if trend and has_multi_epoch_lc:
-        trend_clause = f' Observed detections are currently <strong>{trend}</strong> across the light curve.'
+        trend_clause = (
+            f' Most recent same-band detections are <strong>{trend}</strong> '
+            f'(not a forecast beyond the last observation).'
+        )
+    elif has_multi_epoch_lc and latest_obs_date:
+        trend_clause = (
+            f' Current brightness trend is <strong>unknown</strong> '
+            f'(last observation {latest_obs_date}; same-band recent pair unavailable or stale).'
+        )
+
+    phase_note = ""
+    if days_since_peak is not None and t_rest is not None:
+        phase_note = (
+            f' Cataloged peak {peak_date} ({days_since_peak}d ago; '
+            f'rest-frame phase +{t_rest:.1f}d).'
+        )
+    elif t_rest is not None:
+        phase_note = f' Rest-frame epoch +{t_rest:.1f}d from discovery.'
 
     notice = (
         f'<div style="margin-bottom:0.75rem;padding:0.5rem 0.75rem;background:rgba(15,23,42,0.5);'
         f'border-left:3px solid {color};border-radius:4px;font-size:0.78rem;line-height:1.4;color:#e2e8f0;">'
-        f'<strong>Discovered {time_str}</strong> ({ref_date}, rest-frame +{(t_rest or 0):.1f}d). '
+        f'<strong>Discovered {time_str}</strong> ({disc_date_label}).{phase_note} '
         f'{obs_summary} {current_clause}{trend_clause} {window_clause}'
         f'</div>'
     )
@@ -1035,7 +1095,7 @@ def get_transient_lifecycle(
         f'<h3 style="margin:0 0 0.5rem 0;color:#f1f5f9;font-size:1.05rem;">Can I see it tonight? '
         f'<span style="color:{color};">{heading}</span></h3>'
         f'<p style="margin:0 0 0.75rem 0;color:#e2e8f0;line-height:1.6;">'
-        f'Discovered <strong>{days_since} days ago</strong> ({ref_date}). {obs_summary}</p>'
+        f'Discovered <strong>{days_since} days ago</strong> ({disc_date_label}).{phase_note} {obs_summary}</p>'
         f'<p style="margin:0 0 0.75rem 0;color:#cbd5e1;line-height:1.6;">{current_clause}{trend_clause}</p>'
         f'{tel_table}</div>'
     )
@@ -1043,6 +1103,8 @@ def get_transient_lifecycle(
     return {
         "phase": phase,
         "days_since": days_since,
+        "days_since_discovery": days_since_discovery,
+        "days_since_peak": days_since_peak,
         "t_rest": round(t_rest, 1) if t_rest is not None else None,
         "m_peak": m_peak,
         "m_current": m_current,
@@ -1052,6 +1114,8 @@ def get_transient_lifecycle(
         "peak_confirmed": peak_confirmed,
         "time_str": time_str,
         "ref_date": ref_date,
+        "discover_date": disc_date_label,
+        "peak_date": peak_date if peak_date != "—" else None,
         "badge_html": badge,
         "cockpit_notice": notice,
         "story_guidance_html": story,
@@ -1062,21 +1126,32 @@ def get_transient_lifecycle(
         "model_valid_days": max_valid_days,
         "dm": None,  # class-template dm is never attached to an object-specific prediction
         "fit_meta": pred_meta,
+        "trend": trend,
     }
 
 
 
 def format_cosmic_neighbors_panel(
     name: str,
-    closest_data: dict[str, list[dict[str, Any]]],
+    closest_data: dict[str, Any],
     is_cockpit: bool = True
 ) -> str:
     """Render cosmic neighbors & contemporaries across time, space, and cosmological era."""
     path_suffix = "" if is_cockpit else "/story"
+    status = closest_data.get("_status") or "ok"
+    index_size = closest_data.get("_index_size")
+    unavailable = status == "unavailable"
+    unavailable_msg = (
+        '<div style="color:#fbbf24;font-size:0.8rem;padding:0.5rem 0;">'
+        'Neighbor search unavailable — catalog index not loaded. '
+        'This does not mean no neighbors exist.</div>'
+    )
 
     # Format Closest in Time (Cosmic Contemporaries)
     time_items_html = ""
-    if closest_data.get("time"):
+    if unavailable:
+        time_items_html = unavailable_msg
+    elif closest_data.get("time"):
         for item in closest_data["time"]:
             it_name = item.get("name", "")
             it_type = item.get("type", "Transient") or "Transient"
@@ -1104,11 +1179,13 @@ def format_cosmic_neighbors_panel(
               </div>
             </a>"""
     else:
-        time_items_html = '<div style="color:var(--text-muted);font-size:0.8rem;padding:0.5rem 0;">No contemporary transients indexed.</div>'
+        time_items_html = '<div style="color:var(--text-muted);font-size:0.8rem;padding:0.5rem 0;">No close discovery-date matches in the loaded index.</div>'
 
     # Format Closest in Sky Neighborhood
     sky_items_html = ""
-    if closest_data.get("sky"):
+    if unavailable:
+        sky_items_html = unavailable_msg
+    elif closest_data.get("sky"):
         for item in closest_data["sky"]:
             it_name = item.get("name", "")
             it_type = item.get("type", "Transient") or "Transient"
@@ -1127,11 +1204,13 @@ def format_cosmic_neighbors_panel(
               </div>
             </a>"""
     else:
-        sky_items_html = '<div style="color:var(--text-muted);font-size:0.8rem;padding:0.5rem 0;">No sky neighbors cataloged in this field.</div>'
+        sky_items_html = '<div style="color:var(--text-muted);font-size:0.8rem;padding:0.5rem 0;">No sky neighbors returned for this field from the loaded index.</div>'
 
     # Format Closest in Cosmic Distance
     cosmic_items_html = ""
-    if closest_data.get("cosmic"):
+    if unavailable:
+        cosmic_items_html = unavailable_msg
+    elif closest_data.get("cosmic"):
         for item in closest_data["cosmic"]:
             it_name = item.get("name", "")
             it_type = item.get("type", "Transient") or "Transient"
@@ -1145,23 +1224,30 @@ def format_cosmic_neighbors_panel(
               </div>
               <div style="display:flex;justify-content:space-between;font-size:0.75rem;color:var(--text-muted);">
                 <span>Type {it_type}</span>
-                <span>~{ly_m} Mly lookback</span>
+                <span>~{ly_m} Mly (approx.)</span>
               </div>
             </a>"""
     else:
-        cosmic_items_html = '<div style="color:var(--text-muted);font-size:0.8rem;padding:0.5rem 0;">Redshift data unavailable for cosmic distance matching.</div>'
+        cosmic_items_html = (
+            '<div style="color:var(--text-muted);font-size:0.8rem;padding:0.5rem 0;">'
+            'No redshift match available (target z missing or no comparable redshifts in index).</div>'
+        )
 
     container_class = "panel" if is_cockpit else "dossier-card"
     container_style = 'style="margin-top:2.5rem;"' if not is_cockpit else ''
+    if isinstance(index_size, int) and index_size > 0:
+        index_label = f"{index_size:,}+ transients indexed"
+    else:
+        index_label = "Neighbor index unavailable" if unavailable else "Transients indexed"
 
     return f"""
     <div class="{container_class}" {container_style}>
       <div class="panel-title" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem;flex-wrap:wrap;gap:0.5rem;">
         <span style="display:flex;align-items:center;gap:6px;">🌌 Cosmic Neighbors &amp; Contemporaries</span>
-        <span class="cutout-tag active" style="font-size:0.7rem;border-color:rgba(56,189,248,0.4);background:rgba(56,189,248,0.12);color:#38bdf8;cursor:default;">110,222+ Transients Indexed</span>
+        <span class="cutout-tag active" style="font-size:0.7rem;border-color:rgba(56,189,248,0.4);background:rgba(56,189,248,0.12);color:#38bdf8;cursor:default;">{index_label}</span>
       </div>
       <p style="color:var(--text-muted);font-size:0.85rem;margin-top:0;margin-bottom:1rem;">
-        Cataloged supernovae closest to <strong>{name}</strong> in discovery time, spatial sky neighborhood, and cosmological lookback epoch:
+        Cataloged transients closest to <strong>{name}</strong> in discovery time, spatial sky neighborhood, and cosmological redshift:
       </p>
 
       <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));gap:0.85rem;">
@@ -1400,12 +1486,22 @@ def render_pro_cockpit(
         legacy_viewer_link = "https://www.legacysurvey.org/viewer"
 
     # Find closest events in time, sky separation, and cosmic distance
-    closest_data = {"sky": [], "time": [], "cosmic": []}
+    closest_data: dict[str, Any] = {
+        "sky": [], "time": [], "cosmic": [],
+        "_status": "unavailable", "_index_size": 0,
+        "_error": "Neighbor search not attempted",
+    }
     if find_closest_events is not None and has_coords:
         try:
             closest_data = find_closest_events(name, ra_deg, dec_deg, discoverdate, redshift, limit=3)
-        except Exception:
-            pass
+        except Exception as exc:  # noqa: BLE001
+            closest_data = {
+                "sky": [], "time": [], "cosmic": [],
+                "_status": "unavailable", "_index_size": 0,
+                "_error": str(exc),
+            }
+    elif not has_coords:
+        closest_data["_error"] = "Coordinates unavailable for neighbor search"
 
     neighbors_panel_html = format_cosmic_neighbors_panel(name, closest_data, is_cockpit=True)
 
@@ -2471,7 +2567,7 @@ def render_pro_cockpit(
           <tr><th>Dec. (J2000)</th><td>{dec_str} {f"({dec_deg:.5f}°)" if dec_deg else ""}</td></tr>
           <tr><th>Spectral Type</th><td>{claimedtype}</td></tr>
           <tr><th>Redshift (z)</th><td>{redshift}</td></tr>
-          <tr><th>Recession Velocity</th><td>{velocity}</td></tr>
+          <tr><th>Recession Velocity</th><td>{velocity}{"" if velocity in ("—", "") else ' <span style="color:var(--text-muted);font-size:0.78rem;">(redshift Doppler-equivalent)</span>'}</td></tr>
           <tr><th>Luminosity Distance</th><td>{lumdist_display}</td></tr>
           <tr><th>{maxappmag_label}</th><td>{maxappmag_cell}</td></tr>
           <tr><th>Peak Absolute Mag</th><td>{maxabsmag_display}</td></tr>
@@ -4117,8 +4213,9 @@ def render_story_mode(
         vel_km_html = f"~{vel_km:,.0f} km/s"
         vel_pct_html = f"~{vel_pct:.1f}% Speed of Light"
     else:
+        # Do not substitute cosmological recession velocity or class means here.
         vel_km_html = "Not measured"
-        vel_pct_html = "No spectrum / unclassified"
+        vel_pct_html = "No spectral ejecta velocity"
 
     # Constellation
     const_name, const_eng = "Deep Space", "Celestial Sphere"
@@ -4197,12 +4294,22 @@ def render_story_mode(
     has_coords = ra_deg is not None and dec_deg is not None
 
     # Find closest events in time, sky separation, and cosmic distance
-    closest_data = {"sky": [], "time": [], "cosmic": []}
+    closest_data = {
+        "sky": [], "time": [], "cosmic": [],
+        "_status": "unavailable", "_index_size": 0,
+        "_error": "Neighbor search not attempted",
+    }
     if find_closest_events is not None and has_coords:
         try:
             closest_data = find_closest_events(name, ra_deg, dec_deg, discoverdate, redshift, limit=3)
-        except Exception:
-            pass
+        except Exception as exc:  # noqa: BLE001
+            closest_data = {
+                "sky": [], "time": [], "cosmic": [],
+                "_status": "unavailable", "_index_size": 0,
+                "_error": str(exc),
+            }
+    elif not has_coords:
+        closest_data["_error"] = "Coordinates unavailable for neighbor search"
 
     neighbors_panel_html = format_cosmic_neighbors_panel(name, closest_data, is_cockpit=False)
 

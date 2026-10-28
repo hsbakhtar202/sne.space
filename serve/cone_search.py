@@ -9,6 +9,7 @@ from __future__ import annotations
 import heapq
 import json
 import math
+import os
 import re
 import threading
 import time
@@ -17,12 +18,63 @@ from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parent.parent
-CAT_FILE = ROOT / "serve/www/astrocats/astrocats/supernovae/output/catalog.min.json"
+# Fallback only — prefer SNE_DATA_DIR / volume catalog (plain or .gz). The baked
+# catalog.min.json is dockerignored, so hardcoding the repo path yields an empty
+# neighbor index in production.
+_BAKED_CAT = ROOT / "serve/www/astrocats/astrocats/supernovae/output/catalog.min.json"
 
 # In-memory spatial index: list of (x, y, z, ra_deg, dec_deg, meta_summary)
 _SPATIAL_INDEX: list[tuple[float, float, float, float, float, dict[str, Any]]] = []
 _INDEX_INITIALIZED = False
 _INDEX_LOCK = threading.Lock()
+_INDEX_STATUS = "uninitialized"  # ok | empty | missing_catalog | error
+_INDEX_ERROR = ""
+
+
+def _resolve_catalog_paths() -> list[Path]:
+    """Catalog JSON sources for the neighbor index, most authoritative first."""
+    paths: list[Path] = []
+    try:
+        from data_paths import resolve_output_dir
+    except ImportError:
+        try:
+            from serve.data_paths import resolve_output_dir
+        except ImportError:
+            resolve_output_dir = None  # type: ignore
+    roots: list[Path] = []
+    if resolve_output_dir is not None:
+        try:
+            roots.append(resolve_output_dir())
+        except Exception:
+            pass
+    roots.append(_BAKED_CAT.parent)
+    seen: set[str] = set()
+    for root in roots:
+        for name in ("catalog.min.json", "catalog.min.json.gz"):
+            p = root / name
+            key = str(p.resolve()) if p.exists() else str(p)
+            if key in seen:
+                continue
+            seen.add(key)
+            if p.is_file():
+                paths.append(p)
+    # Runtime overlays (recent discoveries) — optional.
+    runtime = (os.environ.get("SNE_RUNTIME_DIR") or "").strip()
+    if runtime:
+        for name in ("recent-catalog.min.json", "published-updates.min.json"):
+            p = Path(runtime) / name
+            if p.is_file():
+                paths.append(p)
+    return paths
+
+
+def _open_catalog_path(path: Path):
+    """Yield a text file handle for plain JSON or gzip-compressed JSON."""
+    import gzip
+
+    if path.suffix == ".gz":
+        return gzip.open(path, "rt", encoding="utf-8", errors="replace")
+    return open(path, "r", encoding="utf-8", errors="replace")
 
 
 def _parse_coord(val: Any) -> float | None:
@@ -107,7 +159,7 @@ def _iter_catalog(path: Path):
     import json as _json
 
     decoder = _json.JSONDecoder()
-    with open(path, "r", encoding="utf-8", errors="replace") as fh:
+    with _open_catalog_path(path) as fh:
         head = fh.read(1)
         while head and head.isspace():
             head = fh.read(1)
@@ -141,13 +193,59 @@ def _iter_catalog(path: Path):
                 buf = buf[end:]
 
 
-def init_cone_index() -> int:
-    """Initialize the 3D unit vector spatial index from catalog.min.json.
+def _append_event(pts: list, seen: set[str], ev: dict) -> None:
+    if not isinstance(ev, dict):
+        return
+    name = ev.get("name", "")
+    if not name:
+        return
+    norm = str(name).lower().replace(" ", "").replace("-", "")
+    if norm in seen:
+        return
+    ra_val = _first_value(ev, "ra")
+    dec_val = _first_value(ev, "dec")
+    ra_deg = _parse_coord(ra_val)
+    dec_deg = _parse_coord(dec_val)
+    if ra_deg is None or dec_deg is None:
+        return
 
-    Streams the source so startup does not allocate a second full copy of the
-    catalog. Only ~106k compact float tuples are retained.
+    # In sexagesimal hours format, RA might be in hours (0..24)
+    if ra_val and ":" in str(ra_val) and ra_deg < 24.0:
+        ra_deg *= 15.0
+
+    r_rad = math.radians(ra_deg)
+    d_rad = math.radians(dec_deg)
+    x = math.cos(d_rad) * math.cos(r_rad)
+    y = math.cos(d_rad) * math.sin(r_rad)
+    z = math.sin(d_rad)
+
+    disc_str = _first_value(ev, "discoverdate")
+    z_str = _first_value(ev, "redshift")
+    seen.add(norm)
+    pts.append((
+        x, y, z, round(ra_deg, 6), round(dec_deg, 6),
+        {
+            "name": name,
+            "type": _first_value(ev, "claimedtype"),
+            "redshift": z_str,
+            "maxappmag": _first_value(ev, "maxappmag"),
+            "discoverdate": disc_str,
+            "host": _first_value(ev, "host"),
+            "_disc_dt": _parse_date(disc_str),
+            "_z": _parse_z(z_str),
+        },
+    ))
+
+
+def init_cone_index() -> int:
+    """Initialize the 3D unit vector spatial index from the volume catalog.
+
+    Resolves ``SNE_DATA_DIR`` / ``catalog.min.json(.gz)`` first so Docker
+    deployments (where the baked plain JSON is dockerignored) still index
+    ~110k events. Streams sources so startup does not allocate a second full
+    copy of the catalog.
     """
-    global _SPATIAL_INDEX, _INDEX_INITIALIZED
+    global _SPATIAL_INDEX, _INDEX_INITIALIZED, _INDEX_STATUS, _INDEX_ERROR
     if _INDEX_INITIALIZED:
         return len(_SPATIAL_INDEX)
 
@@ -155,62 +253,44 @@ def init_cone_index() -> int:
         if _INDEX_INITIALIZED:
             return len(_SPATIAL_INDEX)
 
-        if not CAT_FILE.is_file():
+        sources = _resolve_catalog_paths()
+        if not sources:
+            _SPATIAL_INDEX = []
+            _INDEX_INITIALIZED = True
+            _INDEX_STATUS = "missing_catalog"
+            _INDEX_ERROR = "No catalog.min.json(.gz) found under SNE_DATA_DIR or baked path"
+            print(f"[ConeIndex] {_INDEX_ERROR}", flush=True)
             return 0
 
         t0 = time.time()
-        pts = []
+        pts: list = []
+        seen: set[str] = set()
         try:
-            for ev in _iter_catalog(CAT_FILE):
-                if not isinstance(ev, dict):
-                    continue
-                name = ev.get("name", "")
-                if not name:
-                    continue
-                ra_val = _first_value(ev, "ra")
-                dec_val = _first_value(ev, "dec")
-                ra_deg = _parse_coord(ra_val)
-                dec_deg = _parse_coord(dec_val)
-                if ra_deg is None or dec_deg is None:
-                    continue
-
-                # In sexagesimal hours format, RA might be in hours (0..24)
-                if ra_val and ":" in str(ra_val) and ra_deg < 24.0:
-                    ra_deg *= 15.0
-
-                r_rad = math.radians(ra_deg)
-                d_rad = math.radians(dec_deg)
-                x = math.cos(d_rad) * math.cos(r_rad)
-                y = math.cos(d_rad) * math.sin(r_rad)
-                z = math.sin(d_rad)
-
-                # Pre-parse the two fields every cone query compares against.
-                # find_closest_events used to call _parse_d() ~102,000 times per
-                # event page (one datetime construction per catalog point) and
-                # re-float every redshift. Both are constant per index build, so
-                # parse once here and stash the results as private fields.
-                disc_str = _first_value(ev, "discoverdate")
-                z_str = _first_value(ev, "redshift")
-                pts.append((
-                    x, y, z, round(ra_deg, 6), round(dec_deg, 6),
-                    {
-                        "name": name,
-                        "type": _first_value(ev, "claimedtype"),
-                        "redshift": z_str,
-                        "maxappmag": _first_value(ev, "maxappmag"),
-                        "discoverdate": disc_str,
-                        "host": _first_value(ev, "host"),
-                        "_disc_dt": _parse_date(disc_str),
-                        "_z": _parse_z(z_str),
-                    },
-                ))
-        except Exception:
+            for src in sources:
+                for ev in _iter_catalog(src):
+                    _append_event(pts, seen, ev)
+        except Exception as exc:  # noqa: BLE001
+            _SPATIAL_INDEX = []
+            _INDEX_INITIALIZED = True
+            _INDEX_STATUS = "error"
+            _INDEX_ERROR = str(exc)
+            print(f"[ConeIndex] build failed: {exc}", flush=True)
             return 0
 
-    _SPATIAL_INDEX = pts
-    _INDEX_INITIALIZED = True
-    print(f"[ConeIndex] {len(pts)} points in {time.time() - t0:.2f}s", flush=True)
-    return len(_SPATIAL_INDEX)
+        _SPATIAL_INDEX = pts
+        _INDEX_INITIALIZED = True
+        if not pts:
+            _INDEX_STATUS = "empty"
+            _INDEX_ERROR = f"Catalog sources readable but yielded 0 points: {[str(s) for s in sources]}"
+        else:
+            _INDEX_STATUS = "ok"
+            _INDEX_ERROR = ""
+        print(
+            f"[ConeIndex] {len(pts)} points in {time.time() - t0:.2f}s "
+            f"from {len(sources)} source(s) status={_INDEX_STATUS}",
+            flush=True,
+        )
+        return len(_SPATIAL_INDEX)
 
 
 def cone_search(
@@ -308,10 +388,22 @@ def find_closest_events(
     discoverdate_str: str = "",
     redshift_str: str = "",
     limit: int = 3
-) -> dict[str, list[dict[str, Any]]]:
-    """Find catalog transients closest to this event in sky separation, discovery time, and cosmic distance."""
-    if not _INDEX_INITIALIZED:
-        init_cone_index()
+) -> dict[str, Any]:
+    """Find catalog transients closest to this event in sky separation, discovery time, and cosmic distance.
+
+    Returns sky/time/cosmic lists plus ``_status`` / ``_index_size`` / ``_error`` so
+    the UI can distinguish "search unavailable" from "no neighbors exist".
+    """
+    n = init_cone_index() if not _INDEX_INITIALIZED else len(_SPATIAL_INDEX)
+    if n == 0 or _INDEX_STATUS in ("missing_catalog", "empty", "error"):
+        return {
+            "sky": [],
+            "time": [],
+            "cosmic": [],
+            "_status": "unavailable",
+            "_index_size": n,
+            "_error": _INDEX_ERROR or f"Neighbor index status={_INDEX_STATUS}",
+        }
 
     r0 = math.radians(ra_deg) if ra_deg is not None else None
     d0 = math.radians(dec_deg) if dec_deg is not None else None
@@ -431,6 +523,9 @@ def find_closest_events(
     return {
         "sky": sky_res,
         "time": time_res,
-        "cosmic": cosmic_res
+        "cosmic": cosmic_res,
+        "_status": "ok",
+        "_index_size": len(_SPATIAL_INDEX),
+        "_error": "",
     }
 
