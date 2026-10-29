@@ -156,6 +156,191 @@ def _classify_type_badge(claimed_type: str) -> str:
     return "badge-other"
 
 
+def _catalog_item_to_query_item(item: dict[str, Any]) -> Optional[dict[str, Any]]:
+    """Convert a catalog.min.json / recent-catalog row into /api/transients shape."""
+    name = str(item.get("name") or "").strip()
+    if not name:
+        return None
+    aliases: list[str] = []
+    for a in item.get("alias") or []:
+        aval = a.get("value", a) if isinstance(a, dict) else str(a)
+        if aval and aval != name and aval not in aliases:
+            aliases.append(str(aval))
+    c_type = _extract_val(item, "claimedtype") or "—"
+    disc_date = _extract_val(item, "discoverdate") or "—"
+    host = _extract_val(item, "host") or "—"
+    disc = _extract_val(item, "discoverer") or "—"
+    search_tokens = [name.lower()] + [a.lower() for a in aliases]
+    if c_type and c_type != "—":
+        search_tokens.append(c_type.lower())
+    if host and host != "—":
+        search_tokens.append(host.lower())
+    return {
+        "name": name,
+        "aliases": aliases,
+        "type": c_type,
+        "type_badge": _classify_type_badge(c_type),
+        "date": disc_date,
+        "age": _format_relative_age(disc_date if disc_date != "—" else ""),
+        "mag": _extract_float(_extract_val(item, "maxappmag")),
+        "z": _extract_float(_extract_val(item, "redshift")),
+        "ra": _extract_val(item, "ra") or "—",
+        "dec": _extract_val(item, "dec") or "—",
+        "host": host,
+        "disc": disc,
+        "spec": _extract_int_count(item.get("spectralink")),
+        "phot": _extract_int_count(item.get("photolink")),
+        "search_blob": " ".join(search_tokens),
+    }
+
+
+def _load_recent_query_items() -> list[dict[str, Any]]:
+    path = _runtime_recent_path()
+    if not path.is_file():
+        return []
+    try:
+        raw = json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return []
+    if not isinstance(raw, list):
+        return []
+    out: list[dict[str, Any]] = []
+    for row in raw:
+        if not isinstance(row, dict):
+            continue
+        item = _catalog_item_to_query_item(row)
+        if item is not None:
+            out.append(item)
+    return out
+
+
+def _recent_passes_filters(
+    item: dict[str, Any],
+    *,
+    q: str,
+    type_filter: str,
+    has_spectra: Optional[bool],
+    has_photometry: Optional[bool],
+) -> bool:
+    q_clean = (q or "").strip().lower()
+    if q_clean and q_clean not in (item.get("search_blob") or ""):
+        return False
+    type_clean = (type_filter or "").strip().lower()
+    if type_clean and type_clean not in ("all", "any", ""):
+        t = (item.get("type") or "").lower()
+        if type_clean == "ia":
+            if "ia" not in t and "i-a" not in t:
+                return False
+        elif type_clean == "ii":
+            if "ii" not in t:
+                return False
+        elif type_clean in ("ibc", "ib/c"):
+            if "ib" not in t and "ic" not in t:
+                return False
+        elif type_clean == "slsn":
+            if "slsn" not in t and "superluminous" not in t:
+                return False
+        elif type_clean == "tde":
+            if "tde" not in t and "tidal" not in t:
+                return False
+        elif type_clean not in t:
+            return False
+    if has_spectra is True and int(item.get("spec") or 0) <= 0:
+        return False
+    if has_spectra is False and int(item.get("spec") or 0) > 0:
+        return False
+    if has_photometry is True and int(item.get("phot") or 0) <= 0:
+        return False
+    if has_photometry is False and int(item.get("phot") or 0) > 0:
+        return False
+    return True
+
+
+def _merge_recent_into_query_result(
+    result: dict[str, Any],
+    *,
+    q: str = "",
+    type_filter: str = "",
+    has_spectra: Optional[bool] = None,
+    has_photometry: Optional[bool] = None,
+    sort: str = "discoverdate",
+    order: str = "desc",
+    page: int = 1,
+    limit: int = 50,
+) -> dict[str, Any]:
+    """Ensure runtime recent-catalog rows appear in /api/transients results."""
+    recent = _load_recent_query_items()
+    if not recent:
+        return result
+
+    recent = [
+        r
+        for r in recent
+        if _recent_passes_filters(
+            r,
+            q=q,
+            type_filter=type_filter,
+            has_spectra=has_spectra,
+            has_photometry=has_photometry,
+        )
+    ]
+    if not recent:
+        return result
+
+    # Only rewrite page 1. Later pages are pure CatalogStore; once upsert lands,
+    # recent names sort into their true positions across the whole index.
+    page = max(1, int(page))
+    if page != 1:
+        return result
+
+    limit = max(1, min(int(limit), 250))
+    reverse = str(order).lower() == "desc"
+    sort_key = str(sort).lower()
+
+    store_items = list(result.get("items") or [])
+    by_name = {r["name"]: r for r in recent}
+    # Prefer recent row when both exist (fresher photolink / type / host).
+    merged_pool = list(recent)
+    for it in store_items:
+        name = it.get("name")
+        if name and name not in by_name:
+            merged_pool.append(it)
+
+    if sort_key in ("discoverdate", "date"):
+        merged_pool.sort(
+            key=lambda x: _clean_date_for_sort(str(x.get("date") or ""), reverse=reverse),
+            reverse=reverse,
+        )
+    elif sort_key == "name":
+        merged_pool.sort(key=lambda x: str(x.get("name") or "").lower(), reverse=reverse)
+    elif sort_key in ("claimedtype", "type"):
+        merged_pool.sort(key=lambda x: str(x.get("type") or "").lower(), reverse=reverse)
+    elif sort_key in ("photolink", "phot"):
+        merged_pool.sort(key=lambda x: int(x.get("phot") or 0), reverse=reverse)
+    elif sort_key in ("spectralink", "spec"):
+        merged_pool.sort(key=lambda x: int(x.get("spec") or 0), reverse=reverse)
+
+    store_total = int(result.get("total") or 0)
+    store_names = {i.get("name") for i in store_items}
+    recent_only = sum(1 for r in recent if r["name"] not in store_names)
+    extra = 0
+    if not (q or "").strip() and (not type_filter or type_filter in ("", "all", "any")):
+        extra = recent_only
+    total = store_total + extra
+    pages = max(1, math.ceil(total / limit) if total else 1)
+    page_items = merged_pool[:limit]
+
+    out = dict(result)
+    out["items"] = page_items
+    out["total"] = total
+    out["pages"] = pages
+    out["page"] = 1
+    out["limit"] = limit
+    out["has_next"] = pages > 1
+    out["has_prev"] = False
+    return out
+
+
 class CatalogEngine:
     _instance: Optional["CatalogEngine"] = None
     _lock = threading.Lock()
@@ -428,11 +613,25 @@ class CatalogEngine:
         production path: it avoids holding 110k records in RAM. The in-memory
         implementation below remains as a fallback for callers that construct a
         ``CatalogEngine`` directly (scripts, tests).
+
+        After the store query, recent-catalog.min.json is merged in so brand-new
+        TNS discoveries cannot flash on SSR then vanish when JS hits this API.
         """
         store = self._store()
         if store is not None:
             try:
-                return store.query(
+                result = store.query(
+                    q=q,
+                    type_filter=type_filter,
+                    has_spectra=has_spectra,
+                    has_photometry=has_photometry,
+                    sort=sort,
+                    order=order,
+                    page=page,
+                    limit=limit,
+                )
+                return _merge_recent_into_query_result(
+                    result,
                     q=q,
                     type_filter=type_filter,
                     has_spectra=has_spectra,

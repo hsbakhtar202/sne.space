@@ -152,10 +152,27 @@
     // Sync visual headers
     updateHeaderSortVisuals();
 
-    // If query params were present in URL on arrival, perform initial fetch to match params
-    if (urlParams.toString()) {
-      fetchData();
+    // Seed pagination from SSR so Next/Last work before the first API round-trip.
+    // Without this, state.pages stays 1 and click handlers no-op.
+    seedPaginationFromDom();
+
+    // Always refresh from /api/transients so the table agrees with CatalogStore
+    // (which now merges recent-catalog). Previously we only fetched when the URL
+    // had query params — that left pagination dead on a clean `/` load, and when
+    // `?limit=` was present the stale store wiped the fresh SSR recent list.
+    fetchData();
+  }
+
+  function seedPaginationFromDom() {
+    var infoTotal = document.getElementById('info-total');
+    if (infoTotal) {
+      var n = parseInt(String(infoTotal.textContent || '').replace(/,/g, ''), 10);
+      if (n > 0) state.total = n;
     }
+    if (state.total > 0) {
+      state.pages = Math.max(1, Math.ceil(state.total / state.limit));
+    }
+    updatePagination();
   }
 
   function updateHeaderSortVisuals() {

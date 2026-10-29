@@ -4552,7 +4552,8 @@ class Handler(SimpleHTTPRequestHandler):
                     page=page_int,
                     limit=limit_int,
                 )
-                self._send(200, "application/json; charset=utf-8", json.dumps(res, indent=2).encode("utf-8"), {
+                # Compact JSON: indent=2 added tens of ms and bytes on every page flip.
+                self._send(200, "application/json; charset=utf-8", json.dumps(res, separators=(",", ":")).encode("utf-8"), {
                     "Cache-Control": "public, max-age=30"
                 })
                 return

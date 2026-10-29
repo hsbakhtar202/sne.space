@@ -197,6 +197,7 @@ def _row(item: dict[str, str]) -> dict[str, str] | None:
         "discoverydate": item.get("Discovery Date (UT)", ""),
         "discoverymag": item.get("Discovery Mag/Flux", ""),
         "filter": item.get("Discovery Filter", ""),
+        "host": (item.get("Host Name") or "").strip(),
     }
 
 
@@ -222,7 +223,8 @@ def _publish(written: list[dict]) -> None:
         if mag:
             kind = "brightest_observed" if p_count >= 2 else "discovery"
             mag_entry = [{"value": mag, "kind": kind}]
-        catalog_rows.append({
+        host = (row.get("host") or "").strip()
+        entry = {
             "name": row["name"],
             "alias": [{"value": row["name"]}],
             "discoverer": [{"value": row["discoverer"]}],
@@ -234,11 +236,27 @@ def _publish(written: list[dict]) -> None:
             "claimedtype": [{"value": ctype}],
             "photolink": f"{p_count},0",
             "spectralink": f"{s_count}" if s_count > 0 else "0",
-        })
+        }
+        if host:
+            entry["host"] = [{"value": host}]
+        catalog_rows.append(entry)
     # Explicit rather than derived from RECENT_PATH.parent so the intent is clear
     # and a future move of one file cannot silently desynchronise the pair.
     catalog_path = _runtime_write_path("recent-catalog.min.json")
     _atomic_write_text(catalog_path, json.dumps(catalog_rows, separators=(",", ":")))
+    # Immediate CatalogStore upsert so /api/transients matches homepage SSR.
+    # Enrichment later re-publishes with real photometry counts.
+    try:
+        from ingest.catalog_publish import publish_catalog_items
+
+        pub = publish_catalog_items(catalog_rows)
+        print(
+            f"[Publish] recent-catalog upserted={pub.get('upserted')} "
+            f"items={pub.get('items')} note={pub.get('note')}",
+            flush=True,
+        )
+    except Exception as exc:  # noqa: BLE001
+        print(f"[Publish] recent-catalog CatalogStore upsert failed: {exc}", flush=True)
     classified = sum(1 for r in written if r.get("type") and r["type"] != "unclassified")
     print(
         f"Published {len(written)} transients ({classified} classified); "
@@ -326,6 +344,7 @@ def _pull_recent_body(days: int = 40) -> int:
             "spectra_count": 0,
             # Honest default: no persisted photometry until enrich writes points.
             "photo_count": 0,
+            "host": (row.get("host") or item.get("Host Name") or "").strip(),
             "sort": row["discoverydate"],
         })
         pending.append((cname_raw, row, item))

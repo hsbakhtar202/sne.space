@@ -79,6 +79,7 @@ def event_to_catalog_item(name: str, meta: dict) -> dict[str, Any]:
             aliases.append(str(aval))
     claimed = _val(meta, "claimedtype") or "unclassified"
     disc = _val(meta, "discoverdate")
+    host = _val(meta, "host")
     item: dict[str, Any] = {
         "name": name,
         "alias": [{"value": name}] + [{"value": a} for a in aliases],
@@ -98,6 +99,8 @@ def event_to_catalog_item(name: str, meta: dict) -> dict[str, Any]:
             isinstance(p, dict) and is_candidate_point(p) for p in (meta.get("photometry") or [])
         ),
     }
+    if host:
+        item["host"] = [{"value": host}]
     return item
 
 
@@ -163,6 +166,58 @@ def atomic_write_json_array(path: Path, items: List[dict]) -> None:
         raise
 
 
+def publish_catalog_items(
+    items: Sequence[dict],
+    *,
+    catalog_db: Optional[Path] = None,
+    write_overlay: bool = True,
+    overlay_file: Optional[Path] = None,
+) -> dict[str, Any]:
+    """Upsert catalog-shaped rows into overlay + CatalogStore (no event JSON required).
+
+    Used by ``pull_recent`` so discovery stubs enter SQLite immediately — before
+    enrichment finishes — so ``/api/transients`` agrees with the homepage SSR.
+    """
+    clean = [i for i in items if isinstance(i, dict) and i.get("name")]
+    result: dict[str, Any] = {
+        "items": len(clean),
+        "overlay_path": str(overlay_file or overlay_path()),
+        "upserted": 0,
+        "quarantine_preserved": sum(1 for i in clean if i.get("quarantined")),
+    }
+    if not clean:
+        return result
+
+    if write_overlay:
+        op = Path(overlay_file) if overlay_file is not None else overlay_path()
+        existing: List[dict] = []
+        if op.is_file():
+            try:
+                raw = json.loads(op.read_text(encoding="utf-8"))
+                if isinstance(raw, list):
+                    existing = [x for x in raw if isinstance(x, dict)]
+            except Exception:
+                existing = []
+        merged = merge_overlay(existing, clean)
+        atomic_write_json_array(op, merged)
+        result["overlay_size"] = len(merged)
+
+    db_path = catalog_db
+    if db_path is None:
+        db_path = Path(SUPERNOVAE_OUTPUT) / ".index" / "catalog.db"
+    if db_path.is_file():
+        from serve.catalog_store import CatalogStore
+
+        store = CatalogStore(db_path)
+        store.load_existing()
+        result["upserted"] = store.upsert_catalog_items(clean)
+    else:
+        result["upserted"] = 0
+        result["note"] = f"no catalog db at {db_path}; overlay written only"
+
+    return result
+
+
 def publish_event_files(
     paths: Iterable[Path],
     *,
@@ -177,45 +232,9 @@ def publish_event_files(
             continue
         name, meta = loaded
         items.append(event_to_catalog_item(name, meta))
-
-    result: dict[str, Any] = {
-        "items": len(items),
-        "overlay_path": str(overlay_path()),
-        "upserted": 0,
-        "quarantine_preserved": sum(1 for i in items if i.get("quarantined")),
-    }
-    if not items:
-        return result
-
-    if write_overlay:
-        op = overlay_path()
-        existing: List[dict] = []
-        if op.is_file():
-            try:
-                raw = json.loads(op.read_text(encoding="utf-8"))
-                if isinstance(raw, list):
-                    existing = [x for x in raw if isinstance(x, dict)]
-            except Exception:
-                existing = []
-        merged = merge_overlay(existing, items)
-        atomic_write_json_array(op, merged)
-        result["overlay_size"] = len(merged)
-
-    db_path = catalog_db
-    if db_path is None:
-        # Match server default relative to corpus
-        db_path = Path(SUPERNOVAE_OUTPUT) / ".index" / "catalog.db"
-    if db_path.is_file():
-        from serve.catalog_store import CatalogStore
-
-        store = CatalogStore(db_path)
-        store.load_existing()
-        result["upserted"] = store.upsert_catalog_items(items)
-    else:
-        result["upserted"] = 0
-        result["note"] = f"no catalog db at {db_path}; overlay written only"
-
-    return result
+    return publish_catalog_items(
+        items, catalog_db=catalog_db, write_overlay=write_overlay
+    )
 
 
 def publish_names(names: Sequence[str], **kwargs: Any) -> dict[str, Any]:
