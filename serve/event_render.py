@@ -1716,6 +1716,9 @@ def render_pro_cockpit(
 
     gtag('config', 'G-P1SCVZ0V7T');
   </script>
+  <!-- Google AdSense -->
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2422460022815514"
+       crossorigin="anonymous"></script>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{name} — Open Supernova Catalog Cockpit</title>
@@ -4578,6 +4581,9 @@ def render_story_mode(
 
     gtag('config', 'G-P1SCVZ0V7T');
   </script>
+  <!-- Google AdSense -->
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2422460022815514"
+       crossorigin="anonymous"></script>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{name}: What Happened, Distance &amp; Viewing Guide — sne.space</title>

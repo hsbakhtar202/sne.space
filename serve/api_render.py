@@ -15,6 +15,9 @@ def render_api_docs_page() -> str:
 
     gtag('config', 'G-P1SCVZ0V7T');
   </script>
+  <!-- Google AdSense -->
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2422460022815514"
+       crossorigin="anonymous"></script>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>API Documentation & Developer Protocols — Open Supernova Catalog (sne.space)</title>
