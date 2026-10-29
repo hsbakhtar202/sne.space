@@ -80,13 +80,30 @@ def event_to_catalog_item(name: str, meta: dict) -> dict[str, Any]:
     claimed = _val(meta, "claimedtype") or "unclassified"
     disc = _val(meta, "discoverdate")
     host = _val(meta, "host")
+    z = _val(meta, "redshift")
+    # Listing magnitude: prefer explicit maxappmag, else discovery mag. Kind must
+    # stay honest — a lone discovery point is not a fitted peak.
+    mag = _val(meta, "maxappmag")
+    mag_kind = ""
+    mm = meta.get("maxappmag")
+    if isinstance(mm, list) and mm and isinstance(mm[0], dict):
+        mag_kind = str(mm[0].get("kind") or "")
+    if not mag:
+        mag = _val(meta, "discoverymag")
+        if mag:
+            mag_kind = "discovery"
+    elif not mag_kind:
+        mag_kind = "brightest_observed" if len(raw_dets) >= 2 else "discovery"
+    mag_entry = []
+    if mag:
+        mag_entry = [{"value": mag, "kind": mag_kind or "discovery"}]
     item: dict[str, Any] = {
         "name": name,
         "alias": [{"value": name}] + [{"value": a} for a in aliases],
         "discoverer": [{"value": _val(meta, "discoverer")}] if _val(meta, "discoverer") else [],
         "discoverdate": [{"value": disc}] if disc else [],
         "maxdate": [{"value": _val(meta, "maxdate")}] if _val(meta, "maxdate") else [],
-        "maxappmag": [{"value": _val(meta, "maxappmag")}] if _val(meta, "maxappmag") else [],
+        "maxappmag": mag_entry,
         "ra": [{"value": _val(meta, "ra")}] if _val(meta, "ra") else [],
         "dec": [{"value": _val(meta, "dec")}] if _val(meta, "dec") else [],
         "claimedtype": [{"value": claimed}],
@@ -101,6 +118,8 @@ def event_to_catalog_item(name: str, meta: dict) -> dict[str, Any]:
     }
     if host:
         item["host"] = [{"value": host}]
+    if z:
+        item["redshift"] = [{"value": z}]
     return item
 
 
@@ -251,6 +270,12 @@ def main() -> int:
     ap.add_argument("--files", nargs="*", default=[], help="Event JSON paths")
     ap.add_argument("--names", nargs="*", default=[], help="Event names to locate under SUPERNOVAE_OUTPUT")
     ap.add_argument("--from-checkpoint", action="store_true", help="Publish all checkpoint-completed names")
+    ap.add_argument(
+        "--folder",
+        type=str,
+        default="",
+        help="Glob folder under SUPERNOVAE_OUTPUT (e.g. sne-2025-2029) to republish metadata",
+    )
     ap.add_argument("--limit", type=int, default=0)
     ap.add_argument("--catalog-db", type=Path, default=None)
     args = ap.parse_args()
@@ -260,6 +285,10 @@ def main() -> int:
         root = Path(SUPERNOVAE_OUTPUT)
         for n in args.names:
             paths.extend(root.glob(f"sne-*/{n}.json"))
+    if args.folder:
+        folder = Path(SUPERNOVAE_OUTPUT) / args.folder
+        if folder.is_dir():
+            paths.extend(sorted(folder.glob("*.json")))
     if args.from_checkpoint:
         from ingest.backfill_photometry import load_checkpoint
         completed = load_checkpoint().get("completed") or []
@@ -272,7 +301,7 @@ def main() -> int:
 
     # de-dupe paths
     uniq = list(dict.fromkeys(paths))
-    if args.limit and not args.from_checkpoint:
+    if args.limit:
         uniq = uniq[: args.limit]
     result = publish_event_files(uniq, catalog_db=args.catalog_db)
     print(json.dumps(result, indent=2))

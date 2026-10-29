@@ -224,6 +224,7 @@ def _publish(written: list[dict]) -> None:
             kind = "brightest_observed" if p_count >= 2 else "discovery"
             mag_entry = [{"value": mag, "kind": kind}]
         host = (row.get("host") or "").strip()
+        z = (row.get("redshift") or "").strip()
         entry = {
             "name": row["name"],
             "alias": [{"value": row["name"]}],
@@ -239,6 +240,8 @@ def _publish(written: list[dict]) -> None:
         }
         if host:
             entry["host"] = [{"value": host}]
+        if z:
+            entry["redshift"] = [{"value": z}]
         catalog_rows.append(entry)
     # Explicit rather than derived from RECENT_PATH.parent so the intent is clear
     # and a future move of one file cannot silently desynchronise the pair.
@@ -345,6 +348,7 @@ def _pull_recent_body(days: int = 40) -> int:
             # Honest default: no persisted photometry until enrich writes points.
             "photo_count": 0,
             "host": (row.get("host") or item.get("Host Name") or "").strip(),
+            "redshift": (row.get("redshift") or item.get("Redshift") or "").strip(),
             "sort": row["discoverydate"],
         })
         pending.append((cname_raw, row, item))
@@ -384,6 +388,37 @@ def _pull_recent_body(days: int = 40) -> int:
                 continue
             n += 1
         return n
+
+    def _card_fill_from_body(card: dict, body: dict) -> None:
+        """Copy table-visible fields from an event body onto a recent-list card."""
+        if not isinstance(body, dict) or not card:
+            return
+        card["spectra_count"] = len(body.get("spectra") or [])
+        card["photo_count"] = _usable_photo_count(body)
+        ct = body.get("claimedtype") or []
+        if ct and isinstance(ct[0], dict) and ct[0].get("value"):
+            card["type"] = ct[0]["value"]
+        for key, dest in (("ra", "ra"), ("dec", "dec")):
+            vals = body.get(key) or []
+            if vals and isinstance(vals[0], dict) and vals[0].get("value"):
+                card[dest] = vals[0]["value"]
+        peak = body.get("maxappmag") or []
+        if peak and isinstance(peak[0], dict) and peak[0].get("value"):
+            card["maxappmag"] = str(peak[0]["value"])
+        else:
+            dm = body.get("discoverymag") or []
+            if dm and isinstance(dm[0], dict) and dm[0].get("value"):
+                card["maxappmag"] = str(dm[0]["value"])
+        host = body.get("host") or []
+        if host and isinstance(host[0], dict) and host[0].get("value"):
+            card["host"] = str(host[0]["value"])
+        z = body.get("redshift") or []
+        if z and isinstance(z[0], dict) and z[0].get("value"):
+            card["redshift"] = str(z[0]["value"])
+        elif body.get("hostredshift"):
+            hz = body["hostredshift"]
+            if isinstance(hz, list) and hz and isinstance(hz[0], dict) and hz[0].get("value"):
+                card["redshift"] = str(hz[0]["value"])
 
     def _needs_enrich(cname_raw: str) -> bool:
         """Re-enrich stubs: missing file, sparse photometry (<=1), or no spectra."""
@@ -435,24 +470,12 @@ def _pull_recent_body(days: int = 40) -> int:
                 pass
             card = by_name.get(cname_raw)
             if card is not None and event is not None:
-                body = event.get(cname, {})
-                card["spectra_count"] = len(body.get("spectra", []))
-                card["photo_count"] = _usable_photo_count(body)
-                card["type"] = body.get("claimedtype", [{"value": card["type"]}])[0].get("value", card["type"])
-                card["ra"] = body.get("ra", [{"value": card["ra"]}])[0].get("value", card["ra"])
-                card["dec"] = body.get("dec", [{"value": card["dec"]}])[0].get("value", card["dec"])
-                peak = body.get("maxappmag") or []
-                if peak and isinstance(peak[0], dict) and peak[0].get("value"):
-                    card["maxappmag"] = str(peak[0]["value"])
-                elif body.get("discoverymag"):
-                    dm = body["discoverymag"]
-                    if isinstance(dm, list) and dm and isinstance(dm[0], dict) and dm[0].get("value"):
-                        card["maxappmag"] = str(dm[0]["value"])
+                _card_fill_from_body(card, event.get(cname, {}))
         except Exception as exc:
             print(f"TNS enrich failed for {cname_raw}: {exc}", flush=True)
             continue
 
-    # Carry the enrichment counts for events we skipped back onto the cards.
+    # Carry enrichment fields for events we skipped back onto the cards.
     for cname_raw, row, item in pending:
         hit = on_disk.get(cname_raw)
         card = by_name.get(cname_raw)
@@ -460,25 +483,16 @@ def _pull_recent_body(days: int = 40) -> int:
             continue
         _path, ex_data = hit
         key = next(iter(ex_data), cname_raw)
-        body = ex_data.get(key, {})
-        card["spectra_count"] = len(body.get("spectra", []))
-        card["photo_count"] = _usable_photo_count(body)
-        ct = body.get("claimedtype") or []
-        if ct and ct[0].get("value"):
-            card["type"] = ct[0]["value"]
-        ra = body.get("ra") or []
-        dec = body.get("dec") or []
-        if ra and ra[0].get("value"):
-            card["ra"] = ra[0]["value"]
-        if dec and dec[0].get("value"):
-            card["dec"] = dec[0]["value"]
-        peak = body.get("maxappmag") or []
-        if peak and isinstance(peak[0], dict) and peak[0].get("value"):
-            card["maxappmag"] = str(peak[0]["value"])
+        _card_fill_from_body(card, ex_data.get(key, {}))
 
     _publish(written)
-    # Automatic catalog/SQLite/UI publication — not a manual sync_corpus step.
-    _auto_publish_paths(published_paths)
+    # Publish both newly enriched files and already-on-disk recent events so
+    # redshift / host / magnitude in event JSON reach CatalogStore (table columns).
+    for _cname, hit in on_disk.items():
+        published_paths.append(hit[0])
+    # de-dupe while preserving order
+    uniq_paths = list(dict.fromkeys(published_paths))
+    _auto_publish_paths(uniq_paths)
     print(f"Wrote {len(written)} events into {SUPERNOVAE_OUTPUT}", flush=True)
     return len(written)
 

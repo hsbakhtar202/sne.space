@@ -238,6 +238,15 @@ def build_event_dict(
             "source": tns_source_alias,
         }]
 
+    # Host galaxy name from TNS (when reported). Render-time NED resolution can
+    # refine this later; the catalog table needs the value on the event itself.
+    host_name = (row.get("host") or "").strip()
+    if host_name:
+        event["host"] = [{
+            "value": host_name,
+            "source": tns_source_alias,
+        }]
+
     # Discoverer
     reporters = row.get("reporters", "").strip()
     reporting_group = row.get("reporting_group", "").strip()
