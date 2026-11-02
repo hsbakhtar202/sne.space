@@ -118,6 +118,7 @@ def reconcile(
 
         missing: list[dict] = []
         stale: list[dict] = []
+        held_reduction: list[dict] = []
         ok = 0
         unreadable: list[str] = []
         publish_paths: list[Path] = []
@@ -143,20 +144,28 @@ def reconcile(
                 )
                 publish_paths.append(path)
                 continue
-            # stale: store phot/spec disagree with JSON arrays
+            # stale: store phot/spec disagree with JSON arrays.
+            # SAFETY: distinguish direction. json>store means the local file is
+            # richer (safe to upsert). json<store means the inherited index claims
+            # MORE than the local file holds — a count *reduction* that must not be
+            # applied blindly (could destroy valid historical index claims).
             if int(row["phot"] or 0) != want_phot or int(row["spec"] or 0) != spec:
-                stale.append(
-                    {
-                        "name": name,
-                        "store_phot": row["phot"],
-                        "json_det": det,
-                        "store_spec": row["spec"],
-                        "json_spec": spec,
-                        "publish_revision": row["publish_revision"],
-                        "path": str(path),
-                    }
-                )
-                publish_paths.append(path)
+                richer = (want_phot > int(row["phot"] or 0)) or (spec > int(row["spec"] or 0))
+                entry = {
+                    "name": name,
+                    "store_phot": row["phot"],
+                    "json_det": det,
+                    "store_spec": row["spec"],
+                    "json_spec": spec,
+                    "publish_revision": row["publish_revision"],
+                    "path": str(path),
+                    "direction": "json_richer" if richer else "json_poorer",
+                }
+                stale.append(entry)
+                if richer:
+                    publish_paths.append(path)  # safe: local file has more data
+                else:
+                    held_reduction.append(entry)  # classify before any apply
                 continue
             ok += 1
     finally:
@@ -171,12 +180,16 @@ def reconcile(
         "ok": ok,
         "missing_in_store": len(missing),
         "stale_counts": len(stale),
+        "stale_json_richer": sum(1 for s in stale if s.get("direction") == "json_richer"),
+        "stale_json_poorer_held": len(held_reduction),
         "unreadable_files": len(unreadable),
         "apply": apply,
         "live_data_untouched": not apply,
         "missing_sample": missing[:25],
         "stale_sample": stale[:25],
+        "held_reduction_sample": held_reduction[:25],
         "unreadable_sample": unreadable[:25],
+        "note": "json_poorer reductions are HELD (not applied) to avoid destroying valid historical index claims",
     }
 
     if apply and publish_paths:
