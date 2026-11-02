@@ -113,3 +113,41 @@ def test_oldest_pending_age(tmp_path):
     q._conn.execute("UPDATE enrich_jobs SET enqueued_at=enqueued_at-100")
     q._conn.commit()
     assert q.stats()["oldest_pending_age_s"] >= 99
+
+
+# 9. weighted fairness: aged (priority) backlog cannot starve fresh jobs, and
+#    fresh arrivals cannot starve aged backlog — both make progress.
+def test_no_starvation_either_direction(tmp_path):
+    q = _queue(tmp_path, aged_share=0.5, aging_seconds=10**9)  # aging off; pure weighting
+    # Seed a large aged backlog.
+    for i in range(50):
+        q.enqueue(f"AGED{i}", priority=True)
+    # Continuously add fresh work while draining; fresh must still be claimed.
+    claimed = []
+    fresh_added = 0
+    for _ in range(120):
+        q.enqueue(f"FRESH{fresh_added}"); fresh_added += 1
+        job = q._claim()
+        if job is None:
+            break
+        claimed.append(job[0])
+        q._finish_ok(job[0])
+    fresh_claimed = sum(1 for n in claimed if n.startswith("FRESH"))
+    aged_claimed = sum(1 for n in claimed if n.startswith("AGED"))
+    # With ~50/50 weighting, both classes get served (neither is starved).
+    assert fresh_claimed > 0, "aged backlog starved fresh jobs"
+    assert aged_claimed > 0, "fresh arrivals starved aged backlog"
+    # Roughly balanced (not 100% one class) under equal shares.
+    assert 0.2 <= fresh_claimed / max(1, len(claimed)) <= 0.8
+
+
+# 10. aging promotes a long-waited fresh job to priority (starvation guard).
+def test_aging_promotes_old_fresh_job(tmp_path):
+    q = _queue(tmp_path, aging_seconds=0.01)
+    q.enqueue("OLDFRESH")
+    # Re-enqueue after the aging window: should be promoted to priority=1.
+    import time as _t
+    _t.sleep(0.02)
+    q.enqueue("OLDFRESH")  # deduped, but aged -> promoted
+    pr = q._conn.execute("SELECT priority FROM enrich_jobs WHERE name='OLDFRESH'").fetchone()[0]
+    assert pr == 1

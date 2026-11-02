@@ -65,6 +65,8 @@ class DurableEnrichmentQueue:
         backoff_cap: float = 900.0,
         rate_limit_cooldown: float = 120.0,
         lease_seconds: float = 90.0,
+        aged_share: float = 0.5,
+        aging_seconds: float = 3600.0,
     ) -> None:
         self.db = db or _db_path()
         self.max_attempts = max_attempts
@@ -73,6 +75,14 @@ class DurableEnrichmentQueue:
         self.backoff_cap = backoff_cap
         self.rate_limit_cooldown = rate_limit_cooldown
         self.lease_seconds = lease_seconds
+        # Weighted fair scheduling: roughly ``aged_share`` of claims go to aged
+        # backlog (priority=1), the rest to fresh work — so neither class starves
+        # even under continuous arrivals on the other side.
+        self.aged_share = min(1.0, max(0.0, aged_share))
+        # Aging: any job waiting longer than this is promoted to priority, so a
+        # perpetually busy fresh stream cannot starve it indefinitely.
+        self.aging_seconds = aging_seconds
+        self._since_aged = 0  # claims since the last aged-backlog claim
         self._lock = threading.Lock()
         self._conn = sqlite3.connect(str(self.db), timeout=60.0, check_same_thread=False)
         self._conn.execute("PRAGMA journal_mode=WAL")
@@ -115,11 +125,13 @@ class DurableEnrichmentQueue:
         now = time.time()
         with self._lock:
             row = self._conn.execute(
-                "SELECT status FROM enrich_jobs WHERE name = ?", (name,)
+                "SELECT status, enqueued_at FROM enrich_jobs WHERE name = ?", (name,)
             ).fetchone()
             if row is not None and row[0] in ("queued", "leased", "retry"):
-                # Escalate an already-queued fresh job to priority if requested.
-                if priority:
+                # Escalate to priority if requested OR if the job has waited past
+                # the aging window (aging prevents starvation under busy fresh load).
+                aged = (now - float(row[1] or now)) >= self.aging_seconds
+                if priority or aged:
                     with self._conn:
                         self._conn.execute(
                             "UPDATE enrich_jobs SET priority=1, updated_at=? WHERE name=?",
@@ -152,17 +164,39 @@ class DurableEnrichmentQueue:
                     "WHERE status='leased' AND lease_until < ?",
                     (now, now),
                 )
-            # Starvation guard: aged-backlog (priority=1) jobs are claimed before
-            # fresh arrivals, and within each class the OLDEST enqueued goes first —
-            # so continuous new discoveries cannot starve older unfinished work.
-            row = self._conn.execute(
-                "SELECT name, fetch_lc, fetch_spec FROM enrich_jobs "
-                "WHERE status IN ('queued','retry') AND not_before <= ? "
-                "ORDER BY priority DESC, enqueued_at ASC LIMIT 1",
-                (now,),
-            ).fetchone()
+            # Aging pass: promote any due job that has waited past aging_seconds.
+            with self._conn:
+                self._conn.execute(
+                    "UPDATE enrich_jobs SET priority=1, updated_at=? "
+                    "WHERE status IN ('queued','retry') AND priority=0 AND not_before <= ? "
+                    "AND (? - enqueued_at) >= ?",
+                    (now, now, now, self.aging_seconds),
+                )
+
+            # Weighted fair selection between aged (priority=1) and fresh classes so
+            # neither starves under continuous arrivals on the other side.
+            def _next(priority: int):
+                return self._conn.execute(
+                    "SELECT name, fetch_lc, fetch_spec FROM enrich_jobs "
+                    "WHERE status IN ('queued','retry') AND not_before <= ? AND priority = ? "
+                    "ORDER BY enqueued_at ASC LIMIT 1",
+                    (now, priority),
+                ).fetchone()
+
+            aged_row = _next(1)
+            fresh_row = _next(0)
+            row = None
+            if aged_row is not None and fresh_row is not None:
+                want_aged = (self._since_aged + 1) * self.aged_share >= 1.0
+                row = aged_row if want_aged else fresh_row
+            elif aged_row is not None:
+                row = aged_row
+            else:
+                row = fresh_row
             if row is None:
                 return None
+            is_aged = aged_row is not None and row[0] == aged_row[0]
+            self._since_aged = 0 if is_aged else self._since_aged + 1
             name, lc, sp = row[0], bool(row[1]), bool(row[2])
             with self._conn:
                 self._conn.execute(
