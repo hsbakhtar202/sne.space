@@ -29,6 +29,7 @@ CREATE TABLE IF NOT EXISTS enrich_jobs (
     status        TEXT NOT NULL DEFAULT 'queued',  -- queued|leased|retry|done|failed
     attempts      INTEGER NOT NULL DEFAULT 0,
     max_attempts  INTEGER NOT NULL DEFAULT 3,
+    priority      INTEGER NOT NULL DEFAULT 0,      -- 1 = aged backlog (starvation guard)
     not_before    REAL NOT NULL DEFAULT 0,
     lease_until   REAL NOT NULL DEFAULT 0,
     enqueued_at   REAL NOT NULL,
@@ -78,7 +79,14 @@ class DurableEnrichmentQueue:
         self._conn.execute("PRAGMA synchronous=NORMAL")
         with self._conn:
             self._conn.executescript(_SCHEMA)
+        # Migration: add priority column if upgrading an existing queue db.
+        try:
+            self._conn.execute("ALTER TABLE enrich_jobs ADD COLUMN priority INTEGER NOT NULL DEFAULT 0")
+            self._conn.commit()
+        except sqlite3.OperationalError:
+            pass  # column already exists
         self._started = False
+        self._stop = False
         self._wake = threading.Condition(self._lock)
         # process-level counters (persisted counters live in the table)
         self.enqueued = 0
@@ -89,8 +97,19 @@ class DurableEnrichmentQueue:
 
     # -- durability ------------------------------------------------------
 
-    def enqueue(self, name: str, fetch_lightcurve: bool = True, fetch_spectra: bool = True) -> bool:
-        """Durably record a job. False when already queued/leased (deduped)."""
+    def enqueue(
+        self,
+        name: str,
+        fetch_lightcurve: bool = True,
+        fetch_spectra: bool = True,
+        *,
+        priority: bool = False,
+    ) -> bool:
+        """Durably record a job. False when already queued/leased (deduped).
+
+        ``priority=True`` marks aged backlog so starvation-safe scheduling can
+        reserve capacity for it ahead of fresh discoveries.
+        """
         if not name:
             return False
         now = time.time()
@@ -99,16 +118,24 @@ class DurableEnrichmentQueue:
                 "SELECT status FROM enrich_jobs WHERE name = ?", (name,)
             ).fetchone()
             if row is not None and row[0] in ("queued", "leased", "retry"):
+                # Escalate an already-queued fresh job to priority if requested.
+                if priority:
+                    with self._conn:
+                        self._conn.execute(
+                            "UPDATE enrich_jobs SET priority=1, updated_at=? WHERE name=?",
+                            (now, name),
+                        )
                 self.deduped += 1
                 return False
             with self._conn:
                 self._conn.execute(
                     "INSERT INTO enrich_jobs(name, fetch_lc, fetch_spec, status, attempts, "
-                    "max_attempts, not_before, enqueued_at, updated_at, last_error) "
-                    "VALUES(?,?,?,?,0,?,0,?,?,NULL) "
+                    "max_attempts, priority, not_before, enqueued_at, updated_at, last_error) "
+                    "VALUES(?,?,?,?,0,?,?,0,?,?,NULL) "
                     "ON CONFLICT(name) DO UPDATE SET status='queued', not_before=0, "
-                    "attempts=0, updated_at=excluded.updated_at, last_error=NULL",
-                    (name, int(fetch_lightcurve), int(fetch_spectra), "queued", self.max_attempts, now, now),
+                    "attempts=0, priority=excluded.priority, updated_at=excluded.updated_at, last_error=NULL",
+                    (name, int(fetch_lightcurve), int(fetch_spectra), "queued",
+                     self.max_attempts, int(priority), now, now),
                 )
             self.enqueued += 1
             self._wake.notify()
@@ -125,10 +152,13 @@ class DurableEnrichmentQueue:
                     "WHERE status='leased' AND lease_until < ?",
                     (now, now),
                 )
+            # Starvation guard: aged-backlog (priority=1) jobs are claimed before
+            # fresh arrivals, and within each class the OLDEST enqueued goes first —
+            # so continuous new discoveries cannot starve older unfinished work.
             row = self._conn.execute(
                 "SELECT name, fetch_lc, fetch_spec FROM enrich_jobs "
                 "WHERE status IN ('queued','retry') AND not_before <= ? "
-                "ORDER BY enqueued_at LIMIT 1",
+                "ORDER BY priority DESC, enqueued_at ASC LIMIT 1",
                 (now,),
             ).fetchone()
             if row is None:
@@ -211,19 +241,39 @@ class DurableEnrichmentQueue:
 
     # -- worker ----------------------------------------------------------
 
+    def _execute(self, name: str, lc: bool, sp: bool) -> bool:
+        """Run one enrichment job. Isolated so tests can stub the network out."""
+        from ingest.manager import enrich_event
+
+        return bool(enrich_event(name, fetch_lightcurve=lc, fetch_spectra=sp, force=False))
+
     def start(self, workers: int = 2) -> None:
         with self._lock:
             if self._started:
                 return
             self._started = True
+        self._stop = False
         for i in range(max(1, workers)):
             threading.Thread(target=self._worker, name=f"durable-enrich-{i}", daemon=True).start()
 
-    def _worker(self) -> None:
-        from ingest.manager import enrich_event
+    def stop(self) -> None:
+        """Signal workers to exit and close the store (clean teardown)."""
+        with self._lock:
+            self._stop = True
+            self._wake.notify_all()
+        try:
+            self._conn.close()
+        except Exception:
+            pass
 
+    def _worker(self) -> None:
         while True:
-            job = self._claim()
+            if self._stop:
+                return
+            try:
+                job = self._claim()
+            except (sqlite3.ProgrammingError, sqlite3.OperationalError):
+                return  # store closed during teardown
             if job is None:
                 with self._wake:
                     self._wake.wait(timeout=5.0)
@@ -233,7 +283,7 @@ class DurableEnrichmentQueue:
             rate = False
             err = ""
             try:
-                ok = bool(enrich_event(name, fetch_lightcurve=lc, fetch_spectra=sp, force=False))
+                ok = bool(self._execute(name, lc, sp))
             except Exception as exc:  # noqa: BLE001
                 err = str(exc)
                 low = err.lower()

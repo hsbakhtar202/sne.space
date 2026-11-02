@@ -326,6 +326,14 @@
     if (infoStart) infoStart.textContent = start.toLocaleString();
     if (infoEnd) infoEnd.textContent = end.toLocaleString();
     if (infoTotal) infoTotal.textContent = state.total.toLocaleString();
+    // Keep the hero "Total Transients" and the "All Transients" chip on the same
+    // authoritative CatalogStore total as the API/pagination (homepage/API parity).
+    if (state.type === 'all' && !state.q && state.total > 0) {
+      var heroTotal = document.getElementById('hero-total');
+      if (heroTotal) heroTotal.textContent = state.total.toLocaleString();
+      var allChip = document.querySelector('#type-filters .filter-chip[data-type="all"] .chip-count');
+      if (allChip) allChip.textContent = Math.floor(state.total / 1000) + 'k+';
+    }
     if (indicator) indicator.textContent = 'Page ' + state.page.toLocaleString() + ' of ' + state.pages.toLocaleString();
     if (timeBadge && durationMs !== undefined) timeBadge.textContent = '⚡ ' + durationMs + 'ms';
 

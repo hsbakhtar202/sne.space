@@ -21,6 +21,26 @@ if (is_file($recentCatPath)) {
     }
 }
 
+// Authoritative catalog statistics: the same published CatalogStore snapshot that
+// /api/transients serves (written by server.py as catalog-stats.json). Total =
+// event rows in the published CatalogStore at publish_revision. Previously these
+// numbers were hardcoded and diverged from the API. Fall back to the historical
+// constants only when the snapshot is unavailable.
+$CAT_TOTAL = 110356;              // fallback only
+$CAT_TOTAL_LABEL = '110,222';     // fallback only
+$CAT_TOTAL_SHORT = '110k+';       // fallback only
+$CAT_STATS = null;
+$catStatsPath = $runtimeDir . '/catalog-stats.json';
+if (is_file($catStatsPath)) {
+    $cs = json_decode((string)file_get_contents($catStatsPath), true);
+    if (is_array($cs) && isset($cs['total']) && (int)$cs['total'] > 0) {
+        $CAT_STATS = $cs;
+        $CAT_TOTAL = (int)$cs['total'];
+        $CAT_TOTAL_LABEL = number_format($CAT_TOTAL);
+        $CAT_TOTAL_SHORT = floor($CAT_TOTAL / 1000) . 'k+';
+    }
+}
+
 function _fmt_type_badge(string $type): string {
     $t = strtolower($type);
     if (strpos($t, 'ia') !== false) return 'badge-ia';
@@ -630,12 +650,12 @@ function _fmt_field_val($field): string {
   <main>
     <section class="catalog-hero">
       <h1 class="hero-headline">The Open Supernova Catalog</h1>
-      <p class="hero-subtext">A community-curated astronomical repository indexing 110,222+ explosive transients, multi-band optical light curves, and calibrated spectra from 1000 AD to 2026+.</p>
+      <p class="hero-subtext">A community-curated astronomical repository indexing <?php echo $CAT_TOTAL_LABEL; ?>+ explosive transients, multi-band optical light curves, and calibrated spectra from 1000 AD to 2026+.</p>
 
       <div class="stats-telemetry-row">
         <div class="telemetry-card">
           <div class="telemetry-label">Total Transients</div>
-          <div class="telemetry-val">110,222</div>
+          <div class="telemetry-val" id="hero-total"><?php echo $CAT_TOTAL_LABEL; ?></div>
           <div class="telemetry-desc">Historical & modern survey events</div>
         </div>
         <div class="telemetry-card">
@@ -710,7 +730,7 @@ function _fmt_field_val($field): string {
 
         <div class="filter-pills-row">
           <div class="type-filter-group" id="type-filters">
-            <button class="filter-chip active" data-type="all">All Transients <span class="chip-count">110k+</span></button>
+            <button class="filter-chip active" data-type="all">All Transients <span class="chip-count"><?php echo $CAT_TOTAL_SHORT; ?></span></button>
             <button class="filter-chip" data-type="ia">Type Ia</button>
             <button class="filter-chip" data-type="ii">Type II</button>
             <button class="filter-chip" data-type="ibc">Type Ib/c</button>
@@ -787,7 +807,7 @@ function _fmt_field_val($field): string {
 
       <div class="catalog-pagination-bar">
         <div class="pagination-info" id="pagination-info">
-          Showing <span id="info-start">1</span>–<span id="info-end">50</span> of <span id="info-total">110,356</span> supernovae
+          Showing <span id="info-start">1</span>–<span id="info-end">50</span> of <span id="info-total"><?php echo $CAT_TOTAL_LABEL; ?></span> supernovae
           <span class="telemetry-badge" id="query-time-badge">⚡ Instant</span>
         </div>
         <div class="pagination-controls">
