@@ -1,0 +1,19 @@
+{
+  "stub": null,
+  "bytes": 735458,
+  "det": 1,
+  "lim": 0,
+  "spec": 5,
+  "phot_len": 1,
+  "photometry_ingest": {},
+  "discoverymag": null,
+  "maxappmag": [
+    {
+      "value": "18.91",
+      "derived": true,
+      "source": "2"
+    }
+  ],
+  "has_photometry_key": true,
+  "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md"
+}

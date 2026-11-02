@@ -1,0 +1,16 @@
+{
+  "det": 1482,
+  "lim": 42,
+  "spec": 133,
+  "photolink": null,
+  "spectralink": null,
+  "maxappmag": {
+    "value": "8.98",
+    "derived": true,
+    "source": "4,5,26"
+  },
+  "discoverymag": null,
+  "host": "NGC 3034",
+  "redshift": "0.000677",
+  "ingest": null
+}

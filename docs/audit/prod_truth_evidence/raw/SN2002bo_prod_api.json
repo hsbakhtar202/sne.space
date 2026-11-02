@@ -1,0 +1,19 @@
+{
+  "name": "SN2002bo",
+  "aliases": [
+    "AAVSO 1012+22"
+  ],
+  "type": "Ia",
+  "type_badge": "badge-ia",
+  "date": "2002/03/09",
+  "age": "24y ago",
+  "mag": 13.1,
+  "z": 0.00424,
+  "ra": "10:18:06.51",
+  "dec": "+21:49:41.7",
+  "host": "NGC 3190",
+  "disc": "Cacella, Hirose",
+  "spec": 64,
+  "phot": 773,
+  "search_blob": "sn2002bo aavso 1012+22 ia ngc 3190 cacella, hirose"
+}

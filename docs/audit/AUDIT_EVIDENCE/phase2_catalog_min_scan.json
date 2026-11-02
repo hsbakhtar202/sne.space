@@ -1,0 +1,87 @@
+{
+  "source": "/Users/haseeb/Desktop/WorkingDev/sne.space/serve/www/astrocats/astrocats/supernovae/output/catalog.min.json",
+  "bytes": 53212351,
+  "note": "Aggregates from catalog.min.json photolink/spectralink fields \u2014 NOT re-verified against event JSON arrays for each of 110k",
+  "n": 110222,
+  "stats": {
+    "events": 110222,
+    "phot1": 71829,
+    "spec0": 103591,
+    "host_missing": 88704,
+    "z_missing": 66537,
+    "mag_present": 87751,
+    "z_present": 43685,
+    "phot0": 13503,
+    "mag_missing": 22471,
+    "spec_ge1": 6631,
+    "phot_ge2": 24890,
+    "discoverdate_missing": 4465
+  },
+  "phot_hist_capped": {
+    "0": 13503,
+    "1": 71829,
+    "2": 1466,
+    "3": 1921,
+    "4": 2508,
+    "5": 1980,
+    "6": 1309,
+    "7": 1025,
+    "8": 1233,
+    "9": 1027,
+    "10": 701,
+    "11": 705,
+    "12": 691,
+    "13": 665,
+    "14": 551,
+    "15": 495,
+    "16": 512,
+    "17": 444,
+    "18": 401,
+    "19": 400,
+    "20+": 6856
+  },
+  "year_bin": {
+    "pre-2010": 13035,
+    "2010-2019": 37944,
+    "2020-2024": 52240,
+    "2025+": 7003
+  },
+  "examples": {
+    "phot0": [
+      "GRB 910421",
+      "GRB 910423",
+      "GRB 910424",
+      "GRB 910425A",
+      "GRB 910425B"
+    ],
+    "phot1": [
+      "AT1990am",
+      "AT1991bm",
+      "AT1991bn",
+      "AT1992bv",
+      "AT1992bw"
+    ],
+    "phot_ge2": [
+      "SN1990af",
+      "SN1990B",
+      "SN1990E",
+      "SN1990I",
+      "SN1990K"
+    ],
+    "no_host": [],
+    "has_z": []
+  },
+  "pct": {
+    "phot1": 65.168,
+    "spec0": 93.984,
+    "host_missing": 80.478,
+    "z_missing": 60.366,
+    "mag_present": 79.613,
+    "z_present": 39.634,
+    "phot0": 12.251,
+    "mag_missing": 20.387,
+    "spec_ge1": 6.016,
+    "phot_ge2": 22.582,
+    "discoverdate_missing": 4.051
+  }
+}

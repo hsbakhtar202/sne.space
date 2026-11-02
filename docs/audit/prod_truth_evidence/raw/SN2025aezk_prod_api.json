@@ -1,0 +1,25 @@
+{
+  "name": "SN2025aezk",
+  "aliases": [
+    "PS25iyj",
+    "2025aezk",
+    "GOTO25kqr",
+    "AT2025aezk",
+    "ATLAS25per",
+    "SN 2025aezk",
+    "ZTF25acepuxi"
+  ],
+  "type": "Ia",
+  "type_badge": "badge-ia",
+  "date": "2025/11/24",
+  "age": "11mo ago",
+  "mag": null,
+  "z": 0.050953,
+  "ra": "10:34:09.517",
+  "dec": "+60:01:59.76",
+  "host": "\u2014",
+  "disc": "Jesper Sollerman (SU), Christoffer Fremling (Caltech), Daniel Perley (LJMU), Theophile du Laz (Caltech) on behalf of ZTF",
+  "spec": 0,
+  "phot": 1,
+  "search_blob": "sn2025aezk ps25iyj 2025aezk goto25kqr at2025aezk atlas25per sn 2025aezk ztf25acepuxi ia jesper sollerman (su), christoffer fremling (caltech), daniel perley (ljmu), theophile du laz (caltech) on behalf of ztf"
+}

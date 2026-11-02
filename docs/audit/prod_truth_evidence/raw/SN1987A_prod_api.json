@@ -1,0 +1,29 @@
+{
+  "name": "SN1987A",
+  "aliases": [
+    "MCSNR J0535-6916",
+    "INTREF 262",
+    "LMC",
+    "SSTISAGE1C J053528.01-691611.0",
+    "2XMM J053528.1-691611",
+    "XMMU J053528.5-691614",
+    "J053527.99-691611.1",
+    "LMC 264",
+    "AAVSO 0534-69",
+    "LMCSNR J053528-691611",
+    "SNR1987A"
+  ],
+  "type": "II Pec",
+  "type_badge": "badge-ii",
+  "date": "1987/02/24",
+  "age": "39y ago",
+  "mag": 1.9,
+  "z": 9.51e-06,
+  "ra": "05:35:28.020",
+  "dec": "-69:16:11.07",
+  "host": "LMC",
+  "disc": "Shelton, Duhalde, Jones",
+  "spec": 36,
+  "phot": 3332,
+  "search_blob": "sn1987a mcsnr j0535-6916 intref 262 lmc sstisage1c j053528.01-691611.0 2xmm j053528.1-691611 xmmu j053528.5-691614 j053527.99-691611.1 lmc 264 aavso 0534-69 lmcsnr j053528-691611 snr1987a ii pec lmc shelton, duhalde, jones"
+}

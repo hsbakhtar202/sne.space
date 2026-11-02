@@ -1,0 +1,17 @@
+{
+  "name": "AT2026ahba",
+  "aliases": [],
+  "type": "unclassified",
+  "type_badge": "badge-other",
+  "date": "2026/10/29",
+  "age": "today",
+  "mag": 19.1029,
+  "z": null,
+  "ra": "12:09:41.154",
+  "dec": "+10:35:15.65",
+  "host": "\u2014",
+  "disc": "Fritz",
+  "spec": 0,
+  "phot": 0,
+  "search_blob": "at2026ahba unclassified"
+}

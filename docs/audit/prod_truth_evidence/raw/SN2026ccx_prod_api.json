@@ -1,0 +1,25 @@
+{
+  "name": "SN2026ccx",
+  "aliases": [
+    "2026ccx",
+    "PS26ady",
+    "AT2026ccx",
+    "GOTO26alh",
+    "ATLAS26bka",
+    "SN 2026ccx",
+    "ZTF26aaeuqwl"
+  ],
+  "type": "Ia",
+  "type_badge": "badge-ia",
+  "date": "2026/02/04",
+  "age": "8mo ago",
+  "mag": null,
+  "z": 0.064145,
+  "ra": "08:38:00.960",
+  "dec": "+09:18:22.39",
+  "host": "\u2014",
+  "disc": "M. Kennedy, D. O'Neill, K. Ackley, M. Dyer, J. Lyman, K. Ulaczyk, D. Steeghs, D. Galloway, V. Dhillon, P. O'Brien, G. Ramsay, K. Noysena, R. Kotak, R. Breton, J. Casares, L. Nuttall, R. Starling, B. Gompertz, B. Godson, T. Killestein, A. Kumar, M. Pursiainen, on behalf of GOTO collaboration",
+  "spec": 0,
+  "phot": 1,
+  "search_blob": "sn2026ccx 2026ccx ps26ady at2026ccx goto26alh atlas26bka sn 2026ccx ztf26aaeuqwl ia m. kennedy, d. o'neill, k. ackley, m. dyer, j. lyman, k. ulaczyk, d. steeghs, d. galloway, v. dhillon, p. o'brien, g. ramsay, k. noysena, r. kotak, r. breton, j. casares, l. nuttall, r. starling, b. gompertz, b. godson, t. killestein, a. kumar, m. pursiainen, on behalf of goto collaboration"
+}

@@ -1,0 +1,19 @@
+{
+  "name": "SN2013dy",
+  "aliases": [
+    "<a id=\"PSNJ22181760+4034096\">PSN J22181760+4034096</a>"
+  ],
+  "type": "Ia",
+  "type_badge": "badge-ia",
+  "date": "2013/07/10",
+  "age": "13y ago",
+  "mag": 12.8,
+  "z": 0.003889,
+  "ra": "22:18:17.60",
+  "dec": "+40:34:09.6",
+  "host": "NGC 7250",
+  "disc": "LOSS",
+  "spec": 117,
+  "phot": 2275,
+  "search_blob": "sn2013dy <a id=\"psnj22181760+4034096\">psn j22181760+4034096</a> ia ngc 7250 loss"
+}

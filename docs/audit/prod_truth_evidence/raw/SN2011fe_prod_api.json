@@ -1,0 +1,21 @@
+{
+  "name": "SN2011fe",
+  "aliases": [
+    "PTF11kly",
+    "PSN J14030581+5416254",
+    "<a id=\"PTF11kly\">PTF11kly</a>"
+  ],
+  "type": "Ia",
+  "type_badge": "badge-ia",
+  "date": "2011/08/24",
+  "age": "15y ago",
+  "mag": 9.48,
+  "z": 0.000804,
+  "ra": "14:03:05.711",
+  "dec": "+54:16:25.22",
+  "host": "M101",
+  "disc": "Nugent et al.",
+  "spec": 158,
+  "phot": 3371,
+  "search_blob": "sn2011fe ptf11kly psn j14030581+5416254 <a id=\"ptf11kly\">ptf11kly</a> ia m101 nugent et al."
+}

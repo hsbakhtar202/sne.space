@@ -1,0 +1,19 @@
+{
+  "name": "SN2010jl",
+  "aliases": [
+    "PTF10aaxf"
+  ],
+  "type": "IIn",
+  "type_badge": "badge-ii",
+  "date": "2010/11/03",
+  "age": "15y ago",
+  "mag": 10.62,
+  "z": 0.0107,
+  "ra": "09:42:53.33",
+  "dec": "+09:29:41.8",
+  "host": "UGC 5189A",
+  "disc": "Newton, Puckett",
+  "spec": 49,
+  "phot": 964,
+  "search_blob": "sn2010jl ptf10aaxf iin ugc 5189a newton, puckett"
+}

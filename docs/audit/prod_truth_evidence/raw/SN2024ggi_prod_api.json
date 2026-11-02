@@ -1,0 +1,26 @@
+{
+  "name": "SN2024ggi",
+  "aliases": [
+    "2024ggi",
+    "PS24brj",
+    "AT2024ggi",
+    "GOTO24aig",
+    "ATLAS24fsk",
+    "SN 2024ggi",
+    "BGEM J111822.10-325015.1",
+    "MASTER OT J111822.09-325015.0"
+  ],
+  "type": "II",
+  "type_badge": "badge-ii",
+  "date": "2024/04/11",
+  "age": "2y ago",
+  "mag": null,
+  "z": 0.002435,
+  "ra": "11:18:22.087",
+  "dec": "-32:50:15.27",
+  "host": "\u2014",
+  "disc": "J. Tonry, L. Denneau, H. Weiland, A. Lawrence, R. Siverd (IfA, University of Hawaii), N. Erasmus, W. Koorts (South African Astronomical Observatory), A. Jordan, V. Suc (UAI, Obstech), S. J. Smartt (Oxford/QUB), K. W. Smith, D. R. Young, M. Nicholl, M. Fulton, M. McCollum, T. Moore, J. Weston, X. Sheng, P. Ramsden, C. R. Angus (Queen's University Belfast), A. Aamer (QUB/Birmingham), L. Shingles (GSI/QUB), S. Srivastav, J. Gillanders, L. Rhodes, A. Andersson, H. Stevance (Oxford), A. Rest (STScI), T.-W. Chen (NCU), C. Stubbs (Harvard), J. Sommer (LMU/QUB)",
+  "spec": 5,
+  "phot": 1,
+  "search_blob": "sn2024ggi 2024ggi ps24brj at2024ggi goto24aig atlas24fsk sn 2024ggi bgem j111822.10-325015.1 master ot j111822.09-325015.0 ii j. tonry, l. denneau, h. weiland, a. lawrence, r. siverd (ifa, university of hawaii), n. erasmus, w. koorts (south african astronomical observatory), a. jordan, v. suc (uai, obstech), s. j. smartt (oxford/qub), k. w. smith, d. r. young, m. nicholl, m. fulton, m. mccollum, t. moore, j. weston, x. sheng, p. ramsden, c. r. angus (queen's university belfast), a. aamer (qub/birmingham), l. shingles (gsi/qub), s. srivastav, j. gillanders, l. rhodes, a. andersson, h. stevance (oxford), a. rest (stsci), t.-w. chen (ncu), c. stubbs (harvard), j. sommer (lmu/qub)"
+}

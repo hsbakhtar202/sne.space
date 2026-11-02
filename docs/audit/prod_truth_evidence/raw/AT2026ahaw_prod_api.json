@@ -1,0 +1,17 @@
+{
+  "name": "AT2026ahaw",
+  "aliases": [],
+  "type": "unclassified",
+  "type_badge": "badge-other",
+  "date": "2026/10/29",
+  "age": "today",
+  "mag": 13.98,
+  "z": null,
+  "ra": "00:35:16.317",
+  "dec": "+34:30:00.50",
+  "host": "\u2014",
+  "disc": "GOTO_bot",
+  "spec": 0,
+  "phot": 0,
+  "search_blob": "at2026ahaw unclassified"
+}

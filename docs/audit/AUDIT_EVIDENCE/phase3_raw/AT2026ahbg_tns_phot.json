@@ -1,0 +1,23 @@
+{
+  "status": "ok",
+  "n_detections": 1,
+  "n_limits": 0,
+  "source": "tns_html",
+  "ztf_oid": null,
+  "error": null,
+  "fetched_at": "2026-10-29T22:22:45Z",
+  "rows_preview": [
+    {
+      "time": "61342.47863",
+      "magnitude": "20.09",
+      "band": "L-GOTO",
+      "u_time": "MJD",
+      "upperlimit": false,
+      "kind": "detection",
+      "e_magnitude": "0.16",
+      "telescope": "GOTO-S_GOTO-3",
+      "tns_photometry_id": "630500",
+      "candid": "tns:630500"
+    }
+  ]
+}

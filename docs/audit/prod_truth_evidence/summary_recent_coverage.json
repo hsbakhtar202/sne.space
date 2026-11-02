@@ -1,0 +1,50 @@
+{
+  "recent_n": 13,
+  "upstream_tns_det_sum": 12,
+  "upstream_tns_lim_sum": 9,
+  "upstream_alerce_det_sum": 4,
+  "prod_json_det_sum": 14,
+  "prod_json_lim_sum": 25,
+  "api_phot_sum": 0,
+  "stages": {
+    "INGEST_FETCH_FAILED_BEFORE_PERSIST": 2,
+    "PUBLISH_INDEX_MISMATCH_AFTER_JSON_OK": 10,
+    "NONE_OR_UPSTREAM_EMPTY": 1
+  },
+  "all_stages": {
+    "INGEST_FETCH_FAILED_BEFORE_PERSIST": 2,
+    "PUBLISH_INDEX_MISMATCH_AFTER_JSON_OK": 11,
+    "NONE_OR_UPSTREAM_EMPTY": 6,
+    "OK_END_TO_END_FOR_COUNTS": 8,
+    "PROD_HAS_DATA_UPSTREAM_EMPTY_OR_INACCESSIBLE": 6
+  },
+  "n_sample": 33,
+  "health": {
+    "uptime_seconds": 11556.0,
+    "data_dir": "/data/astrocats/astrocats/supernovae/output",
+    "catalog_store": {
+      "ready": true,
+      "events": "110373",
+      "built_at": "1793313974",
+      "schema_version": "4",
+      "overlay_mtime": "1793313974.7186604",
+      "db_bytes": 158035968,
+      "db_path": "/data/astrocats/astrocats/supernovae/output/.index/catalog.db"
+    },
+    "enrich_queue": {
+      "pending": 256,
+      "inflight": 2,
+      "max_pending": 256,
+      "workers": 2,
+      "cooldown_seconds_remaining": 0.0,
+      "enqueued": 2511,
+      "deduped": 6216,
+      "dropped": 75124,
+      "completed": 1600,
+      "failed": 0,
+      "timed_out": 145,
+      "rate_limited": 0,
+      "known_attempts": 645
+    }
+  }
+}

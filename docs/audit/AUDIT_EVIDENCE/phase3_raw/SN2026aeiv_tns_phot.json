@@ -1,0 +1,23 @@
+{
+  "status": "ok",
+  "n_detections": 1,
+  "n_limits": 0,
+  "source": "tns_html",
+  "ztf_oid": "ZTF26abzfswo",
+  "error": null,
+  "fetched_at": "2026-10-29T22:22:58Z",
+  "rows_preview": [
+    {
+      "time": "61318.11426",
+      "magnitude": "19.081",
+      "band": "wide-ATLAS",
+      "u_time": "MJD",
+      "upperlimit": false,
+      "kind": "detection",
+      "e_magnitude": "0.112",
+      "telescope": "ATLAS-TDO_ATLAS-05",
+      "tns_photometry_id": "624594",
+      "candid": "tns:624594"
+    }
+  ]
+}

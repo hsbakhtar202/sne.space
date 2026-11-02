@@ -1,0 +1,17 @@
+{
+  "name": "AT2026ahcd",
+  "aliases": [],
+  "type": "unclassified",
+  "type_badge": "badge-other",
+  "date": "2026/10/29",
+  "age": "today",
+  "mag": 19.8072,
+  "z": null,
+  "ra": "10:45:21.749",
+  "dec": "+16:09:53.70",
+  "host": "\u2014",
+  "disc": "ZTF_LIONS",
+  "spec": 0,
+  "phot": 0,
+  "search_blob": "at2026ahcd unclassified"
+}

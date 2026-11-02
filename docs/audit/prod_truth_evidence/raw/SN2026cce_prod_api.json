@@ -1,0 +1,23 @@
+{
+  "name": "SN2026cce",
+  "aliases": [
+    "2026cce",
+    "AT2026cce",
+    "ATLAS26bjd",
+    "SN 2026cce",
+    "ZTF26aaezpbh"
+  ],
+  "type": "II",
+  "type_badge": "badge-ii",
+  "date": "2026/02/04",
+  "age": "8mo ago",
+  "mag": null,
+  "z": 0.010277,
+  "ra": "18:40:31.271",
+  "dec": "+28:36:31.15",
+  "host": "\u2014",
+  "disc": "Nabeel Rehemtulla (CIERA, NU), Wynn Jacobson-Gal\u00e1n (Caltech), Theophile du Laz (Caltech) on behalf of ZTF",
+  "spec": 0,
+  "phot": 1,
+  "search_blob": "sn2026cce 2026cce at2026cce atlas26bjd sn 2026cce ztf26aaezpbh ii nabeel rehemtulla (ciera, nu), wynn jacobson-gal\u00e1n (caltech), theophile du laz (caltech) on behalf of ztf"
+}

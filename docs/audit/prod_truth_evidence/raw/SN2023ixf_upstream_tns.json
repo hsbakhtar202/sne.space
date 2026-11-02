@@ -1,0 +1,9 @@
+{
+  "status": "ok",
+  "n_detections": 1,
+  "n_limits": 1,
+  "source": "tns_html",
+  "ztf_oid": "ZTF23aaklqou",
+  "error": null,
+  "fetched_at": "2026-10-29T22:23:04Z"
+}

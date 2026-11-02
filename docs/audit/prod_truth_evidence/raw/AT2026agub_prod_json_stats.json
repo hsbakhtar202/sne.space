@@ -1,0 +1,41 @@
+{
+  "stub": null,
+  "bytes": 2159,
+  "det": 0,
+  "lim": 0,
+  "spec": 0,
+  "phot_len": 0,
+  "photometry_ingest": {
+    "alerce": {
+      "status": "empty",
+      "oid": "ZTF26accvezn"
+    },
+    "tns": {
+      "status": "unavailable",
+      "n_detections": 0,
+      "n_limits": 0,
+      "source": null,
+      "fetched_at": "2026-10-29T21:31:34Z",
+      "error": "tns rate limited"
+    }
+  },
+  "discoverymag": [
+    {
+      "value": "19.4603",
+      "kind": "discovery",
+      "source": "2",
+      "band": "r-ZTF",
+      "time": "61338.41269",
+      "u_time": "MJD"
+    }
+  ],
+  "maxappmag": [
+    {
+      "value": "19.4603",
+      "kind": "discovery",
+      "source": "2"
+    }
+  ],
+  "has_photometry_key": true,
+  "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md"
+}

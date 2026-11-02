@@ -1,0 +1,34 @@
+{
+  "status": "ok",
+  "n_detections": 1,
+  "n_limits": 1,
+  "source": "tns_html",
+  "ztf_oid": "ZTF26acdjwvc",
+  "error": null,
+  "fetched_at": "2026-10-29T22:22:20Z",
+  "rows_preview": [
+    {
+      "time": "61339.55028",
+      "magnitude": "18.1807",
+      "band": "r-ZTF",
+      "u_time": "MJD",
+      "upperlimit": true,
+      "kind": "non_detection",
+      "telescope": "P48_ZTF-Cam",
+      "tns_photometry_id": "630476",
+      "candid": "tns:630476"
+    },
+    {
+      "time": "61342.54862",
+      "magnitude": "19.1029",
+      "band": "r-ZTF",
+      "u_time": "MJD",
+      "upperlimit": false,
+      "kind": "detection",
+      "e_magnitude": "0.156013",
+      "telescope": "P48_ZTF-Cam",
+      "tns_photometry_id": "630477",
+      "candid": "tns:630477"
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "name": "SN2006gy",
+  "aliases": [],
+  "type": "II",
+  "type_badge": "badge-ii",
+  "date": "2006/09/18",
+  "age": "20y ago",
+  "mag": 14.18,
+  "z": 0.01919,
+  "ra": "03:17:27.06",
+  "dec": "+41:24:19.5",
+  "host": "NGC 1260",
+  "disc": "Quimby, Mondol",
+  "spec": 19,
+  "phot": 69,
+  "search_blob": "sn2006gy ii ngc 1260 quimby, mondol"
+}

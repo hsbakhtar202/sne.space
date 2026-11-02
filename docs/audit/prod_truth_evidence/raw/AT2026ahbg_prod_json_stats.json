@@ -1,0 +1,41 @@
+{
+  "stub": null,
+  "bytes": 2872,
+  "det": 1,
+  "lim": 0,
+  "spec": 0,
+  "phot_len": 1,
+  "photometry_ingest": {
+    "alerce": {
+      "status": "empty"
+    },
+    "tns": {
+      "status": "ok",
+      "n_detections": 1,
+      "n_limits": 0,
+      "source": "tns_html",
+      "fetched_at": "2026-10-29T19:35:53Z",
+      "error": null
+    }
+  },
+  "discoverymag": [
+    {
+      "value": "20.09",
+      "kind": "discovery",
+      "source": "1",
+      "band": "L-GOTO",
+      "time": "61342.50496",
+      "u_time": "MJD",
+      "e_value": "0.16"
+    }
+  ],
+  "maxappmag": [
+    {
+      "value": "20.09",
+      "kind": "discovery",
+      "source": "1"
+    }
+  ],
+  "has_photometry_key": true,
+  "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md"
+}

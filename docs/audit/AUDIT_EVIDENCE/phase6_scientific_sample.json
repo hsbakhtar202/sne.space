@@ -1,0 +1,135 @@
+[
+  {
+    "name": "AT2026agub",
+    "n_det": 1,
+    "n_lim": 1,
+    "n_spec": 0,
+    "maxappmag": {},
+    "discoverymag": {
+      "value": "19.4603",
+      "kind": "discovery",
+      "source": "1",
+      "band": "r-ZTF",
+      "e_value": "0.209386"
+    },
+    "host": null,
+    "redshift": null,
+    "photometry_ingest": {
+      "alerce": {
+        "status": "empty",
+        "oid": "ZTF26accvezn"
+      },
+      "tns": {
+        "status": "ok",
+        "n_detections": 1,
+        "n_limits": 1,
+        "source": "tns_html",
+        "fetched_at": "2026-10-28T16:24:36Z",
+        "error": null
+      }
+    },
+    "issues": []
+  },
+  {
+    "name": "SN2026aeiv",
+    "n_det": 1,
+    "n_lim": 0,
+    "n_spec": 2,
+    "maxappmag": {
+      "value": "19.08",
+      "derived": true,
+      "source": "2"
+    },
+    "discoverymag": {},
+    "host": null,
+    "redshift": "0.0077",
+    "photometry_ingest": null,
+    "issues": [
+      "derived_maxappmag_with_lte1_det",
+      "unlabeled_maxappmag_single_epoch"
+    ]
+  },
+  {
+    "name": "SN2011fe",
+    "n_det": 3371,
+    "n_lim": 105,
+    "n_spec": 158,
+    "maxappmag": {
+      "value": "9.48",
+      "derived": true,
+      "source": "19,39,40"
+    },
+    "discoverymag": {},
+    "host": "M101",
+    "redshift": "0.000804",
+    "photometry_ingest": null,
+    "issues": []
+  },
+  {
+    "name": "SN2023ixf",
+    "n_det": 110,
+    "n_lim": 0,
+    "n_spec": 5,
+    "maxappmag": {
+      "value": "12.02",
+      "derived": true,
+      "source": "4"
+    },
+    "discoverymag": {},
+    "host": null,
+    "redshift": "0.0008",
+    "photometry_ingest": null,
+    "issues": []
+  },
+  {
+    "name": "SN2024ggi",
+    "n_det": 1,
+    "n_lim": 0,
+    "n_spec": 5,
+    "maxappmag": {
+      "value": "18.91",
+      "derived": true,
+      "source": "2"
+    },
+    "discoverymag": {},
+    "host": null,
+    "redshift": "0.002435",
+    "photometry_ingest": null,
+    "issues": [
+      "derived_maxappmag_with_lte1_det",
+      "unlabeled_maxappmag_single_epoch"
+    ]
+  },
+  {
+    "name": "SN1987A",
+    "n_det": 3332,
+    "n_lim": 0,
+    "n_spec": 36,
+    "maxappmag": {
+      "value": "1.9",
+      "derived": true,
+      "source": "43,62,63"
+    },
+    "discoverymag": {},
+    "host": "LMC",
+    "redshift": "9.51e-06",
+    "photometry_ingest": null,
+    "issues": []
+  },
+  {
+    "name": "SN2014J",
+    "n_det": 1482,
+    "n_lim": 42,
+    "n_spec": 133,
+    "maxappmag": {
+      "value": "8.98",
+      "derived": true,
+      "source": "4,5,26"
+    },
+    "discoverymag": {},
+    "host": "NGC 3034",
+    "redshift": "0.000677",
+    "photometry_ingest": null,
+    "issues": []
+  }
+]

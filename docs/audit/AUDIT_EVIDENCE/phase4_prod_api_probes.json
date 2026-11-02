@@ -1,0 +1,205 @@
+{
+  "api_transients_top5": {
+    "http": 200,
+    "ms": 3802.5,
+    "bytes": 1453,
+    "data": {
+      "total": 110703,
+      "page": 1,
+      "limit": 5,
+      "pages": 22141,
+      "has_next": true,
+      "has_prev": false,
+      "items": [
+        {
+          "name": "AT2026ahch",
+          "aliases": [],
+          "type": "unclassified",
+          "type_badge": "badge-other",
+          "date": "2026/10/29",
+          "age": "today",
+          "mag": 19.49,
+          "z": null,
+          "ra": "05:06:09.858",
+          "dec": "-39:29:11.35",
+          "host": "\u2014",
+          "disc": "GOTO_bot",
+          "spec": 0,
+          "phot": 0,
+          "search_blob": "at2026ahch unclassified"
+        },
+        {
+          "name": "AT2026ahba",
+          "aliases": [],
+          "type": "unclassified",
+          "type_badge": "badge-other",
+          "date": "2026/10/29",
+          "age": "today",
+          "mag": 19.1029,
+          "z": null,
+          "ra": "12:09:41.154",
+          "dec": "+10:35:15.65",
+          "host": "\u2014",
+          "disc": "Fritz",
+          "spec": 0,
+          "phot": 0,
+          "search_blob": "at2026ahba unclassified"
+        },
+        {
+          "name": "AT2026ahcd",
+          "aliases": [],
+          "type": "unclassified",
+          "type_badge": "badge-other",
+          "date": "2026/10/29",
+          "age": "today",
+          "mag": 19.8072,
+          "z": null,
+          "ra": "10:45:21.749",
+          "dec": "+16:09:53.70",
+          "host": "\u2014",
+          "disc": "ZTF_LIONS",
+          "spec": 0,
+          "phot": 0,
+          "search_blob": "at2026ahcd unclassified"
+        },
+        {
+          "name": "AT2026ahco",
+          "aliases": [],
+          "type": "unclassified",
+          "type_badge": "badge-other",
+          "date": "2026/10/29",
+          "age": "today",
+          "mag": 19.9,
+          "z": null,
+          "ra": "01:56:16.603",
+          "dec": "-06:04:44.79",
+          "host": "\u2014",
+          "disc": "GOTO_bot",
+          "spec": 0,
+          "phot": 0,
+          "search_blob": "at2026ahco unclassified"
+        },
+        {
+          "name": "AT2026ahcf",
+          "aliases": [],
+          "type": "unclassified",
+          "type_badge": "badge-other",
+          "date": "2026/10/29",
+          "age": "today",
+          "mag": 20.04,
+          "z": null,
+          "ra": "03:35:07.508",
+          "dec": "-01:27:53.30",
+          "host": "\u2014",
+          "disc": "GOTO_bot",
+          "spec": 0,
+          "phot": 0,
+          "search_blob": "at2026ahcf unclassified"
+        }
+      ]
+    }
+  },
+  "api_recent": {
+    "error": "'list' object has no attribute 'get'"
+  },
+  "api_q_agub": {
+    "http": 200,
+    "ms": 2719.0,
+    "bytes": 357,
+    "data": {
+      "total": 0,
+      "page": 1,
+      "limit": 50,
+      "pages": 1,
+      "has_next": false,
+      "has_prev": false,
+      "items": [
+        {
+          "name": "AT2026agub",
+          "aliases": [],
+          "type": "unclassified",
+          "type_badge": "badge-other",
+          "date": "2026/10/25",
+          "age": "4d ago",
+          "mag": 19.4603,
+          "z": null,
+          "ra": "01:52:22.081",
+          "dec": "+35:47:23.75",
+          "host": "\u2014",
+          "disc": "Fritz",
+          "spec": 0,
+          "phot": 0,
+          "search_blob": "at2026agub unclassified"
+        }
+      ]
+    }
+  },
+  "api_q_aeiv": {
+    "http": 200,
+    "ms": 2525.7,
+    "bytes": 376,
+    "data": {
+      "total": 1,
+      "page": 1,
+      "limit": 50,
+      "pages": 1,
+      "has_next": false,
+      "has_prev": false,
+      "items": [
+        {
+          "name": "SN2026aeiv",
+          "aliases": [],
+          "type": "SN Ia-91bg-like",
+          "type_badge": "badge-ia",
+          "date": "2026/10/05",
+          "age": "24d ago",
+          "mag": 19.081,
+          "z": 0.0078,
+          "ra": "03:16:41.828",
+          "dec": "+80:48:09.12",
+          "host": "NGC1184",
+          "disc": "ATLAS_Bot1",
+          "spec": 0,
+          "phot": 0,
+          "search_blob": "sn2026aeiv sn ia-91bg-like ngc1184"
+        }
+      ]
+    }
+  },
+  "api_q_2011fe": {
+    "http": 200,
+    "ms": 2649.9,
+    "bytes": 493,
+    "data": {
+      "total": 1,
+      "page": 1,
+      "limit": 50,
+      "pages": 1,
+      "has_next": false,
+      "has_prev": false,
+      "items": [
+        {
+          "name": "SN2011fe",
+          "aliases": [
+            "PTF11kly",
+            "PSN J14030581+5416254",
+            "<a id=\"PTF11kly\">PTF11kly</a>"
+          ],
+          "type": "Ia",
+          "type_badge": "badge-ia",
+          "date": "2011/08/24",
+          "age": "15y ago",
+          "mag": 9.48,
+          "z": 0.000804,
+          "ra": "14:03:05.711",
+          "dec": "+54:16:25.22",
+          "host": "M101",
+          "disc": "Nugent et al.",
+          "spec": 158,
+          "phot": 3371,
+          "search_blob": "sn2011fe ptf11kly psn j14030581+5416254 <a id=\"ptf11kly\">ptf11kly</a> ia m101 nugent et al."
+        }
+      ]
+    }
+  }
+}

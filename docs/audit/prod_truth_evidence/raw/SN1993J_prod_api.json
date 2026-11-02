@@ -1,0 +1,29 @@
+{
+  "name": "SN1993J",
+  "aliases": [
+    "EQ 0951+692",
+    "ICRF J095524.7+690113",
+    "IERS B0951+692",
+    "INTREF 395",
+    "PBC J0955.1+6904",
+    "RORF 0951+692",
+    "2XMM J095524.7+690114",
+    "H18",
+    "P36",
+    "M81 XMM2",
+    "AAVSO 0947+69"
+  ],
+  "type": "IIb",
+  "type_badge": "badge-ii",
+  "date": "1993/03/28",
+  "age": "33y ago",
+  "mag": 9.91,
+  "z": -0.000113,
+  "ra": "09:55:24.7747",
+  "dec": "+69:01:13.702",
+  "host": "NGC 3031",
+  "disc": "Garcia",
+  "spec": 100,
+  "phot": 1838,
+  "search_blob": "sn1993j eq 0951+692 icrf j095524.7+690113 iers b0951+692 intref 395 pbc j0955.1+6904 rorf 0951+692 2xmm j095524.7+690114 h18 p36 m81 xmm2 aavso 0947+69 iib ngc 3031 garcia"
+}

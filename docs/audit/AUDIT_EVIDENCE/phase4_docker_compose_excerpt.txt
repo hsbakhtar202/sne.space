@@ -1,0 +1,53 @@
+READ-ONLY excerpt of volume/env related lines from docker-compose.yml + Dockerfile CMD
+
+      # Point the corpus at the mounted volume. serve/data_paths.py reads this
+      - SNE_DATA_DIR=/data/astrocats/astrocats/supernovae/output
+      # Mutable runtime JSON (recent-events / recent-catalog) lives here, not in
+      - SNE_RUNTIME_DIR=/data/sne-runtime
+      - SNE_ENRICH_QUEUE_MAX=256
+      - SNE_ENRICH_WORKERS=2
+      - SNE_ENRICH_TIMEOUT=45
+      - SNE_ENRICH_ATTEMPTS=3
+      - SNE_PAGE_CACHE_MB=96
+      - SNE_PAGE_CACHE_TTL=900
+      - SNE_RENDER_MAX_CONCURRENT=4
+    volumes:
+      - sne_logs:/app/serve/logs
+      # THE fix for "ingested data does not survive deployments". Event JSON is
+      # the only stateful data this service owns; without this mount every
+      - sne_data:/data/astrocats/astrocats/supernovae/output
+      # Mutable runtime JSON only. Deliberately NOT mounting serve/www/assets/:
+      # that would hide version-controlled CSS/JS behind an old volume.
+      # Drop tns_public_objects.csv.zip into this volume to refresh the TNS
+      - sne_runtime:/data/sne-runtime
+  # Optional historical backfill sidecar. MUST mount the same sne_runtime and
+  # sne_data volumes so fcntl priority locks and corpus writes coordinate with
+  #   command: ["python3", "-m", "ingest.backfill_photometry", "--years", "2025"]
+  #     - SNE_DATA_DIR=/data/astrocats/astrocats/supernovae/output
+  #     - SNE_RUNTIME_DIR=/data/sne-runtime
+  #   volumes:
+  #     - sne_data:/data/astrocats/astrocats/supernovae/output
+  #     - sne_runtime:/data/sne-runtime
+volumes:
+  sne_logs:
+  sne_data:
+  # Mutable runtime JSON (recent-events / recent-catalog) AND cross-process
+  # MUST mount this same volume or set SNE_INGEST_LOCK_DIR to a shared path.
+  sne_runtime:
+
+--- Dockerfile ---
+# Copy application files
+COPY . /app
+# Ensure proper environment variables.
+# SNE_DATA_DIR points the writable event corpus at the durable volume. Event JSON
+# first so a mounted volume always wins over the baked copy.
+ENV PYTHONUNBUFFERED=1 \
+# redeploy cannot reset it to the image's build-time copy. Declared as a VOLUME so a
+VOLUME ["/data/sne-runtime"]
+# are not available at runtime, so this is set as a real environment variable.
+ENV SNE_GIT_REVISION=${GIT_REVISION}
+  CMD curl -fsS http://localhost:8080/healthz || exit 1
+RUN chmod +x /app/docker-entrypoint.sh
+# The entrypoint seeds the data volume on first boot and then execs the server.
+ENTRYPOINT ["/app/docker-entrypoint.sh"]
+CMD ["python3", "serve/server.py"]

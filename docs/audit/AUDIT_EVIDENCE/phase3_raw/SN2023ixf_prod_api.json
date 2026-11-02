@@ -1,0 +1,26 @@
+{
+  "name": "SN2023ixf",
+  "aliases": [
+    "2023ixf",
+    "PS23dij",
+    "AT2023ixf",
+    "ATLAS23ncx",
+    "SN 2023ixf",
+    "ZTF23aaklqou",
+    "MASTER OT J140338.55+541840.8",
+    "MASTER OT J140338.60+541842.0"
+  ],
+  "type": "II",
+  "type_badge": "badge-ii",
+  "date": "2023/05/19",
+  "age": "3y ago",
+  "mag": null,
+  "z": 0.0008,
+  "ra": "14:03:38.562",
+  "dec": "+54:18:41.94",
+  "host": "\u2014",
+  "disc": "Koichi Itagaki",
+  "spec": 5,
+  "phot": 110,
+  "search_blob": "sn2023ixf 2023ixf ps23dij at2023ixf atlas23ncx sn 2023ixf ztf23aaklqou master ot j140338.55+541840.8 master ot j140338.60+541842.0 ii koichi itagaki"
+}

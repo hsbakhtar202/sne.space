@@ -1,0 +1,137 @@
+{
+  "scanned_at_utc": "2026-10-29T22:17:18.610715+00:00",
+  "corpus_root": "/Users/haseeb/Desktop/WorkingDev/sne.space/serve/www/astrocats/astrocats/supernovae/output",
+  "note": "LOCAL workspace corpus only \u2014 NOT production 110k volume",
+  "stats": {
+    "event_json_files": 2718,
+    "unique_names_seen": 2718,
+    "two_or_more_detections": 101,
+    "peak_supported_by_multi_epoch": 101,
+    "total_detections": 17002,
+    "total_limits": 411,
+    "total_spectra_arrays": 660,
+    "events_with_spectra": 178,
+    "spectralink_mismatch": 178,
+    "events_without_spectra": 2540,
+    "exactly_one_detection": 2598,
+    "possible_peak_mislabel": 86,
+    "with_upper_limits": 11,
+    "zero_detections": 19,
+    "metadata_only_no_phot_no_spec": 19,
+    "unclassified_or_missing_type": 15,
+    "missing_discoverdate": 1
+  },
+  "by_age": {
+    "older_than_1y": {
+      "events": 1963,
+      "detections": 14054,
+      "limits": 185,
+      "spectra": 480,
+      "zero_detections": 19
+    },
+    "last_1y": {
+      "events": 594,
+      "detections": 714,
+      "limits": 225,
+      "spectra": 5
+    },
+    "last_90d": {
+      "events": 149,
+      "detections": 2152,
+      "limits": 0,
+      "spectra": 163
+    },
+    "last_30d": {
+      "events": 9,
+      "detections": 73,
+      "limits": 0,
+      "spectra": 11
+    },
+    "last_7d": {
+      "events": 2,
+      "detections": 8,
+      "limits": 0,
+      "spectra": 1
+    },
+    "no_discoverdate": {
+      "events": 1,
+      "detections": 1,
+      "limits": 1,
+      "spectra": 0
+    }
+  },
+  "provenance": {
+    "historical_folder+no_live_enrich_markers": {
+      "events": 22,
+      "detections": 12008,
+      "limits": 185,
+      "spectra": 474
+    },
+    "historical_folder+live_enrich_markers": {
+      "events": 2,
+      "detections": 126,
+      "limits": 0,
+      "spectra": 6
+    },
+    "modern_folder_2025_2029+live_enrich_markers": {
+      "events": 84,
+      "detections": 2277,
+      "limits": 226,
+      "spectra": 82
+    },
+    "modern_folder_2025_2029+no_live_enrich_markers": {
+      "events": 2610,
+      "detections": 2591,
+      "limits": 0,
+      "spectra": 98
+    }
+  },
+  "sqlite": {
+    "db_path": "/Users/haseeb/Desktop/WorkingDev/sne.space/serve/www/astrocats/astrocats/supernovae/output/.index/catalog.db",
+    "db_bytes": 155193344,
+    "events_table_count": 110534,
+    "phot_zero": 13503,
+    "phot_one": 71938,
+    "phot_ge2": 25093,
+    "spec_ge1": 6795,
+    "host_dash": 89016,
+    "z_null": 66893,
+    "mag_null": 22778
+  },
+  "samples": {
+    "orphan_scalar_mag": [],
+    "fake_photolink": [],
+    "peak_mislabel": [
+      "AT1990am",
+      "AT2018lwh",
+      "AT2020czx",
+      "SN2024ggi",
+      "AT2021lnh",
+      "AT2020acyg",
+      "SN2026aaoq",
+      "SN2026abfe",
+      "SN2026ablk",
+      "SN2026znw",
+      "SN2026adlt",
+      "SN2026aaag",
+      "SN2026aeiv",
+      "SN2026aaaf",
+      "SN2026zxs",
+      "SN2026aaxj",
+      "SN2026zvi",
+      "SN2026acjo",
+      "SN2026abgb",
+      "SN2026acoq",
+      "SN2026acya",
+      "SN2026adpg",
+      "SN2026abyp",
+      "SN2026zyg",
+      "SN2026zwh",
+      "SN2026aafj",
+      "SN2026aaji",
+      "SN2026aarv",
+      "SN2026aaiv",
+      "SN2026aaxa"
+    ]
+  }
+}

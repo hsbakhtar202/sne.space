@@ -1,0 +1,21 @@
+{
+  "name": "SN2014J",
+  "aliases": [
+    "PSN J09554214+6940260",
+    "<a id=\"PSNJ09554214+6940260\">PSN J09554214+6940260</a>",
+    "iPTF14jj"
+  ],
+  "type": "Ia",
+  "type_badge": "badge-ia",
+  "date": "2014/01/21",
+  "age": "12y ago",
+  "mag": 8.98,
+  "z": 0.000677,
+  "ra": "09:55:42.12",
+  "dec": "+69:40:25.9",
+  "host": "NGC 3034",
+  "disc": "Fossey et al.",
+  "spec": 133,
+  "phot": 1482,
+  "search_blob": "sn2014j psn j09554214+6940260 <a id=\"psnj09554214+6940260\">psn j09554214+6940260</a> iptf14jj ia ngc 3034 fossey et al."
+}

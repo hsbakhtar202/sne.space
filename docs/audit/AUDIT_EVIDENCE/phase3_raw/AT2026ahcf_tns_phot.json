@@ -1,0 +1,34 @@
+{
+  "status": "ok",
+  "n_detections": 1,
+  "n_limits": 1,
+  "source": "tns_html",
+  "ztf_oid": null,
+  "error": null,
+  "fetched_at": "2026-10-29T22:22:38Z",
+  "rows_preview": [
+    {
+      "time": "61341.72529",
+      "magnitude": "19",
+      "band": "L-GOTO",
+      "u_time": "MJD",
+      "upperlimit": true,
+      "kind": "non_detection",
+      "telescope": "GOTO-S_GOTO-3",
+      "tns_photometry_id": "630562",
+      "candid": "tns:630562"
+    },
+    {
+      "time": "61342.48397",
+      "magnitude": "20.04",
+      "band": "L-GOTO",
+      "u_time": "MJD",
+      "upperlimit": false,
+      "kind": "detection",
+      "e_magnitude": "0.12",
+      "telescope": "GOTO-S_GOTO-3",
+      "tns_photometry_id": "630563",
+      "candid": "tns:630563"
+    }
+  ]
+}

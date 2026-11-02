@@ -1,0 +1,72 @@
+{
+  "status": "ok",
+  "revision": "unknown",
+  "uptime_seconds": 11556.0,
+  "rss_mb": 3356.7,
+  "peak_rss_mb": 3831.0,
+  "outbound": {
+    "total": 12536,
+    "by_host": {
+      "3.248.22.204": 3513,
+      "108.133.51.241": 3333,
+      "79.125.3.84": 3272,
+      "35.171.170.111": 899,
+      "100.55.221.180": 892,
+      "134.4.54.42": 627
+    },
+    "recent": [
+      "108.133.51.241",
+      "108.133.51.241",
+      "35.171.170.111",
+      "108.133.51.241",
+      "134.4.54.42",
+      "108.133.51.241",
+      "3.248.22.204",
+      "3.248.22.204",
+      "134.4.54.42",
+      "3.248.22.204"
+    ]
+  },
+  "data_dir": "/data/astrocats/astrocats/supernovae/output",
+  "data_dir_exists": true,
+  "catalog_store": {
+    "ready": true,
+    "events": "110373",
+    "built_at": "1793313974",
+    "schema_version": "4",
+    "overlay_mtime": "1793313974.7186604",
+    "db_bytes": 158035968,
+    "db_path": "/data/astrocats/astrocats/supernovae/output/.index/catalog.db"
+  },
+  "page_cache": {
+    "entries": 485,
+    "bytes": 100633062,
+    "max_bytes": 100663296,
+    "ttl_seconds": 900.0,
+    "hits": 10783,
+    "misses": 70687,
+    "stores": 26923,
+    "evictions": 26313,
+    "hit_rate": 0.1324
+  },
+  "render_gate": {
+    "max_concurrent": 4,
+    "cache_hits_while_waiting": 8642
+  },
+  "enrich_queue": {
+    "pending": 256,
+    "inflight": 2,
+    "max_pending": 256,
+    "workers": 2,
+    "cooldown_seconds_remaining": 0.0,
+    "enqueued": 2511,
+    "deduped": 6216,
+    "dropped": 75124,
+    "completed": 1600,
+    "failed": 0,
+    "timed_out": 145,
+    "rate_limited": 0,
+    "known_attempts": 645
+  },
+  "enrich_available": true
+}

@@ -1,0 +1,65 @@
+{
+  "drawn_at_utc": "2026-10-29T23:36:57.882640+00:00",
+  "method": "concurrent HEAD for stratified+all2025+; GET parse <=100KB sample n=120",
+  "catalog_n": 110565,
+  "bin_sizes": {
+    "pre-2010": 13036,
+    "2010-2019": 37944,
+    "2020-2024": 52241,
+    "2025+": 2874,
+    "unknown": 4470
+  },
+  "head_n": 3524,
+  "stub_n": 150,
+  "real_n": 3374,
+  "by_year": {
+    "pre-2010": {
+      "n": 150,
+      "stub": 150,
+      "stub_pct": 100.0,
+      "real": 0,
+      "bytes_p50": null,
+      "bytes_gt_100k": 0,
+      "bytes_gt_1M": 0,
+      "stub_with_catalog_phot_ge1": 118
+    },
+    "2010-2019": {
+      "n": 200,
+      "stub": 0,
+      "stub_pct": 0.0,
+      "real": 200,
+      "bytes_p50": 2871,
+      "bytes_gt_100k": 0,
+      "bytes_gt_1M": 0,
+      "stub_with_catalog_phot_ge1": 0
+    },
+    "2020-2024": {
+      "n": 250,
+      "stub": 0,
+      "stub_pct": 0.0,
+      "real": 250,
+      "bytes_p50": 2871,
+      "bytes_gt_100k": 0,
+      "bytes_gt_1M": 0,
+      "stub_with_catalog_phot_ge1": 0
+    },
+    "2025+": {
+      "n": 2874,
+      "stub": 0,
+      "stub_pct": 0.0,
+      "real": 2874,
+      "bytes_p50": 2871,
+      "bytes_gt_100k": 0,
+      "bytes_gt_1M": 0,
+      "stub_with_catalog_phot_ge1": 0
+    }
+  },
+  "array_parse": {
+    "n_ok": 96,
+    "det0": 0,
+    "det1": 94,
+    "det_ge2": 2,
+    "lim_ge1": 0,
+    "spec_ge1": 2
+  }
+}

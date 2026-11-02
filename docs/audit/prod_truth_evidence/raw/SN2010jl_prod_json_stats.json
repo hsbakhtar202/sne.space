@@ -1,0 +1,17 @@
+{
+  "stub": "1",
+  "bytes": 2225,
+  "det": 0,
+  "lim": 0,
+  "spec": 0,
+  "phot_len": 0,
+  "photometry_ingest": {},
+  "discoverymag": null,
+  "maxappmag": [
+    {
+      "value": "10.62"
+    }
+  ],
+  "has_photometry_key": false,
+  "schema": null
+}

@@ -1,0 +1,17 @@
+{
+  "name": "SN2026aeiv",
+  "aliases": [],
+  "type": "SN Ia-91bg-like",
+  "type_badge": "badge-ia",
+  "date": "2026/10/05",
+  "age": "24d ago",
+  "mag": 19.081,
+  "z": 0.0078,
+  "ra": "03:16:41.828",
+  "dec": "+80:48:09.12",
+  "host": "NGC1184",
+  "disc": "ATLAS_Bot1",
+  "spec": 0,
+  "phot": 0,
+  "search_blob": "sn2026aeiv sn ia-91bg-like ngc1184"
+}

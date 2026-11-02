@@ -1,0 +1,24 @@
+{
+  "name": "SN1998bw",
+  "aliases": [
+    "GRB 980425",
+    "Trigger 6707",
+    "XRF 980425",
+    "SN10928c",
+    "AAVSO 1927-53",
+    "GRB 980425A"
+  ],
+  "type": "Ic BL",
+  "type_badge": "badge-ibc",
+  "date": "1998/04/28",
+  "age": "28y ago",
+  "mag": 13.5,
+  "z": 0.0085,
+  "ra": "19:35:03.17",
+  "dec": "-52:50:46.1",
+  "host": "ESO 184-G82",
+  "disc": "Galama et al.",
+  "spec": 30,
+  "phot": 527,
+  "search_blob": "sn1998bw grb 980425 trigger 6707 xrf 980425 sn10928c aavso 1927-53 grb 980425a ic bl eso 184-g82 galama et al."
+}

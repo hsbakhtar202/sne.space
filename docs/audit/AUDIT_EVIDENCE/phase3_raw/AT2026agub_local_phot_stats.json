@@ -1,0 +1,31 @@
+{
+  "det": 1,
+  "lim": 1,
+  "spec": 0,
+  "photolink": null,
+  "spectralink": null,
+  "maxappmag": null,
+  "discoverymag": {
+    "value": "19.4603",
+    "kind": "discovery",
+    "source": "1",
+    "band": "r-ZTF",
+    "e_value": "0.209386"
+  },
+  "host": null,
+  "redshift": null,
+  "ingest": {
+    "alerce": {
+      "status": "empty",
+      "oid": "ZTF26accvezn"
+    },
+    "tns": {
+      "status": "ok",
+      "n_detections": 1,
+      "n_limits": 1,
+      "source": "tns_html",
+      "fetched_at": "2026-10-28T16:24:36Z",
+      "error": null
+    }
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "status": "unavailable",
+  "n_detections": 0,
+  "n_limits": 0,
+  "source": null,
+  "ztf_oid": null,
+  "error": "tns rate limited",
+  "fetched_at": "2026-10-29T22:23:13Z",
+  "rows_preview": []
+}

@@ -1,0 +1,20 @@
+{
+  "name": "SN2009ip",
+  "aliases": [
+    "Howerton-A23",
+    "PSN J22230828-2856515"
+  ],
+  "type": "IIn",
+  "type_badge": "badge-ii",
+  "date": "2012/07/24",
+  "age": "14y ago",
+  "mag": 12.01,
+  "z": 0.005944,
+  "ra": "22:23:08.3",
+  "dec": "-28:56:52",
+  "host": "NGC 7259",
+  "disc": "Howerton",
+  "spec": 240,
+  "phot": 1581,
+  "search_blob": "sn2009ip howerton-a23 psn j22230828-2856515 iin ngc 7259 howerton"
+}

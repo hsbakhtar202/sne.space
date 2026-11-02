@@ -1,0 +1,21 @@
+{
+  "name": "TDE2026dmt",
+  "aliases": [
+    "2026dmt",
+    "GOTO26bha",
+    "ZTF26aafpwna"
+  ],
+  "type": "TDE-He",
+  "type_badge": "badge-tde",
+  "date": "2026/02/05",
+  "age": "8mo ago",
+  "mag": null,
+  "z": 0.147,
+  "ra": "08:28:51.635",
+  "dec": "+39:04:54.31",
+  "host": "\u2014",
+  "disc": "Erica Hammerstein (Berkeley), Robert Stein (UMD) on behalf of the ZTF AGN/TDE working group",
+  "spec": 0,
+  "phot": 1,
+  "search_blob": "tde2026dmt 2026dmt goto26bha ztf26aafpwna tde-he erica hammerstein (berkeley), robert stein (umd) on behalf of the ztf agn/tde working group"
+}

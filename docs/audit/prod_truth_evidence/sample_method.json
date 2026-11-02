@@ -1,0 +1,138 @@
+{
+  "drawn_at_utc": "2026-10-29T22:47:44.567832+00:00",
+  "n": 33,
+  "sample": [
+    {
+      "bucket": "mandatory_regression",
+      "name": "AT2026agub"
+    },
+    {
+      "bucket": "recent_discovered",
+      "name": "AT2026ahch"
+    },
+    {
+      "bucket": "recent_discovered",
+      "name": "AT2026ahba"
+    },
+    {
+      "bucket": "recent_discovered",
+      "name": "AT2026ahcd"
+    },
+    {
+      "bucket": "recent_discovered",
+      "name": "AT2026ahco"
+    },
+    {
+      "bucket": "recent_discovered",
+      "name": "AT2026ahcf"
+    },
+    {
+      "bucket": "recent_discovered",
+      "name": "AT2026ahbg"
+    },
+    {
+      "bucket": "recent_discovered",
+      "name": "AT2026ahcp"
+    },
+    {
+      "bucket": "recent_discovered",
+      "name": "AT2026ahce"
+    },
+    {
+      "bucket": "recent_api_page1",
+      "name": "AT2026ahbz"
+    },
+    {
+      "bucket": "recent_api_page1",
+      "name": "AT2026ahbw"
+    },
+    {
+      "bucket": "recent_api_page1",
+      "name": "AT2026ahbc"
+    },
+    {
+      "bucket": "recent_api_page1",
+      "name": "AT2026ahaw"
+    },
+    {
+      "bucket": "mid_age_anchor",
+      "name": "SN2026aeiv"
+    },
+    {
+      "bucket": "mid_age_anchor",
+      "name": "SN2023ixf"
+    },
+    {
+      "bucket": "mid_age_anchor",
+      "name": "SN2024ggi"
+    },
+    {
+      "bucket": "mid_age_anchor",
+      "name": "SN2025ahkt"
+    },
+    {
+      "bucket": "mid_age_anchor",
+      "name": "SN2025aezk"
+    },
+    {
+      "bucket": "mid_age_30_180d",
+      "name": "SN2026chr"
+    },
+    {
+      "bucket": "mid_age_30_180d",
+      "name": "TDE2026dmt"
+    },
+    {
+      "bucket": "mid_age_30_180d",
+      "name": "SN2026cce"
+    },
+    {
+      "bucket": "mid_age_30_180d",
+      "name": "SN2026ccr"
+    },
+    {
+      "bucket": "mid_age_30_180d",
+      "name": "SN2026ccx"
+    },
+    {
+      "bucket": "historical_well_observed",
+      "name": "SN2011fe"
+    },
+    {
+      "bucket": "historical_well_observed",
+      "name": "SN1987A"
+    },
+    {
+      "bucket": "historical_well_observed",
+      "name": "SN2014J"
+    },
+    {
+      "bucket": "historical_well_observed",
+      "name": "SN2002bo"
+    },
+    {
+      "bucket": "historical_well_observed",
+      "name": "SN1993J"
+    },
+    {
+      "bucket": "historical_well_observed",
+      "name": "SN2013dy"
+    },
+    {
+      "bucket": "historical_well_observed",
+      "name": "SN2009ip"
+    },
+    {
+      "bucket": "historical_well_observed",
+      "name": "SN2010jl"
+    },
+    {
+      "bucket": "historical_well_observed",
+      "name": "SN1998bw"
+    },
+    {
+      "bucket": "historical_well_observed",
+      "name": "SN2006gy"
+    }
+  ]
+}

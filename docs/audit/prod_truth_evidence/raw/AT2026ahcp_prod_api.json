@@ -1,0 +1,17 @@
+{
+  "name": "AT2026ahcp",
+  "aliases": [],
+  "type": "unclassified",
+  "type_badge": "badge-other",
+  "date": "2026/10/29",
+  "age": "today",
+  "mag": 19.83,
+  "z": null,
+  "ra": "01:33:43.431",
+  "dec": "-19:41:36.29",
+  "host": "\u2014",
+  "disc": "GOTO_bot",
+  "spec": 0,
+  "phot": 0,
+  "search_blob": "at2026ahcp unclassified"
+}
