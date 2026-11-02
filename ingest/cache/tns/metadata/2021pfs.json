@@ -1,0 +1,29 @@
+[
+  {
+    "spec_id": "9871",
+    "obs_date": "2021-06-13 07:37:34",
+    "telescope": "P60",
+    "instrument": "SEDM",
+    "source_group": "ZTF",
+    "ascii_url": "https://www.wis-tns.org/system/files/uploaded/ZTF/tns_2021pfs_2021-06-13_07-37-34.177898_P60_SEDM_ZTF.ascii",
+    "filename": "tns_2021pfs_2021-06-13_07-37-34.177898_P60_SEDM_ZTF.ascii"
+  },
+  {
+    "spec_id": "9851",
+    "obs_date": "2021-06-10 07:27:27",
+    "telescope": "FTN",
+    "instrument": "FLOYDS-N",
+    "source_group": "Global SN Project",
+    "ascii_url": "https://www.wis-tns.org/system/files/uploaded/Global%20SN%20Project/tns_2021pfs_2021-06-10_07-27-27_FTN_FLOYDS-N_Global_SN_Project.ascii",
+    "filename": "tns_2021pfs_2021-06-10_07-27-27_FTN_FLOYDS-N_Global_SN_Project.ascii"
+  },
+  {
+    "spec_id": "9850",
+    "obs_date": "2021-06-10 04:45:43",
+    "telescope": "MMT",
+    "instrument": "BINOSPEC",
+    "source_group": "DLT40",
+    "ascii_url": "https://www.wis-tns.org/system/files/uploaded/DLT40/tns_2021pfs_2459375.69842_MMT_BINOSPEC_DLT40.ascii",
+    "filename": "tns_2021pfs_2459375.69842_MMT_BINOSPEC_DLT40.ascii"
+  }
+]

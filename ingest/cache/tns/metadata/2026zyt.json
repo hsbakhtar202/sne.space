@@ -1,0 +1,11 @@
+[
+  {
+    "spec_id": "24656",
+    "obs_date": "2026-09-08 05:14:56",
+    "telescope": "LT",
+    "instrument": "SPRAT",
+    "source_group": "GOTO",
+    "ascii_url": "https://www.wis-tns.org/system/files/uploaded/GOTO/tns_2026zyt_2461291.718699_LT_SPRAT_GOTO.dat",
+    "filename": "tns_2026zyt_2461291.718699_LT_SPRAT_GOTO.dat"
+  }
+]

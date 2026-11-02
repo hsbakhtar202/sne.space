@@ -1,0 +1,11 @@
+[
+  {
+    "spec_id": "24660",
+    "obs_date": "2026-09-06 00:00:00",
+    "telescope": "SOAR",
+    "instrument": "Goodman",
+    "source_group": "ZTF",
+    "ascii_url": "https://www.wis-tns.org/system/files/uploaded/ZTF/tns_2026zzh_2026-09-06_00-00-00_SOAR_Goodman_ZTF.ascii",
+    "filename": "tns_2026zzh_2026-09-06_00-00-00_SOAR_Goodman_ZTF.ascii"
+  }
+]

@@ -1,0 +1,11 @@
+[
+  {
+    "spec_id": "25024",
+    "obs_date": "2026-10-15 00:00:00",
+    "telescope": "Lick-3m",
+    "instrument": "KAST",
+    "source_group": "TRex",
+    "ascii_url": "https://www.wis-tns.org/system/files/uploaded/TRex/tns_2026adls_2026-10-15_Lick-3m_KAST_TRex.dat",
+    "filename": "tns_2026adls_2026-10-15_Lick-3m_KAST_TRex.dat"
+  }
+]

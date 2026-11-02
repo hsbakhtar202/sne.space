@@ -1,0 +1,20 @@
+[
+  {
+    "spec_id": "25020",
+    "obs_date": "2026-10-19 19:30:35",
+    "telescope": "Lijiang-2.4m",
+    "instrument": "YFOSC",
+    "source_group": "YNTS",
+    "ascii_url": "https://www.wis-tns.org/system/files/uploaded/YNTS/tns_2026afrp_2026-10-19_19-30-35.39_Lijiang-2.4m_YFOSC_YNTS.dat",
+    "filename": "tns_2026afrp_2026-10-19_19-30-35.39_Lijiang-2.4m_YFOSC_YNTS.dat"
+  },
+  {
+    "spec_id": "25014",
+    "obs_date": "2026-10-19 10:29:33",
+    "telescope": "FTN",
+    "instrument": "FS02",
+    "source_group": "Global SN Project",
+    "ascii_url": "https://www.wis-tns.org/system/files/uploaded/Global%20SN%20Project/tns_2026afrp_2026-10-19_10-29-33_FTN_FS02_Global_SN_Project.ascii",
+    "filename": "tns_2026afrp_2026-10-19_10-29-33_FTN_FS02_Global_SN_Project.ascii"
+  }
+]

@@ -1,0 +1,11 @@
+[
+  {
+    "spec_id": "24610",
+    "obs_date": "2026-08-23 09:31:23",
+    "telescope": "VLT-UT4",
+    "instrument": "MUSE",
+    "source_group": "STARGATE",
+    "ascii_url": "https://www.wis-tns.org/system/files/uploaded/STARGATE/tns_2026aafv_2026-08-23_09-31-23_VLT-UT4_MUSE_STARGATE.dat",
+    "filename": "tns_2026aafv_2026-08-23_09-31-23_VLT-UT4_MUSE_STARGATE.dat"
+  }
+]

@@ -1,0 +1,11 @@
+[
+  {
+    "spec_id": "24713",
+    "obs_date": "2026-09-16 14:04:16",
+    "telescope": "UH88",
+    "instrument": "SNIFS",
+    "source_group": "SCAT",
+    "ascii_url": "https://www.wis-tns.org/system/files/uploaded/SCAT/tns_2026abbr_2026-09-16_14-04-16_UH88_SNIFS_SCAT.txt",
+    "filename": "tns_2026abbr_2026-09-16_14-04-16_UH88_SNIFS_SCAT.txt"
+  }
+]

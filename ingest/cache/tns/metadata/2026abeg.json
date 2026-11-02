@@ -1,0 +1,11 @@
+[
+  {
+    "spec_id": "24706",
+    "obs_date": "2026-09-13 02:21:25",
+    "telescope": "NOT",
+    "instrument": "ALFOSC",
+    "source_group": "NUTS2",
+    "ascii_url": "https://www.wis-tns.org/system/files/uploaded/NUTS2/tns_2026abeg_2026-09-13_02-21-24.632_NOT_ALFOSC_NUTS2.dat",
+    "filename": "tns_2026abeg_2026-09-13_02-21-24.632_NOT_ALFOSC_NUTS2.dat"
+  }
+]

@@ -1,0 +1,20 @@
+[
+  {
+    "spec_id": "25032",
+    "obs_date": "2026-10-23 23:40:55",
+    "telescope": "NOT",
+    "instrument": "ALFOSC",
+    "source_group": "None",
+    "ascii_url": "https://www.wis-tns.org/system/files/uploaded/None/tns_2026adfo_2026-10-23_23-40-54.571_NOT_ALFOSC_None_0.txt",
+    "filename": "tns_2026adfo_2026-10-23_23-40-54.571_NOT_ALFOSC_None_0.txt"
+  },
+  {
+    "spec_id": "25031",
+    "obs_date": "2026-10-23 23:40:55",
+    "telescope": "NOT",
+    "instrument": "ALFOSC",
+    "source_group": "None",
+    "ascii_url": "https://www.wis-tns.org/system/files/uploaded/None/tns_2026adfo_2026-10-23_23-40-54.571_NOT_ALFOSC_None.txt",
+    "filename": "tns_2026adfo_2026-10-23_23-40-54.571_NOT_ALFOSC_None.txt"
+  }
+]

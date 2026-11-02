@@ -3605,22 +3605,30 @@ class Handler(SimpleHTTPRequestHandler):
             "is_api": is_api,
         }
 
+    def _ops_auth_secret(self) -> str:
+        """Operator password for /logs and /api/internal/* — env only, no default."""
+        return (os.environ.get("SNE_HEALTH_AUTH") or "").strip()
+
     def _check_logs_auth(self, query: dict) -> bool:
         """Verify authentication for the logs dashboard.
 
-        Supports:
-        1. Query param: ?auth=monster104 or ?password=monster104 or ?key=monster104
-        2. HTTP Cookie: sne_logs_auth=monster104 (or session token)
-        3. HTTP Basic Authorization header: password 'monster104'
+        Supports (secret from ``SNE_HEALTH_AUTH`` only):
+        1. Query param: ?auth=… or ?password=… or ?key=…
+        2. HTTP Cookie: sne_logs_auth=…
+        3. HTTP Basic Authorization header password
         """
+        secret = self._ops_auth_secret()
+        if not secret:
+            return False
+
         # 1. Check query parameters
         p_param = query.get("auth", query.get("password", query.get("key", [""])))[0].strip()
-        if p_param == "monster104":
+        if p_param and p_param == secret:
             return True
 
         # 2. Check Cookie header
         cookie_header = self.headers.get("Cookie", "")
-        if "sne_logs_auth=monster104" in cookie_header:
+        if f"sne_logs_auth={secret}" in cookie_header:
             return True
 
         # 3. Check HTTP Basic Authorization header
@@ -3632,9 +3640,9 @@ class Handler(SimpleHTTPRequestHandler):
                 # format is username:password
                 if ":" in decoded:
                     _, pwd = decoded.split(":", 1)
-                    if pwd.strip() == "monster104":
+                    if pwd.strip() == secret:
                         return True
-                elif decoded.strip() == "monster104":
+                elif decoded.strip() == secret:
                     return True
             except Exception:
                 pass
@@ -3810,11 +3818,12 @@ class Handler(SimpleHTTPRequestHandler):
             except Exception:
                 entered_pwd = ""
 
-            if entered_pwd == "monster104":
+            secret = self._ops_auth_secret()
+            if secret and entered_pwd == secret:
                 # Valid password: set cookie and redirect with 303 See Other
                 self._send(303, "text/html; charset=utf-8", b"", {
                     "Location": "/logs",
-                    "Set-Cookie": "sne_logs_auth=monster104; Path=/; HttpOnly; SameSite=Lax",
+                    "Set-Cookie": f"sne_logs_auth={secret}; Path=/; HttpOnly; SameSite=Lax",
                     "Cache-Control": "no-store, no-cache, must-revalidate"
                 })
                 return

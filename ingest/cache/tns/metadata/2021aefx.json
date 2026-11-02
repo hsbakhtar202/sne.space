@@ -1,0 +1,38 @@
+[
+  {
+    "spec_id": "11540",
+    "obs_date": "2021-12-03 04:57:22",
+    "telescope": "Other",
+    "instrument": "Other",
+    "source_group": "None",
+    "ascii_url": "https://www.wis-tns.org/system/files/uploaded/general/tns_2021aefx_2459551.7065_Other_Other.dat",
+    "filename": "tns_2021aefx_2459551.7065_Other_Other.dat"
+  },
+  {
+    "spec_id": "11417",
+    "obs_date": "2021-11-14 01:50:38",
+    "telescope": "Other",
+    "instrument": "Other",
+    "source_group": "None",
+    "ascii_url": "https://www.wis-tns.org/system/files/uploaded/general/tns_2021aefx_2021-11-14_01-50-38_Other_Other.dat",
+    "filename": "tns_2021aefx_2021-11-14_01-50-38_Other_Other.dat"
+  },
+  {
+    "spec_id": "11413",
+    "obs_date": "2021-11-13 06:22:58",
+    "telescope": "ESO-NTT",
+    "instrument": "EFOSC2-NTT",
+    "source_group": "ePESSTO+",
+    "ascii_url": "https://www.wis-tns.org/system/files/uploaded/ePESSTO%2B/tns_2021aefx_2021-11-13_06-22-58_ESO-NTT_EFOSC2-NTT_ePESSTO%2B.asci",
+    "filename": "tns_2021aefx_2021-11-13_06-22-58_ESO-NTT_EFOSC2-NTT_ePESSTO%2B.asci"
+  },
+  {
+    "spec_id": "11404",
+    "obs_date": "2021-11-11 20:55:27",
+    "telescope": "SALT",
+    "instrument": "RSS",
+    "source_group": "Global SN Project",
+    "ascii_url": "https://www.wis-tns.org/system/files/uploaded/Global%20SN%20Project/tns_2021aefx_2021-11-11_20-55-27.449_SALT_RSS_Global_SN_Project.dat",
+    "filename": "tns_2021aefx_2021-11-11_20-55-27.449_SALT_RSS_Global_SN_Project.dat"
+  }
+]

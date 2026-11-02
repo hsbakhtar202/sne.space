@@ -1,0 +1,20 @@
+[
+  {
+    "spec_id": "24812",
+    "obs_date": "2026-10-01 21:15:29",
+    "telescope": "Lesedi",
+    "instrument": "Mookodi",
+    "source_group": "ATLAS",
+    "ascii_url": "https://www.wis-tns.org/system/files/uploaded/ATLAS/tns_2026acna_2026-10-01_21-15-29_Lesedi_Mookodi_ATLAS.txt",
+    "filename": "tns_2026acna_2026-10-01_21-15-29_Lesedi_Mookodi_ATLAS.txt"
+  },
+  {
+    "spec_id": "24761",
+    "obs_date": "2026-09-23 10:16:01",
+    "telescope": "P60",
+    "instrument": "SEDM",
+    "source_group": "ZTF",
+    "ascii_url": "https://www.wis-tns.org/system/files/uploaded/ZTF/tns_2026acna_2026-09-23_10-16-00.731422_P60_SEDM_ZTF.ascii",
+    "filename": "tns_2026acna_2026-09-23_10-16-00.731422_P60_SEDM_ZTF.ascii"
+  }
+]

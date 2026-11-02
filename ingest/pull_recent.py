@@ -209,39 +209,51 @@ def _publish(written: list[dict]) -> None:
     written.sort(key=lambda r: r["sort"], reverse=True)
     cards = [{k: v for k, v in row.items() if k != "sort"} for row in written[:8]]
     _atomic_write_text(RECENT_PATH, json.dumps(cards, indent=2) + "\n")
+    # Prefer catalog rows derived from on-disk event JSON so photolink includes
+    # detections + limits and publish_revision is stamped. Fall back to the TNS
+    # card only when no event file exists yet.
+    from ingest.catalog_publish import event_to_catalog_item, load_event_file
+    from ingest.manager import SUPERNOVAE_OUTPUT as _OUT
+
     catalog_rows = []
     for row in written:
-        day = row["date"].replace("-", "/")
-        s_count = row.get("spectra_count", 0)
-        p_count = int(row.get("photo_count") or 0)
-        # Prefer enriched brightest-observed mag; discovery mag may fill the
-        # listing column but photolink stays tied to persisted point counts.
-        mag = row.get("maxappmag") or row.get("discoverymag") or ""
-        mag = str(mag).strip()
-        ctype = (row.get("type") or "").strip() or "unclassified"
-        mag_entry = []
-        if mag:
-            kind = "brightest_observed" if p_count >= 2 else "discovery"
-            mag_entry = [{"value": mag, "kind": kind}]
-        host = (row.get("host") or "").strip()
-        z = (row.get("redshift") or "").strip()
-        entry = {
-            "name": row["name"],
-            "alias": [{"value": row["name"]}],
-            "discoverer": [{"value": row["discoverer"]}],
-            "discoverdate": [{"value": day}],
-            "maxdate": [{"value": day}],
-            "maxappmag": mag_entry,
-            "ra": [{"value": row.get("ra", "")}],
-            "dec": [{"value": row.get("dec", "")}],
-            "claimedtype": [{"value": ctype}],
-            "photolink": f"{p_count},0",
-            "spectralink": f"{s_count}" if s_count > 0 else "0",
-        }
-        if host:
-            entry["host"] = [{"value": host}]
-        if z:
-            entry["redshift"] = [{"value": z}]
+        name = row["name"]
+        entry = None
+        hits = list(Path(_OUT).glob(f"sne-*/{name}.json")) if _OUT else []
+        if hits:
+            loaded = load_event_file(hits[0])
+            if loaded:
+                entry = event_to_catalog_item(loaded[0], loaded[1])
+        if entry is None:
+            day = row["date"].replace("-", "/")
+            s_count = row.get("spectra_count", 0)
+            p_count = int(row.get("photo_count") or 0)
+            mag = row.get("maxappmag") or row.get("discoverymag") or ""
+            mag = str(mag).strip()
+            ctype = (row.get("type") or "").strip() or "unclassified"
+            mag_entry = []
+            if mag:
+                kind = "brightest_observed" if p_count >= 2 else "discovery"
+                mag_entry = [{"value": mag, "kind": kind}]
+            host = (row.get("host") or "").strip()
+            z = (row.get("redshift") or "").strip()
+            entry = {
+                "name": name,
+                "alias": [{"value": name}],
+                "discoverer": [{"value": row["discoverer"]}],
+                "discoverdate": [{"value": day}],
+                "maxdate": [{"value": day}],
+                "maxappmag": mag_entry,
+                "ra": [{"value": row.get("ra", "")}],
+                "dec": [{"value": row.get("dec", "")}],
+                "claimedtype": [{"value": ctype}],
+                "photolink": f"{p_count},0",
+                "spectralink": f"{s_count}" if s_count > 0 else "0",
+            }
+            if host:
+                entry["host"] = [{"value": host}]
+            if z:
+                entry["redshift"] = [{"value": z}]
         catalog_rows.append(entry)
     # Explicit rather than derived from RECENT_PATH.parent so the intent is clear
     # and a future move of one file cannot silently desynchronise the pair.

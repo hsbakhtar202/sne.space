@@ -1,0 +1,20 @@
+[
+  {
+    "spec_id": "25018",
+    "obs_date": "2026-10-17 10:00:07",
+    "telescope": "Keck2",
+    "instrument": "DEIMOS",
+    "source_group": "ZTF",
+    "ascii_url": "https://www.wis-tns.org/system/files/uploaded/ZTF/tns_2026aebl_2026-10-17_10-00-07_Keck2_DEIMOS_ZTF.txt",
+    "filename": "tns_2026aebl_2026-10-17_10-00-07_Keck2_DEIMOS_ZTF.txt"
+  },
+  {
+    "spec_id": "24946",
+    "obs_date": "2026-10-16 20:12:21",
+    "telescope": "SALT",
+    "instrument": "RSS",
+    "source_group": "BlackGEM",
+    "ascii_url": "https://www.wis-tns.org/system/files/uploaded/BlackGEM/tns_2026aebl_2026-10-16_20-12-21_SALT_RSS_BlackGEM.txt",
+    "filename": "tns_2026aebl_2026-10-16_20-12-21_SALT_RSS_BlackGEM.txt"
+  }
+]

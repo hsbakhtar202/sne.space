@@ -191,7 +191,35 @@ def _catalog_item_to_query_item(item: dict[str, Any]) -> Optional[dict[str, Any]
         "spec": _extract_int_count(item.get("spectralink")),
         "phot": _extract_int_count(item.get("photolink")),
         "search_blob": " ".join(search_tokens),
+        "publish_revision": _publish_revision_value(item.get("publish_revision")),
     }
+
+
+def _publish_revision_value(raw: Any) -> Optional[float]:
+    if raw is None or raw == "":
+        return None
+    try:
+        return float(raw)
+    except (TypeError, ValueError):
+        return None
+
+
+def _publish_revision_or_neg_inf(item: dict[str, Any]) -> float:
+    v = _publish_revision_value(item.get("publish_revision"))
+    return v if v is not None else float("-inf")
+
+
+def _prefer_authoritative_query_item(
+    store_item: dict[str, Any], recent_item: dict[str, Any]
+) -> dict[str, Any]:
+    """Choose by publish_revision; CatalogStore wins ties and unrevisioned stubs.
+
+    Photometry counts are not a versioning signal — a newer revision may lower
+    phot/spec after a legitimate correction.
+    """
+    if _publish_revision_or_neg_inf(recent_item) > _publish_revision_or_neg_inf(store_item):
+        return recent_item
+    return store_item
 
 
 def _load_recent_query_items() -> list[dict[str, Any]]:
@@ -298,12 +326,24 @@ def _merge_recent_into_query_result(
     sort_key = str(sort).lower()
 
     store_items = list(result.get("items") or [])
-    by_name = {r["name"]: r for r in recent}
-    # Prefer recent row when both exist (fresher photolink / type / host).
-    merged_pool = list(recent)
+    store_by_name = {it["name"]: it for it in store_items if it.get("name")}
+    # Provenance merge: newer publish_revision wins; unrevisioned recent stubs
+    # must not hide CatalogStore rows (P0A production defect).
+    merged_pool: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for r in recent:
+        name = r.get("name")
+        if not name:
+            continue
+        if name in store_by_name:
+            chosen = _prefer_authoritative_query_item(store_by_name[name], r)
+        else:
+            chosen = r
+        merged_pool.append(chosen)
+        seen.add(name)
     for it in store_items:
         name = it.get("name")
-        if name and name not in by_name:
+        if name and name not in seen:
             merged_pool.append(it)
 
     if sort_key in ("discoverdate", "date"):

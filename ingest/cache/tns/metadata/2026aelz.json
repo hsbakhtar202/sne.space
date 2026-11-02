@@ -1,0 +1,20 @@
+[
+  {
+    "spec_id": "24971",
+    "obs_date": "2026-10-19 05:48:36",
+    "telescope": "P200",
+    "instrument": "NGPS",
+    "source_group": "ZTF",
+    "ascii_url": "https://www.wis-tns.org/system/files/uploaded/ZTF/tns_2026aelz_2026-10-19_05-48-36_P200_NGPS_ZTF.ascii",
+    "filename": "tns_2026aelz_2026-10-19_05-48-36_P200_NGPS_ZTF.ascii"
+  },
+  {
+    "spec_id": "25017",
+    "obs_date": "2026-10-17 11:10:39",
+    "telescope": "Keck2",
+    "instrument": "DEIMOS",
+    "source_group": "ZTF",
+    "ascii_url": "https://www.wis-tns.org/system/files/uploaded/ZTF/tns_2026aelz_2026-10-17_11-10-39_Keck2_DEIMOS_ZTF.txt",
+    "filename": "tns_2026aelz_2026-10-17_11-10-39_Keck2_DEIMOS_ZTF.txt"
+  }
+]

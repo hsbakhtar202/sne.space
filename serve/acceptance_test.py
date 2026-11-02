@@ -42,9 +42,12 @@ if str(REPO) not in sys.path:
 
 RESULTS: list[dict] = []
 
-# /api/internal/health is auth-gated. The password is the documented operator
-# credential already used by the logs console; override with SNE_HEALTH_AUTH.
-HEALTH_AUTH = os.environ.get("SNE_HEALTH_AUTH", "monster104")
+# /api/internal/health is auth-gated via SNE_HEALTH_AUTH (required; no hardcoded default).
+HEALTH_AUTH = os.environ.get("SNE_HEALTH_AUTH") or ""
+if not HEALTH_AUTH:
+    # Tests must set a disposable secret; never ship a production password here.
+    HEALTH_AUTH = "test-only-sne-health-auth"
+    os.environ["SNE_HEALTH_AUTH"] = HEALTH_AUTH
 
 
 def health(base: str) -> dict:

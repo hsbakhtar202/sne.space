@@ -624,11 +624,9 @@ providers down"); all are real.
    enrichment for those events cannot succeed until ingest runs with network access.
    Failure is contained — 3 attempts, exponential backoff, then cooldown; no retry storm.
 
-4. **`SNE_HEALTH_AUTH` defaults to a hardcoded operator password** (`monster104`) in
-   `serve/acceptance_test.py` and is used as the auth for `/api/internal/health`. This is
-   pre-existing behaviour that the tests inherited. It should be moved to an env var /
-   secret before this is called production-hardened. Not changed here because it is
-   outside the stability patch's scope and would break existing operator workflows.
+4. **`SNE_HEALTH_AUTH` must be set in the environment.** The former hardcoded operator
+   password was removed from `serve/server.py` on 2026-10-31. Rotate any previously
+   exposed value on deploy; tests use a disposable secret when the env var is unset.
 
 5. **Boot-time outbound calls remain.** The counter shows 4–6 calls at startup from
    background jobs (`ingest.manager` TNS pulls, `pull_recent` TNS search). These are off

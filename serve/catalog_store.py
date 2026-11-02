@@ -873,7 +873,14 @@ class CatalogStore:
                 aliases = json.loads(row["aliases_json"])
             except json.JSONDecodeError:
                 aliases = []
-            items.append({
+            pub_rev = None
+            try:
+                meta = json.loads(row["meta_json"] or "{}")
+                if isinstance(meta, dict) and meta.get("publish_revision") is not None:
+                    pub_rev = float(meta["publish_revision"])
+            except (json.JSONDecodeError, TypeError, ValueError):
+                pub_rev = None
+            item = {
                 "name": row["name"],
                 "aliases": aliases,
                 "type": row["type"],
@@ -889,7 +896,10 @@ class CatalogStore:
                 "spec": row["spec"],
                 "phot": row["phot"],
                 "search_blob": row["search_blob"],
-            })
+            }
+            if pub_rev is not None:
+                item["publish_revision"] = pub_rev
+            items.append(item)
 
         return {
             "total": total_n,

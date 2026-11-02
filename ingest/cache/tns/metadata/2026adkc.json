@@ -1,0 +1,11 @@
+[
+  {
+    "spec_id": "24914",
+    "obs_date": "2026-10-04 07:48:00",
+    "telescope": "P60",
+    "instrument": "SEDM",
+    "source_group": "ZTF",
+    "ascii_url": "https://www.wis-tns.org/system/files/uploaded/ZTF/tns_2026adkc_2026-10-04_07-48-00.306878_P60_SEDM_ZTF.ascii",
+    "filename": "tns_2026adkc_2026-10-04_07-48-00.306878_P60_SEDM_ZTF.ascii"
+  }
+]

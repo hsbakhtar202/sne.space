@@ -1,0 +1,20 @@
+[
+  {
+    "spec_id": "25040",
+    "obs_date": "2026-10-24 19:48:48",
+    "telescope": "Lijiang-2.4m",
+    "instrument": "YFOSC",
+    "source_group": "YNTS",
+    "ascii_url": "https://www.wis-tns.org/system/files/uploaded/YNTS/tns_2026agle_2026-10-24_19-48-47.834_Lijiang-2.4m_YFOSC_YNTS.dat",
+    "filename": "tns_2026agle_2026-10-24_19-48-47.834_Lijiang-2.4m_YFOSC_YNTS.dat"
+  },
+  {
+    "spec_id": "25030",
+    "obs_date": "2026-10-24 05:27:28",
+    "telescope": "LT",
+    "instrument": "SPRAT",
+    "source_group": "GOTO",
+    "ascii_url": "https://www.wis-tns.org/system/files/uploaded/GOTO/tns_2026agle_2461337.727405_LT_SPRAT_GOTO.dat",
+    "filename": "tns_2026agle_2461337.727405_LT_SPRAT_GOTO.dat"
+  }
+]

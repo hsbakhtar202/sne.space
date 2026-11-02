@@ -1,0 +1,20 @@
+[
+  {
+    "spec_id": "6122",
+    "obs_date": "2020-02-13 00:00:00",
+    "telescope": "Lick-3m",
+    "instrument": "KAST",
+    "source_group": "UCSC",
+    "ascii_url": "https://www.wis-tns.org/system/files/uploaded/UCSC/tns_2020cdj_2020-02-13_Lick-3m_KAST_UCSC.flm",
+    "filename": "tns_2020cdj_2020-02-13_Lick-3m_KAST_UCSC.flm"
+  },
+  {
+    "spec_id": "6142",
+    "obs_date": "2020-02-11 13:06:26",
+    "telescope": "P60",
+    "instrument": "SEDM",
+    "source_group": "ZTF",
+    "ascii_url": "https://www.wis-tns.org/system/files/uploaded/ZTF/tns_2020cdj_2020-02-11_13-06-26_P60_SEDM_ZTF.ascii",
+    "filename": "tns_2020cdj_2020-02-11_13-06-26_P60_SEDM_ZTF.ascii"
+  }
+]

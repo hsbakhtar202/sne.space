@@ -1,0 +1,11 @@
+[
+  {
+    "spec_id": "24772",
+    "obs_date": "2026-09-20 12:22:24",
+    "telescope": "P200",
+    "instrument": "NGPS",
+    "source_group": "ZTF",
+    "ascii_url": "https://www.wis-tns.org/system/files/uploaded/ZTF/tns_2026zyh_2026-09-20_12-22-24_P200_NGPS_ZTF.ascii",
+    "filename": "tns_2026zyh_2026-09-20_12-22-24_P200_NGPS_ZTF.ascii"
+  }
+]

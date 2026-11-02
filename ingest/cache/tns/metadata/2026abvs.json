@@ -1,0 +1,20 @@
+[
+  {
+    "spec_id": "24837",
+    "obs_date": "2026-10-03 10:31:51",
+    "telescope": "P60",
+    "instrument": "SEDM",
+    "source_group": "ZTF",
+    "ascii_url": "https://www.wis-tns.org/system/files/uploaded/ZTF/tns_2026abvs_2026-10-03_10-31-51.384784_P60_SEDM_ZTF.ascii",
+    "filename": "tns_2026abvs_2026-10-03_10-31-51.384784_P60_SEDM_ZTF.ascii"
+  },
+  {
+    "spec_id": "24733",
+    "obs_date": "2026-09-21 03:40:56",
+    "telescope": "AAT",
+    "instrument": "AAOmega-2DF",
+    "source_group": "GOTO",
+    "ascii_url": "https://www.wis-tns.org/system/files/uploaded/GOTO/tns_2026abvs_2461304.653427_AAT_AAOmega-2DF_GOTO.dat",
+    "filename": "tns_2026abvs_2461304.653427_AAT_AAOmega-2DF_GOTO.dat"
+  }
+]

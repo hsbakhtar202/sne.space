@@ -306,5 +306,27 @@
     "gal_l": 119.685,
     "gal_b": -49.343,
     "source": "Schlafly & Finkbeiner (2011)"
+  },
+  "28.0920,35.7899": {
+    "ebv": 0.0745,
+    "a_v": 0.231,
+    "a_b": 0.305,
+    "a_g": 0.283,
+    "a_r": 0.205,
+    "a_i": 0.155,
+    "gal_l": 136.585,
+    "gal_b": -25.461,
+    "source": "Analytical Galactic Disk Model (IAU)"
+  },
+  "22.1641,12.1780": {
+    "ebv": 0.0436,
+    "a_v": 0.135,
+    "a_b": 0.179,
+    "a_g": 0.165,
+    "a_r": 0.12,
+    "a_i": 0.091,
+    "gal_l": 137.067,
+    "gal_b": -49.67,
+    "source": "Analytical Galactic Disk Model (IAU)"
   }
 }

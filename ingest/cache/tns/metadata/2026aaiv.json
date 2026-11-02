@@ -1,0 +1,56 @@
+[
+  {
+    "spec_id": "24857",
+    "obs_date": "2026-10-06 23:14:00",
+    "telescope": "Other",
+    "instrument": "Other",
+    "source_group": "Ondrejov Transient Group",
+    "ascii_url": "https://www.wis-tns.org/system/files/uploaded/Ondrejov%20Transient%20Group/tns_2026aaiv_2026-10-06_23-14-00_Other_Other_Ondrejov_Transient_Group.dat",
+    "filename": "tns_2026aaiv_2026-10-06_23-14-00_Other_Other_Ondrejov_Transient_Group.dat"
+  },
+  {
+    "spec_id": "24736",
+    "obs_date": "2026-09-22 05:31:24",
+    "telescope": "P60",
+    "instrument": "SEDM",
+    "source_group": "ZTF",
+    "ascii_url": "https://www.wis-tns.org/system/files/uploaded/ZTF/tns_2026aaiv_2026-09-22_05-31-24.089978_P60_SEDM_ZTF.ascii",
+    "filename": "tns_2026aaiv_2026-09-22_05-31-24.089978_P60_SEDM_ZTF.ascii"
+  },
+  {
+    "spec_id": "24639",
+    "obs_date": "2026-09-03 23:26:30",
+    "telescope": "Other",
+    "instrument": "Other",
+    "source_group": "None",
+    "ascii_url": "https://www.wis-tns.org/system/files/uploaded/None/tns_2026aaiv_2026-09-03_23-26-30_Other_Other_None_0.dat",
+    "filename": "tns_2026aaiv_2026-09-03_23-26-30_Other_Other_None_0.dat"
+  },
+  {
+    "spec_id": "24638",
+    "obs_date": "2026-09-03 23:26:30",
+    "telescope": "Other",
+    "instrument": "Other",
+    "source_group": "None",
+    "ascii_url": "https://www.wis-tns.org/system/files/uploaded/None/tns_2026aaiv_2026-09-03_23-26-30_Other_Other_None.dat",
+    "filename": "tns_2026aaiv_2026-09-03_23-26-30_Other_Other_None.dat"
+  },
+  {
+    "spec_id": "24627",
+    "obs_date": "2026-09-03 13:26:17",
+    "telescope": "ANU-2.3m",
+    "instrument": "WiFeS",
+    "source_group": "Supernova Alliance",
+    "ascii_url": "https://www.wis-tns.org/system/files/uploaded/Supernova%20Alliance/tns_2026aaiv_2026-09-03_13-26-17_ANU-2.3m_WiFeS_Supernova_Alliance.dat",
+    "filename": "tns_2026aaiv_2026-09-03_13-26-17_ANU-2.3m_WiFeS_Supernova_Alliance.dat"
+  },
+  {
+    "spec_id": "24620",
+    "obs_date": "2026-09-02 22:15:00",
+    "telescope": "BL41",
+    "instrument": "FOSC-E5535",
+    "source_group": "None",
+    "ascii_url": "https://www.wis-tns.org/system/files/uploaded/None/tns_2026aaiv_2026-09-02_22-15-00_BL41_FOSC-E5535_None.dat",
+    "filename": "tns_2026aaiv_2026-09-02_22-15-00_BL41_FOSC-E5535_None.dat"
+  }
+]

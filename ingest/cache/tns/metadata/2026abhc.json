@@ -1,0 +1,20 @@
+[
+  {
+    "spec_id": "24766",
+    "obs_date": "2026-09-20 20:10:13",
+    "telescope": "Lesedi",
+    "instrument": "Mookodi",
+    "source_group": "ATLAS",
+    "ascii_url": "https://www.wis-tns.org/system/files/uploaded/ATLAS/tns_2026abhc_2026-09-20_20-10-13_Lesedi_Mookodi_ATLAS.csv",
+    "filename": "tns_2026abhc_2026-09-20_20-10-13_Lesedi_Mookodi_ATLAS.csv"
+  },
+  {
+    "spec_id": "24707",
+    "obs_date": "2026-09-13 00:53:55",
+    "telescope": "NOT",
+    "instrument": "ALFOSC",
+    "source_group": "NUTS2",
+    "ascii_url": "https://www.wis-tns.org/system/files/uploaded/NUTS2/tns_2026abhc_2026-09-13_00-53-54.808_NOT_ALFOSC_NUTS2.dat",
+    "filename": "tns_2026abhc_2026-09-13_00-53-54.808_NOT_ALFOSC_NUTS2.dat"
+  }
+]

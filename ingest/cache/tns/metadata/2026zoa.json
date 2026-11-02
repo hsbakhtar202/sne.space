@@ -1,0 +1,20 @@
+[
+  {
+    "spec_id": "24618",
+    "obs_date": "2026-09-02 07:42:29",
+    "telescope": "ESO-NTT",
+    "instrument": "EFOSC2-NTT",
+    "source_group": "ePESSTO+",
+    "ascii_url": "https://www.wis-tns.org/system/files/uploaded/ePESSTO%2B/tns_2026zoa_2026-09-02_07-42-29_ESO-NTT_EFOSC2-NTT_ePESSTO%2B.asci",
+    "filename": "tns_2026zoa_2026-09-02_07-42-29_ESO-NTT_EFOSC2-NTT_ePESSTO%2B.asci"
+  },
+  {
+    "spec_id": "24759",
+    "obs_date": "2026-09-01 22:20:49",
+    "telescope": "Lesedi",
+    "instrument": "Mookodi",
+    "source_group": "ATLAS",
+    "ascii_url": "https://www.wis-tns.org/system/files/uploaded/ATLAS/tns_2026zoa_2026-09-01_22-20-49_Lesedi_Mookodi_ATLAS.txt",
+    "filename": "tns_2026zoa_2026-09-01_22-20-49_Lesedi_Mookodi_ATLAS.txt"
+  }
+]

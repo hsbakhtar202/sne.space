@@ -36,20 +36,221 @@ from ingest.backfill_photometry import (  # noqa: E402
 from ingest.manager import SUPERNOVAE_OUTPUT, atomic_write_json  # noqa: E402
 
 OVERLAY_NAME = "published-updates.min.json"
+REVISION_NAME = "publish_revision_seq.txt"
+
+
+def _runtime_dir() -> Path:
+    try:
+        from serve import data_paths
+
+        d = data_paths.resolve_runtime_dir()
+        d.mkdir(parents=True, exist_ok=True)
+        return d
+    except Exception:
+        p = ROOT / "serve" / "www" / "assets"
+        p.mkdir(parents=True, exist_ok=True)
+        return p
 
 
 def overlay_path() -> Path:
     """Resolve overlay path at call time (honours current ``SNE_RUNTIME_DIR``)."""
+    return _runtime_dir() / OVERLAY_NAME
+
+
+def _revision_int(raw: Any) -> Optional[int]:
+    if raw is None or raw == "":
+        return None
+    try:
+        return int(float(raw))
+    except (TypeError, ValueError):
+        return None
+
+
+def _max_revision_in_items(items: Iterable[Any]) -> int:
+    hwm = 0
+    for row in items:
+        if not isinstance(row, dict):
+            continue
+        v = _revision_int(row.get("publish_revision"))
+        if v is not None and v > hwm:
+            hwm = v
+    return hwm
+
+
+def _max_revision_in_json_file(path: Path) -> int:
+    if not path.is_file():
+        return 0
+    try:
+        raw = json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return 0
+    if isinstance(raw, list):
+        return _max_revision_in_items(raw)
+    if isinstance(raw, dict):
+        # Either a single item or name->item map
+        if "publish_revision" in raw:
+            return _revision_int(raw.get("publish_revision")) or 0
+        return _max_revision_in_items(raw.values())
+    return 0
+
+
+def _catalog_store_db_candidates() -> list[Path]:
+    """Likely CatalogStore locations for the current process env."""
+    out: list[Path] = []
+    data = (os.environ.get("SNE_DATA_DIR") or "").strip()
+    if data:
+        out.append(Path(data) / ".index" / "catalog.db")
     try:
         from serve import data_paths
-        # Re-resolve each call — module-level RUNTIME_DIR is fixed at import.
-        d = data_paths.resolve_runtime_dir()
-        d.mkdir(parents=True, exist_ok=True)
-        return d / OVERLAY_NAME
+
+        out.append(Path(data_paths.resolve_output_dir()) / ".index" / "catalog.db")
     except Exception:
-        p = ROOT / "serve" / "www" / "assets" / OVERLAY_NAME
-        p.parent.mkdir(parents=True, exist_ok=True)
-        return p
+        pass
+    out.append(SUPERNOVAE_OUTPUT / ".index" / "catalog.db")
+    # Dedupe while preserving order
+    seen: set[str] = set()
+    uniq: list[Path] = []
+    for p in out:
+        key = str(p.resolve()) if p.exists() else str(p)
+        if key in seen:
+            continue
+        seen.add(key)
+        uniq.append(p)
+    return uniq
+
+
+def _catalog_store_max_revision(db_path: Optional[Path] = None) -> int:
+    """Max publish_revision committed in CatalogStore meta_json (0 if unavailable)."""
+    import sqlite3
+
+    paths = [db_path] if db_path is not None else _catalog_store_db_candidates()
+    hwm = 0
+    for path in paths:
+        if path is None or not path.is_file():
+            continue
+        try:
+            conn = sqlite3.connect(f"file:{path}?mode=ro", uri=True, timeout=5.0)
+            try:
+                # JSON1: extract publish_revision from each event's meta blob.
+                row = conn.execute(
+                    "SELECT MAX(CAST(json_extract(meta_json, '$.publish_revision') "
+                    "AS REAL)) FROM events"
+                ).fetchone()
+                if row and row[0] is not None:
+                    hwm = max(hwm, int(float(row[0])))
+            finally:
+                conn.close()
+        except Exception:
+            # Fallback: sample via Python if json_extract unavailable / corrupt.
+            try:
+                conn = sqlite3.connect(f"file:{path}?mode=ro", uri=True, timeout=5.0)
+                try:
+                    for (meta_raw,) in conn.execute(
+                        "SELECT meta_json FROM events "
+                        "WHERE meta_json LIKE '%publish_revision%' LIMIT 50000"
+                    ):
+                        try:
+                            meta = json.loads(meta_raw or "{}")
+                        except Exception:
+                            continue
+                        v = _revision_int(
+                            meta.get("publish_revision") if isinstance(meta, dict) else None
+                        )
+                        if v is not None and v > hwm:
+                            hwm = v
+                finally:
+                    conn.close()
+            except Exception:
+                continue
+    return hwm
+
+
+# Process-local cache for CatalogStore SQL only (overlays are cheap to re-read).
+_STORE_HWM_CACHE: dict[str, float] = {"value": 0.0, "checked_at": 0.0}
+
+
+def authoritative_publish_revision_high_water(
+    *,
+    catalog_db: Optional[Path] = None,
+    force: bool = False,
+) -> int:
+    """Highest committed publish_revision in overlays + CatalogStore.
+
+    The sequence file alone is not authoritative: it can be absent, reset, or
+    lag behind revisions already stamped into CatalogStore / published-updates /
+    recent-catalog. New allocations must exceed this high-water mark.
+
+    Overlay/recent JSON are always re-read (small). CatalogStore MAX() is cached
+    briefly so batch publishes do not rescan SQLite per event.
+    """
+    import time
+
+    runtime = _runtime_dir()
+    hwm = 0
+    hwm = max(hwm, _max_revision_in_json_file(runtime / OVERLAY_NAME))
+    hwm = max(hwm, _max_revision_in_json_file(runtime / "recent-catalog.min.json"))
+
+    now = time.time()
+    if (
+        not force
+        and _STORE_HWM_CACHE["checked_at"]
+        and (now - _STORE_HWM_CACHE["checked_at"]) < 2.0
+    ):
+        store_hwm = int(_STORE_HWM_CACHE["value"])
+    else:
+        store_hwm = _catalog_store_max_revision(catalog_db)
+        _STORE_HWM_CACHE["value"] = float(store_hwm)
+        _STORE_HWM_CACHE["checked_at"] = now
+    return max(hwm, store_hwm)
+
+
+def next_publish_revision(*, catalog_db: Optional[Path] = None) -> int:
+    """Allocate the next global publish revision (cross-process, fcntl-serialized).
+
+    Ordering rule: the next revision must exceed the maximum of
+      (1) the durable sequence file counter,
+      (2) ``int(time.time())`` (legacy numeric space),
+      (3) the authoritative high-water mark from CatalogStore + overlays.
+
+    Wall-clock alone is unsafe under concurrent publishers. The sequence file
+    alone is unsafe if it is lost/reset while committed revisions remain.
+    """
+    import fcntl
+    import time
+
+    path = _runtime_dir() / REVISION_NAME
+    path.parent.mkdir(parents=True, exist_ok=True)
+    # 'a+' creates the file if missing; we rewrite under the lock.
+    with open(path, "a+", encoding="utf-8") as fh:
+        fcntl.flock(fh.fileno(), fcntl.LOCK_EX)
+        try:
+            fh.seek(0)
+            raw = fh.read().strip()
+            try:
+                cur = int(float(raw)) if raw else 0
+            except ValueError:
+                cur = 0
+            # Always consult overlays; force CatalogStore rescan when counter is
+            # missing/reset so we cannot mint below committed store revisions.
+            auth = authoritative_publish_revision_high_water(
+                catalog_db=catalog_db, force=(cur == 0)
+            )
+            nxt = max(cur + 1, int(time.time()), auth + 1)
+            fh.seek(0)
+            fh.truncate()
+            fh.write(str(nxt))
+            fh.flush()
+            try:
+                os.fsync(fh.fileno())
+            except OSError:
+                pass
+            # Allocated tip is also a floor for subsequent store-cache consumers.
+            if nxt > _STORE_HWM_CACHE["value"]:
+                _STORE_HWM_CACHE["value"] = float(nxt)
+                _STORE_HWM_CACHE["checked_at"] = time.time()
+            return nxt
+        finally:
+            fcntl.flock(fh.fileno(), fcntl.LOCK_UN)
 
 
 def _val(meta: dict, key: str) -> str:
@@ -115,6 +316,8 @@ def event_to_catalog_item(name: str, meta: dict) -> dict[str, Any]:
         "quarantined": any(
             isinstance(p, dict) and is_candidate_point(p) for p in (meta.get("photometry") or [])
         ),
+        # Serialized publication stamp for API merge provenance (not a phot count).
+        "publish_revision": next_publish_revision(),
     }
     if host:
         item["host"] = [{"value": host}]
@@ -197,7 +400,14 @@ def publish_catalog_items(
     Used by ``pull_recent`` so discovery stubs enter SQLite immediately — before
     enrichment finishes — so ``/api/transients`` agrees with the homepage SSR.
     """
-    clean = [i for i in items if isinstance(i, dict) and i.get("name")]
+    clean = []
+    for i in items:
+        if not isinstance(i, dict) or not i.get("name"):
+            continue
+        row = dict(i)
+        if row.get("publish_revision") is None:
+            row["publish_revision"] = next_publish_revision()
+        clean.append(row)
     result: dict[str, Any] = {
         "items": len(clean),
         "overlay_path": str(overlay_file or overlay_path()),

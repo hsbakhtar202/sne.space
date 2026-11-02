@@ -1,0 +1,4 @@
+# Staging restore corpus — never commit downloaded AstroCats trees
+astrocats-restore/
+*
+!.gitignore

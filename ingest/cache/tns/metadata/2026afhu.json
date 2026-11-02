@@ -1,0 +1,20 @@
+[
+  {
+    "spec_id": "24960",
+    "obs_date": "2026-10-19 06:17:56",
+    "telescope": "P60",
+    "instrument": "SEDM",
+    "source_group": "ZTF",
+    "ascii_url": "https://www.wis-tns.org/system/files/uploaded/ZTF/tns_2026afhu_2026-10-19_06-17-55.738709_P60_SEDM_ZTF.ascii",
+    "filename": "tns_2026afhu_2026-10-19_06-17-55.738709_P60_SEDM_ZTF.ascii"
+  },
+  {
+    "spec_id": "25021",
+    "obs_date": "2026-10-15 23:38:12",
+    "telescope": "Other",
+    "instrument": "Other",
+    "source_group": "None",
+    "ascii_url": "https://www.wis-tns.org/system/files/uploaded/None/tns_2026afhu_2026-10-15_23-38-12_Other_Other_None.dat",
+    "filename": "tns_2026afhu_2026-10-15_23-38-12_Other_Other_None.dat"
+  }
+]

@@ -1,0 +1,20 @@
+[
+  {
+    "spec_id": "24725",
+    "obs_date": "2026-09-19 05:00:42",
+    "telescope": "P60",
+    "instrument": "SEDM",
+    "source_group": "ZTF",
+    "ascii_url": "https://www.wis-tns.org/system/files/uploaded/ZTF/tns_2026abex_2026-09-19_05-00-41.857883_P60_SEDM_ZTF.ascii",
+    "filename": "tns_2026abex_2026-09-19_05-00-41.857883_P60_SEDM_ZTF.ascii"
+  },
+  {
+    "spec_id": "24710",
+    "obs_date": "2026-09-15 22:19:00",
+    "telescope": "BL41",
+    "instrument": "FOSC-E5535",
+    "source_group": "None",
+    "ascii_url": "https://www.wis-tns.org/system/files/uploaded/None/tns_2026abex_2026-09-15_22-19-00_BL41_FOSC-E5535_None.dat",
+    "filename": "tns_2026abex_2026-09-15_22-19-00_BL41_FOSC-E5535_None.dat"
+  }
+]

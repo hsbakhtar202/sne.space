@@ -1,0 +1,11 @@
+[
+  {
+    "spec_id": "3600",
+    "obs_date": "2019-02-12 12:53:43",
+    "telescope": "P200",
+    "instrument": "DBSP",
+    "source_group": "ZTF",
+    "ascii_url": "https://www.wis-tns.org/system/files/uploaded/ZTF/tns_2019abp_2019-02-12_12-53-43_P200_DBSP_ZTF.ascii",
+    "filename": "tns_2019abp_2019-02-12_12-53-43_P200_DBSP_ZTF.ascii"
+  }
+]

@@ -265,7 +265,9 @@ def main() -> int:
               f"{total} event JSON files still present on the volume")
 
         # Health endpoint should still report the volume as the data dir.
-        code4, body4 = get(f"http://127.0.0.1:{port}/api/internal/health?auth=monster104")
+        os.environ.setdefault("SNE_HEALTH_AUTH", "test-only-sne-health-auth")
+        auth = os.environ["SNE_HEALTH_AUTH"]
+        code4, body4 = get(f"http://127.0.0.1:{port}/api/internal/health?auth={auth}")
         data_dir_ok = False
         try:
             data_dir_ok = str(data_dir) in json.loads(body4).get("data_dir", "")

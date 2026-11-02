@@ -1,0 +1,20 @@
+[
+  {
+    "spec_id": "24872",
+    "obs_date": "2026-10-10 18:48:28",
+    "telescope": "Lesedi",
+    "instrument": "Mookodi",
+    "source_group": "ATLAS",
+    "ascii_url": "https://www.wis-tns.org/system/files/uploaded/ATLAS/tns_2026aedl_2026-10-10_18-48-28_Lesedi_Mookodi_ATLAS.txt",
+    "filename": "tns_2026aedl_2026-10-10_18-48-28_Lesedi_Mookodi_ATLAS.txt"
+  },
+  {
+    "spec_id": "24859",
+    "obs_date": "2026-10-07 20:21:41",
+    "telescope": "SALT",
+    "instrument": "RSS",
+    "source_group": "ATLAS",
+    "ascii_url": "https://www.wis-tns.org/system/files/uploaded/ATLAS/tns_2026aedl_2026-10-07_20-21-41_SALT_RSS_ATLAS.txt",
+    "filename": "tns_2026aedl_2026-10-07_20-21-41_SALT_RSS_ATLAS.txt"
+  }
+]

@@ -1,0 +1,29 @@
+[
+  {
+    "spec_id": "24752",
+    "obs_date": "2026-09-21 07:10:00",
+    "telescope": "Lick-3m",
+    "instrument": "KAST",
+    "source_group": "UCSC",
+    "ascii_url": "https://www.wis-tns.org/system/files/uploaded/UCSC/tns_2026abyk_2026-09-21_07-10-00_Lick-3m_KAST_UCSC.flm",
+    "filename": "tns_2026abyk_2026-09-21_07-10-00_Lick-3m_KAST_UCSC.flm"
+  },
+  {
+    "spec_id": "24753",
+    "obs_date": "2026-09-19 07:55:48",
+    "telescope": "P60",
+    "instrument": "SEDM",
+    "source_group": "ZTF",
+    "ascii_url": "https://www.wis-tns.org/system/files/uploaded/ZTF/tns_2026abyk_2026-09-19_07-55-47.941384_P60_SEDM_ZTF.ascii",
+    "filename": "tns_2026abyk_2026-09-19_07-55-47.941384_P60_SEDM_ZTF.ascii"
+  },
+  {
+    "spec_id": "24729",
+    "obs_date": "2026-09-18 20:35:45",
+    "telescope": "Other",
+    "instrument": "Other",
+    "source_group": "None",
+    "ascii_url": "https://www.wis-tns.org/system/files/uploaded/None/tns_2026abyk_2026-09-18_20-35-45_Other_Other_None.dat",
+    "filename": "tns_2026abyk_2026-09-18_20-35-45_Other_Other_None.dat"
+  }
+]

@@ -1,0 +1,29 @@
+[
+  {
+    "spec_id": "8421",
+    "obs_date": "2021-01-04 12:28:24",
+    "telescope": "FTN",
+    "instrument": "FLOYDS-N",
+    "source_group": "UCSC",
+    "ascii_url": "https://www.wis-tns.org/system/files/uploaded/UCSC/tns_2021J_2021-01-04_12-28-24_FTN_FLOYDS-N_UCSC.flm",
+    "filename": "tns_2021J_2021-01-04_12-28-24_FTN_FLOYDS-N_UCSC.flm"
+  },
+  {
+    "spec_id": "8494",
+    "obs_date": "2021-01-04 09:12:09",
+    "telescope": "P60",
+    "instrument": "SEDM",
+    "source_group": "ZTF",
+    "ascii_url": "https://www.wis-tns.org/system/files/uploaded/ZTF/tns_2021J_2021-01-04_09-12-09.452781_P60_SEDM_ZTF.ascii",
+    "filename": "tns_2021J_2021-01-04_09-12-09.452781_P60_SEDM_ZTF.ascii"
+  },
+  {
+    "spec_id": "8425",
+    "obs_date": "2021-01-04 08:25:59",
+    "telescope": "ESO-NTT",
+    "instrument": "EFOSC2-NTT",
+    "source_group": "ePESSTO+",
+    "ascii_url": "https://www.wis-tns.org/system/files/uploaded/ePESSTO%2B/tns_2021J_2021-01-04_08-25-59_ESO-NTT_EFOSC2-NTT_ePESSTO%2B.asci",
+    "filename": "tns_2021J_2021-01-04_08-25-59_ESO-NTT_EFOSC2-NTT_ePESSTO%2B.asci"
+  }
+]

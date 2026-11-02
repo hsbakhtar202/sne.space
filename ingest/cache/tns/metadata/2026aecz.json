@@ -1,0 +1,11 @@
+[
+  {
+    "spec_id": "24864",
+    "obs_date": "2026-10-06 00:00:00",
+    "telescope": "Lick-3m",
+    "instrument": "KAST",
+    "source_group": "TRex",
+    "ascii_url": "https://www.wis-tns.org/system/files/uploaded/TRex/tns_2026aecz_2026-10-06_Lick-3m_KAST_TRex.dat",
+    "filename": "tns_2026aecz_2026-10-06_Lick-3m_KAST_TRex.dat"
+  }
+]
