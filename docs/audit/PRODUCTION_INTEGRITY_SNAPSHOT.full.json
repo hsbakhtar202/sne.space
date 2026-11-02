@@ -1,0 +1,278 @@
+{
+  "drawn_at_utc": "2026-11-02T04:34:53.266975+00:00",
+  "root": "/Users/haseeb/Desktop/WorkingDev/sne.space/staging/reconcile-full-corpus",
+  "db": "serve/www/astrocats/astrocats/supernovae/output/.index/catalog.db",
+  "store_total_events": 110534,
+  "scanned_event_files": 99676,
+  "ok": 96550,
+  "missing_in_store": 5,
+  "stale_counts": 3121,
+  "unreadable_files": 0,
+  "apply": false,
+  "live_data_untouched": true,
+  "missing_sample": [
+    {
+      "name": "<a id=\"ASASSN-15og\">ASASSN-15og<_a>",
+      "det": 1,
+      "lim": 0,
+      "spec": 0,
+      "path": "/Users/haseeb/Desktop/WorkingDev/sne.space/staging/reconcile-full-corpus/sne-pre-1990/<a id=\"ASASSN-15og\">ASASSN-15og<_a>.json"
+    },
+    {
+      "name": "<a id=\"ASASSN-15ug\">ASASSN-15ug<_a>",
+      "det": 1,
+      "lim": 0,
+      "spec": 0,
+      "path": "/Users/haseeb/Desktop/WorkingDev/sne.space/staging/reconcile-full-corpus/sne-pre-1990/<a id=\"ASASSN-15ug\">ASASSN-15ug<_a>.json"
+    },
+    {
+      "name": "<a id=\"CSS151230:044008+123051\">CSS151230:044008+123051<_a>",
+      "det": 1,
+      "lim": 0,
+      "spec": 0,
+      "path": "/Users/haseeb/Desktop/WorkingDev/sne.space/staging/reconcile-full-corpus/sne-pre-1990/<a id=\"CSS151230:044008+123051\">CSS151230:044008+123051<_a>.json"
+    },
+    {
+      "name": "<a id=\"LSQ12fhs\">LSQ12fhs<_a>",
+      "det": 1,
+      "lim": 0,
+      "spec": 0,
+      "path": "/Users/haseeb/Desktop/WorkingDev/sne.space/staging/reconcile-full-corpus/sne-pre-1990/<a id=\"LSQ12fhs\">LSQ12fhs<_a>.json"
+    },
+    {
+      "name": "<a id=\"iPTF13ebh\">iPTF13ebh<_a>",
+      "det": 1,
+      "lim": 0,
+      "spec": 0,
+      "path": "/Users/haseeb/Desktop/WorkingDev/sne.space/staging/reconcile-full-corpus/sne-pre-1990/<a id=\"iPTF13ebh\">iPTF13ebh<_a>.json"
+    }
+  ],
+  "stale_sample": [
+    {
+      "name": "CSS111118:074033+240900",
+      "store_phot": 5,
+      "json_det": 12,
+      "store_spec": 0,
+      "json_spec": 0,
+      "publish_revision": null,
+      "path": "/Users/haseeb/Desktop/WorkingDev/sne.space/staging/reconcile-full-corpus/sne-pre-1990/CSS111118:074033+240900.json"
+    },
+    {
+      "name": "CSS121113:091919+171410",
+      "store_phot": 26,
+      "json_det": 25,
+      "store_spec": 0,
+      "json_spec": 0,
+      "publish_revision": null,
+      "path": "/Users/haseeb/Desktop/WorkingDev/sne.space/staging/reconcile-full-corpus/sne-pre-1990/CSS121113:091919+171410.json"
+    },
+    {
+      "name": "CSS130315:131135-042408",
+      "store_phot": 0,
+      "json_det": 5,
+      "store_spec": 0,
+      "json_spec": 0,
+      "publish_revision": null,
+      "path": "/Users/haseeb/Desktop/WorkingDev/sne.space/staging/reconcile-full-corpus/sne-pre-1990/CSS130315:131135-042408.json"
+    },
+    {
+      "name": "CSS130515:144134-202021",
+      "store_phot": 12,
+      "json_det": 15,
+      "store_spec": 0,
+      "json_spec": 0,
+      "publish_revision": null,
+      "path": "/Users/haseeb/Desktop/WorkingDev/sne.space/staging/reconcile-full-corpus/sne-pre-1990/CSS130515:144134-202021.json"
+    },
+    {
+      "name": "CSS130912:025702-001844",
+      "store_phot": 181,
+      "json_det": 7363,
+      "store_spec": 0,
+      "json_spec": 0,
+      "publish_revision": null,
+      "path": "/Users/haseeb/Desktop/WorkingDev/sne.space/staging/reconcile-full-corpus/sne-pre-1990/CSS130912:025702-001844.json"
+    },
+    {
+      "name": "CSS130925:010249-004431",
+      "store_phot": 125,
+      "json_det": 130,
+      "store_spec": 0,
+      "json_spec": 0,
+      "publish_revision": null,
+      "path": "/Users/haseeb/Desktop/WorkingDev/sne.space/staging/reconcile-full-corpus/sne-pre-1990/CSS130925:010249-004431.json"
+    },
+    {
+      "name": "CSS131126:032030+211829",
+      "store_phot": 0,
+      "json_det": 17,
+      "store_spec": 0,
+      "json_spec": 0,
+      "publish_revision": null,
+      "path": "/Users/haseeb/Desktop/WorkingDev/sne.space/staging/reconcile-full-corpus/sne-pre-1990/CSS131126:032030+211829.json"
+    },
+    {
+      "name": "CSS131211:102218+064001",
+      "store_phot": 0,
+      "json_det": 5,
+      "store_spec": 0,
+      "json_spec": 0,
+      "publish_revision": null,
+      "path": "/Users/haseeb/Desktop/WorkingDev/sne.space/staging/reconcile-full-corpus/sne-pre-1990/CSS131211:102218+064001.json"
+    },
+    {
+      "name": "CSS131213:112237+122931",
+      "store_phot": 0,
+      "json_det": 5,
+      "store_spec": 0,
+      "json_spec": 0,
+      "publish_revision": null,
+      "path": "/Users/haseeb/Desktop/WorkingDev/sne.space/staging/reconcile-full-corpus/sne-pre-1990/CSS131213:112237+122931.json"
+    },
+    {
+      "name": "CSS140103:140537-012210",
+      "store_phot": 0,
+      "json_det": 5,
+      "store_spec": 0,
+      "json_spec": 0,
+      "publish_revision": null,
+      "path": "/Users/haseeb/Desktop/WorkingDev/sne.space/staging/reconcile-full-corpus/sne-pre-1990/CSS140103:140537-012210.json"
+    },
+    {
+      "name": "CSS140218:095739+123318",
+      "store_phot": 4,
+      "json_det": 5,
+      "store_spec": 1,
+      "json_spec": 1,
+      "publish_revision": null,
+      "path": "/Users/haseeb/Desktop/WorkingDev/sne.space/staging/reconcile-full-corpus/sne-pre-1990/CSS140218:095739+123318.json"
+    },
+    {
+      "name": "CSS140227:114929+083432",
+      "store_phot": 0,
+      "json_det": 5,
+      "store_spec": 0,
+      "json_spec": 0,
+      "publish_revision": null,
+      "path": "/Users/haseeb/Desktop/WorkingDev/sne.space/staging/reconcile-full-corpus/sne-pre-1990/CSS140227:114929+083432.json"
+    },
+    {
+      "name": "CSS140306:094630+061119",
+      "store_phot": 0,
+      "json_det": 5,
+      "store_spec": 0,
+      "json_spec": 0,
+      "publish_revision": null,
+      "path": "/Users/haseeb/Desktop/WorkingDev/sne.space/staging/reconcile-full-corpus/sne-pre-1990/CSS140306:094630+061119.json"
+    },
+    {
+      "name": "CSS140422:111306+052032",
+      "store_phot": 0,
+      "json_det": 5,
+      "store_spec": 0,
+      "json_spec": 0,
+      "publish_revision": null,
+      "path": "/Users/haseeb/Desktop/WorkingDev/sne.space/staging/reconcile-full-corpus/sne-pre-1990/CSS140422:111306+052032.json"
+    },
+    {
+      "name": "CSS140925:011731+054106",
+      "store_phot": 0,
+      "json_det": 9,
+      "store_spec": 1,
+      "json_spec": 1,
+      "publish_revision": null,
+      "path": "/Users/haseeb/Desktop/WorkingDev/sne.space/staging/reconcile-full-corpus/sne-pre-1990/CSS140925:011731+054106.json"
+    },
+    {
+      "name": "CSS150313:140757-120646",
+      "store_phot": 31,
+      "json_det": 35,
+      "store_spec": 1,
+      "json_spec": 1,
+      "publish_revision": null,
+      "path": "/Users/haseeb/Desktop/WorkingDev/sne.space/staging/reconcile-full-corpus/sne-pre-1990/CSS150313:140757-120646.json"
+    },
+    {
+      "name": "CSS151001:002755+145222",
+      "store_phot": 4,
+      "json_det": 5,
+      "store_spec": 0,
+      "json_spec": 0,
+      "publish_revision": null,
+      "path": "/Users/haseeb/Desktop/WorkingDev/sne.space/staging/reconcile-full-corpus/sne-pre-1990/CSS151001:002755+145222.json"
+    },
+    {
+      "name": "CSS160710:160420+392813",
+      "store_phot": 11,
+      "json_det": 6,
+      "store_spec": 0,
+      "json_spec": 0,
+      "publish_revision": null,
+      "path": "/Users/haseeb/Desktop/WorkingDev/sne.space/staging/reconcile-full-corpus/sne-pre-1990/CSS160710:160420+392813.json"
+    },
+    {
+      "name": "CSS161005:015134+290523",
+      "store_phot": 17,
+      "json_det": 49,
+      "store_spec": 0,
+      "json_spec": 0,
+      "publish_revision": null,
+      "path": "/Users/haseeb/Desktop/WorkingDev/sne.space/staging/reconcile-full-corpus/sne-pre-1990/CSS161005:015134+290523.json"
+    },
+    {
+      "name": "CSS161107:012407+231107",
+      "store_phot": 8,
+      "json_det": 9,
+      "store_spec": 0,
+      "json_spec": 0,
+      "publish_revision": null,
+      "path": "/Users/haseeb/Desktop/WorkingDev/sne.space/staging/reconcile-full-corpus/sne-pre-1990/CSS161107:012407+231107.json"
+    },
+    {
+      "name": "CSS170130:130454+365817",
+      "store_phot": 4,
+      "json_det": 37,
+      "store_spec": 0,
+      "json_spec": 0,
+      "publish_revision": null,
+      "path": "/Users/haseeb/Desktop/WorkingDev/sne.space/staging/reconcile-full-corpus/sne-pre-1990/CSS170130:130454+365817.json"
+    },
+    {
+      "name": "CSS170330:134859+431225",
+      "store_phot": 8,
+      "json_det": 74,
+      "store_spec": 0,
+      "json_spec": 0,
+      "publish_revision": null,
+      "path": "/Users/haseeb/Desktop/WorkingDev/sne.space/staging/reconcile-full-corpus/sne-pre-1990/CSS170330:134859+431225.json"
+    },
+    {
+      "name": "CSS170504:132540+144812",
+      "store_phot": 8,
+      "json_det": 101,
+      "store_spec": 0,
+      "json_spec": 0,
+      "publish_revision": null,
+      "path": "/Users/haseeb/Desktop/WorkingDev/sne.space/staging/reconcile-full-corpus/sne-pre-1990/CSS170504:132540+144812.json"
+    },
+    {
+      "name": "CSS170504:150400+324544",
+      "store_phot": 23,
+      "json_det": 19,
+      "store_spec": 0,
+      "json_spec": 0,
+      "publish_revision": null,
+      "path": "/Users/haseeb/Desktop/WorkingDev/sne.space/staging/reconcile-full-corpus/sne-pre-1990/CSS170504:150400+324544.json"
+    },
+    {
+      "name": "CSS170516:121702+400911",
+      "store_phot": 3,
+      "json_det": 23,
+      "store_spec": 0,
+      "json_spec": 0,
+      "publish_revision": null,
+      "path": "/Users/haseeb/Desktop/WorkingDev/sne.space/staging/reconcile-full-corpus/sne-pre-1990/CSS170516:121702+400911.json"
+    }
+  ],
+  "unreadable_sample": []
+}

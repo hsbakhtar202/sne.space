@@ -1,0 +1,56 @@
+{
+  "drawn_at_utc": "2026-11-01T00:00:00Z",
+  "scope": "System-wide reliability investigation (Phases 1-7)",
+  "note": "Full reconcile ran against the staged 99,676-file corpus (hardlinked from staging/astrocats-restore repos) vs the local development CatalogStore (110,534 events). The production event volume is not reachable (SSH/Easypanel access unavailable); a production-volume rerun is a required follow-up.",
+  "reconcile": {
+    "store_total_events": 110534,
+    "scanned_event_files": 99676,
+    "ok": 96550,
+    "missing_in_store_genuine": 0,
+    "missing_in_store_html_artifacts": 5,
+    "stale_counts": 3121,
+    "unreadable_files": 0,
+    "worst_stale_example": {
+      "name": "CSS130912:025702-001844",
+      "store_phot": 181,
+      "json_det": 7363
+    }
+  },
+  "lifecycle_traces": {
+    "set_size": 29,
+    "outcomes": {
+      "complete": 15,
+      "defective_stale_counts": 6,
+      "defective_count_divergence": 8,
+      "defective_not_published": 0,
+      "defective_no_json": 0
+    },
+    "fixture_agub": {"json_det": 1, "api_phot": 1, "outcome": "complete_after_manual_reconcile"},
+    "divergent_2021": ["AT2021aak","AT2021gzn","AT2021lgi","AT2021lyb","AT2021xap","AT2021zzl","SN2021uhn","SN2021wrr"]
+  },
+  "operations_window": {
+    "source": "prod_access.log 2026-10-29 19:34-22:44 UTC",
+    "requests": 49717,
+    "status": {"200": 41965, "404": 7523, "302": 222, "301": 3, "401": 4},
+    "over_5s": 25069,
+    "enrich_views": 7090,
+    "enrich_distinct_events": 5421,
+    "enrich_no_local_json_404": 53
+  },
+  "failure_recovery_tests": {"suite": "serve/test_system_failure_recovery", "pass": "5/5"},
+  "count_sources": {
+    "homepage_headline": 110222,
+    "homepage_secondary": 110356,
+    "api_total": 111577,
+    "authoritative": "unset"
+  },
+  "security": {"old_credential_rejected": false, "old_credential_http": 200},
+  "final_verdict": "NO",
+  "blocked_followups": [
+    "production-volume reconcile (needs Easypanel/SSH)",
+    "P0B promotion from staging",
+    "durable enrichment queue",
+    "continuous reconciliation monitor",
+    "credential rotation"
+  ]
+}
