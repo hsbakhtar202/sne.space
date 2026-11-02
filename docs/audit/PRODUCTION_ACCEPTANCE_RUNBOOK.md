@@ -30,11 +30,49 @@ cp -a "${SNE_DATA_DIR:-/data/astrocats}/.index/catalog.db"* /data/backups/$TS/ 2
 ls -la /data/backups/$TS/
 ```
 
-**Rollback plan:** redeploy the commit in `/tmp/rollback_sha.txt`. The new code is
-additive-only (new `enrich_queue.db`, new `catalog-stats.json`, new
-`reconciliation_discrepancies` table, new `priority` column) — no destructive
-schema change — so rolling back does not corrupt prior state. The queue's
-`ALTER TABLE ... ADD COLUMN priority` is guarded and idempotent.
+**Rollback is NOT just "redeploy the prior SHA."** Redeploying old code does not
+undo persisted state: SQLite schema changes, worker leases, and rewritten JSON
+survive a redeploy. Verify backward compatibility and be ready to restore data.
+
+*Persisted changes introduced by these commits:*
+- `enrich_queue.db` (new file; the queue also runs `ALTER TABLE enrich_jobs ADD COLUMN priority`).
+- `reconciliation_discrepancies` table inside `catalog.db` (new, additive).
+- `catalog-stats.json` (new runtime file the PHP homepage reads).
+- `publish_revision` high-water marks in `catalog.db` `meta` (monotonic; see below).
+
+*Backward-compatibility assessment:*
+- **Old code reading a NEW db:** safe. SQLite ignores the extra `priority` column
+  and the extra `reconciliation_discrepancies` table; unknown columns/tables do not
+  break `SELECT` of known columns. Old code that does `INSERT` without naming
+  `priority` relies on the column default (`0`) — fine.
+- **Monotonic `publish_revision`:** the high-water mark only moves forward. Old code
+  tolerates a *higher* revision (it is a freshness ordering, not a schema version),
+  so no downgrade conflict. Do NOT manually lower it.
+- **In-flight leases:** on redeploy, rows in `leased` state with an expired
+  `lease_until` are reclaimed by the new code on first claim. Old code has no
+  lease concept, so if you roll back *to* old code, those rows are simply unread
+  (harmless — old code doesn't read `enrich_queue.db` at all).
+
+*Data-restoration procedure (use if a rollback must also undo persisted state):*
+```sh
+TS=<backup dir from Step 0>
+# Stop the service first so no writer holds the DBs.
+# Restore the queue db (discard jobs enqueued under the new code):
+cp -a /data/backups/$TS/enrich_queue.db* "${SNE_RUNTIME_DIR:-/data/runtime}/" 2>/dev/null || true
+# Restore the catalog index (drops reconciliation_discrepancies + new revisions):
+cp -a /data/backups/$TS/catalog.db* "${SNE_DATA_DIR:-/data/astrocats}/.index/" 2>/dev/null || true
+# Remove the stats file so the homepage falls back to its build-time numbers:
+rm -f "${SNE_RUNTIME_DIR:-/data/runtime}/catalog-stats.json"
+# Then redeploy the rollback SHA and restart.
+```
+If no backup exists, the safest non-destructive rollback is: redeploy the prior
+SHA, then `DROP TABLE IF EXISTS reconciliation_discrepancies;` (optional) and delete
+`enrich_queue.db` + `catalog-stats.json`. The `priority` column can be left in place
+(old code ignores it); dropping it is optional and only safe while no writer is active.
+
+**Verify backward compatibility before relying on this:** run
+`python3 -m pytest serve/test_p0a_rollback_compat.py -q` and confirm the prior
+build can open a database written by the new build.
 
 ---
 

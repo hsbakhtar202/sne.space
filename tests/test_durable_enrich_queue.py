@@ -151,3 +151,65 @@ def test_aging_promotes_old_fresh_job(tmp_path):
     q.enqueue("OLDFRESH")  # deduped, but aged -> promoted
     pr = q._conn.execute("SELECT priority FROM enrich_jobs WHERE name='OLDFRESH'").fetchone()[0]
     assert pr == 1
+
+
+# 11. Sustained arrivals with simultaneous aging: when many fresh jobs age into the
+#     priority class at once, the weighted allocation must keep BOTH classes
+#     progressing — no runaway starvation of either side.
+def test_sustained_arrivals_with_simultaneous_aging(tmp_path):
+    q = _queue(tmp_path, aged_share=0.5, aging_seconds=0.03)
+    import time as _t
+
+    claimed = []
+    # Simulate a live stream: keep enqueuing fresh work while a worker drains.
+    # Old fresh jobs age into priority; the weighted selector must not let the
+    # (growing) aged class starve brand-new arrivals, nor vice versa.
+    for round_ in range(400):
+        q.enqueue(f"F{round_}")
+        job = q._claim()
+        if job is None:
+            _t.sleep(0.002)
+            continue
+        claimed.append((job[0], round_))
+        q._finish_ok(job[0])
+
+    # How far "behind" the newest enqueued job the claimed job was, at claim time.
+    # If the selector is fair, lag stays bounded (jobs are served roughly in order,
+    # not left behind while the opposite class monopolises).
+    lags = [r - int(n[1:]) for (n, r) in claimed if n.startswith("F")]
+    assert len(claimed) > 200, f"worker barely progressed: {len(claimed)} claims"
+    # Every job eventually completes: nothing starved to the end of the run.
+    final = q.stats()
+    assert final["pending_total"] == 0, f"jobs left unclaimed: {final}"
+    # Bounded lag: the oldest unclaimed job at any point didn't wait for the whole
+    # run. With aging active, max lag should be well under the run length.
+    assert max(lags, default=0) < 300, f"some job waited nearly the whole run: max lag {max(lags)}"
+
+
+# 12. Aging + weighting combined: even when a large batch ages into priority at the
+#     same instant, fresh jobs enqueued afterward still get served within a bounded
+#     number of claims (weighted share guarantees it).
+def test_fresh_served_after_mass_aging(tmp_path):
+    q = _queue(tmp_path, aged_share=0.5, aging_seconds=0.01)
+    import time as _t
+    # Enqueue a big batch, let it ALL age into priority simultaneously.
+    for i in range(60):
+        q.enqueue(f"OLD{i}")
+    _t.sleep(0.03)
+    q._claim(); q._finish_ok("OLD0")  # trigger the aging pass once
+    aged_count = q._conn.execute("SELECT COUNT(*) FROM enrich_jobs WHERE priority=1 AND status='queued'").fetchone()[0]
+    assert aged_count >= 50, f"expected mass aging, got {aged_count}"
+    # Now fresh arrivals must still be served within a bounded window despite the
+    # large aged class. Enqueue fresh and count how many claims until it's taken.
+    q.enqueue("NEW1")
+    q.enqueue("NEW2")
+    seen = set()
+    for _ in range(40):
+        job = q._claim()
+        if job is None:
+            break
+        seen.add(job[0])
+        q._finish_ok(job[0])
+        if {"NEW1", "NEW2"} <= seen:
+            break
+    assert {"NEW1", "NEW2"} <= seen, "fresh jobs starved by a mass-aged priority class"

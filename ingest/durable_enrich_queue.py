@@ -165,12 +165,14 @@ class DurableEnrichmentQueue:
                     (now, now),
                 )
             # Aging pass: promote any due job that has waited past aging_seconds.
+            # Uses the JOB's own enqueue time (row-wise), so promotion depends on how
+            # long each job has waited, not on when this claim happened to run.
             with self._conn:
                 self._conn.execute(
-                    "UPDATE enrich_jobs SET priority=1, updated_at=? "
+                    "UPDATE enrich_jobs SET priority=1 "
                     "WHERE status IN ('queued','retry') AND priority=0 AND not_before <= ? "
                     "AND (? - enqueued_at) >= ?",
-                    (now, now, now, self.aging_seconds),
+                    (now, now, self.aging_seconds),
                 )
 
             # Weighted fair selection between aged (priority=1) and fresh classes so
