@@ -1,0 +1,418 @@
+{
+  "drawn_at_utc": "2026-11-02T03:59:13.608175+00:00",
+  "root": "/Users/haseeb/Desktop/WorkingDev/sne.space/serve/www/astrocats/astrocats/supernovae/output",
+  "db": "/Users/haseeb/Desktop/WorkingDev/sne.space/serve/www/astrocats/astrocats/supernovae/output/.index/catalog.db",
+  "store_total_events": 110534,
+  "scanned_event_files": 2718,
+  "ok": 2564,
+  "missing_in_store": 109,
+  "stale_counts": 45,
+  "unreadable_files": 0,
+  "apply": false,
+  "live_data_untouched": true,
+  "missing_sample": [
+    {
+      "name": "SN2026aaae",
+      "det": 1,
+      "lim": 0,
+      "spec": 1,
+      "path": "/Users/haseeb/Desktop/WorkingDev/sne.space/serve/www/astrocats/astrocats/supernovae/output/sne-2025-2029/SN2026aaae.json"
+    },
+    {
+      "name": "SN2026aaaf",
+      "det": 1,
+      "lim": 0,
+      "spec": 1,
+      "path": "/Users/haseeb/Desktop/WorkingDev/sne.space/serve/www/astrocats/astrocats/supernovae/output/sne-2025-2029/SN2026aaaf.json"
+    },
+    {
+      "name": "SN2026aaag",
+      "det": 1,
+      "lim": 0,
+      "spec": 1,
+      "path": "/Users/haseeb/Desktop/WorkingDev/sne.space/serve/www/astrocats/astrocats/supernovae/output/sne-2025-2029/SN2026aaag.json"
+    },
+    {
+      "name": "SN2026aabq",
+      "det": 1,
+      "lim": 0,
+      "spec": 1,
+      "path": "/Users/haseeb/Desktop/WorkingDev/sne.space/serve/www/astrocats/astrocats/supernovae/output/sne-2025-2029/SN2026aabq.json"
+    },
+    {
+      "name": "SN2026aabs",
+      "det": 9,
+      "lim": 0,
+      "spec": 1,
+      "path": "/Users/haseeb/Desktop/WorkingDev/sne.space/serve/www/astrocats/astrocats/supernovae/output/sne-2025-2029/SN2026aabs.json"
+    },
+    {
+      "name": "SN2026aabz",
+      "det": 1,
+      "lim": 0,
+      "spec": 1,
+      "path": "/Users/haseeb/Desktop/WorkingDev/sne.space/serve/www/astrocats/astrocats/supernovae/output/sne-2025-2029/SN2026aabz.json"
+    },
+    {
+      "name": "SN2026aacb",
+      "det": 1,
+      "lim": 0,
+      "spec": 1,
+      "path": "/Users/haseeb/Desktop/WorkingDev/sne.space/serve/www/astrocats/astrocats/supernovae/output/sne-2025-2029/SN2026aacb.json"
+    },
+    {
+      "name": "SN2026aacj",
+      "det": 78,
+      "lim": 0,
+      "spec": 1,
+      "path": "/Users/haseeb/Desktop/WorkingDev/sne.space/serve/www/astrocats/astrocats/supernovae/output/sne-2025-2029/SN2026aacj.json"
+    },
+    {
+      "name": "SN2026aacp",
+      "det": 1,
+      "lim": 0,
+      "spec": 1,
+      "path": "/Users/haseeb/Desktop/WorkingDev/sne.space/serve/www/astrocats/astrocats/supernovae/output/sne-2025-2029/SN2026aacp.json"
+    },
+    {
+      "name": "SN2026aadx",
+      "det": 12,
+      "lim": 0,
+      "spec": 1,
+      "path": "/Users/haseeb/Desktop/WorkingDev/sne.space/serve/www/astrocats/astrocats/supernovae/output/sne-2025-2029/SN2026aadx.json"
+    },
+    {
+      "name": "SN2026aaee",
+      "det": 11,
+      "lim": 0,
+      "spec": 1,
+      "path": "/Users/haseeb/Desktop/WorkingDev/sne.space/serve/www/astrocats/astrocats/supernovae/output/sne-2025-2029/SN2026aaee.json"
+    },
+    {
+      "name": "SN2026aafa",
+      "det": 8,
+      "lim": 0,
+      "spec": 1,
+      "path": "/Users/haseeb/Desktop/WorkingDev/sne.space/serve/www/astrocats/astrocats/supernovae/output/sne-2025-2029/SN2026aafa.json"
+    },
+    {
+      "name": "SN2026aafg",
+      "det": 1,
+      "lim": 0,
+      "spec": 1,
+      "path": "/Users/haseeb/Desktop/WorkingDev/sne.space/serve/www/astrocats/astrocats/supernovae/output/sne-2025-2029/SN2026aafg.json"
+    },
+    {
+      "name": "SN2026aafh",
+      "det": 1,
+      "lim": 0,
+      "spec": 1,
+      "path": "/Users/haseeb/Desktop/WorkingDev/sne.space/serve/www/astrocats/astrocats/supernovae/output/sne-2025-2029/SN2026aafh.json"
+    },
+    {
+      "name": "SN2026aafj",
+      "det": 1,
+      "lim": 0,
+      "spec": 1,
+      "path": "/Users/haseeb/Desktop/WorkingDev/sne.space/serve/www/astrocats/astrocats/supernovae/output/sne-2025-2029/SN2026aafj.json"
+    },
+    {
+      "name": "SN2026aafk",
+      "det": 1,
+      "lim": 0,
+      "spec": 1,
+      "path": "/Users/haseeb/Desktop/WorkingDev/sne.space/serve/www/astrocats/astrocats/supernovae/output/sne-2025-2029/SN2026aafk.json"
+    },
+    {
+      "name": "SN2026aafs",
+      "det": 1,
+      "lim": 0,
+      "spec": 1,
+      "path": "/Users/haseeb/Desktop/WorkingDev/sne.space/serve/www/astrocats/astrocats/supernovae/output/sne-2025-2029/SN2026aafs.json"
+    },
+    {
+      "name": "SN2026aaft",
+      "det": 78,
+      "lim": 0,
+      "spec": 1,
+      "path": "/Users/haseeb/Desktop/WorkingDev/sne.space/serve/www/astrocats/astrocats/supernovae/output/sne-2025-2029/SN2026aaft.json"
+    },
+    {
+      "name": "SN2026aafv",
+      "det": 1,
+      "lim": 0,
+      "spec": 1,
+      "path": "/Users/haseeb/Desktop/WorkingDev/sne.space/serve/www/astrocats/astrocats/supernovae/output/sne-2025-2029/SN2026aafv.json"
+    },
+    {
+      "name": "SN2026aafw",
+      "det": 1,
+      "lim": 0,
+      "spec": 1,
+      "path": "/Users/haseeb/Desktop/WorkingDev/sne.space/serve/www/astrocats/astrocats/supernovae/output/sne-2025-2029/SN2026aafw.json"
+    },
+    {
+      "name": "SN2026aagh",
+      "det": 74,
+      "lim": 0,
+      "spec": 1,
+      "path": "/Users/haseeb/Desktop/WorkingDev/sne.space/serve/www/astrocats/astrocats/supernovae/output/sne-2025-2029/SN2026aagh.json"
+    },
+    {
+      "name": "SN2026aagj",
+      "det": 29,
+      "lim": 0,
+      "spec": 1,
+      "path": "/Users/haseeb/Desktop/WorkingDev/sne.space/serve/www/astrocats/astrocats/supernovae/output/sne-2025-2029/SN2026aagj.json"
+    },
+    {
+      "name": "SN2026aagm",
+      "det": 36,
+      "lim": 0,
+      "spec": 1,
+      "path": "/Users/haseeb/Desktop/WorkingDev/sne.space/serve/www/astrocats/astrocats/supernovae/output/sne-2025-2029/SN2026aagm.json"
+    },
+    {
+      "name": "SN2026aagp",
+      "det": 1,
+      "lim": 0,
+      "spec": 1,
+      "path": "/Users/haseeb/Desktop/WorkingDev/sne.space/serve/www/astrocats/astrocats/supernovae/output/sne-2025-2029/SN2026aagp.json"
+    },
+    {
+      "name": "SN2026aaiv",
+      "det": 1,
+      "lim": 0,
+      "spec": 4,
+      "path": "/Users/haseeb/Desktop/WorkingDev/sne.space/serve/www/astrocats/astrocats/supernovae/output/sne-2025-2029/SN2026aaiv.json"
+    }
+  ],
+  "stale_sample": [
+    {
+      "name": "SN2015F",
+      "store_phot": 852,
+      "json_det": 828,
+      "store_spec": 2,
+      "json_spec": 2,
+      "publish_revision": null,
+      "path": "/Users/haseeb/Desktop/WorkingDev/sne.space/serve/www/astrocats/astrocats/supernovae/output/sne-2015-2019/SN2015F.json"
+    },
+    {
+      "name": "SN2017glq",
+      "store_phot": 171,
+      "json_det": 118,
+      "store_spec": 1,
+      "json_spec": 1,
+      "publish_revision": null,
+      "path": "/Users/haseeb/Desktop/WorkingDev/sne.space/serve/www/astrocats/astrocats/supernovae/output/sne-2015-2019/SN2017glq.json"
+    },
+    {
+      "name": "SN2024nrb",
+      "store_phot": 1,
+      "json_det": 16,
+      "store_spec": 0,
+      "json_spec": 1,
+      "publish_revision": null,
+      "path": "/Users/haseeb/Desktop/WorkingDev/sne.space/serve/www/astrocats/astrocats/supernovae/output/sne-2020-2024/SN2024nrb.json"
+    },
+    {
+      "name": "AT2025aapj",
+      "store_phot": 14,
+      "json_det": 1,
+      "store_spec": 0,
+      "json_spec": 0,
+      "publish_revision": null,
+      "path": "/Users/haseeb/Desktop/WorkingDev/sne.space/serve/www/astrocats/astrocats/supernovae/output/sne-2025-2029/AT2025aapj.json"
+    },
+    {
+      "name": "AT2025aaxf",
+      "store_phot": 2,
+      "json_det": 1,
+      "store_spec": 0,
+      "json_spec": 0,
+      "publish_revision": null,
+      "path": "/Users/haseeb/Desktop/WorkingDev/sne.space/serve/www/astrocats/astrocats/supernovae/output/sne-2025-2029/AT2025aaxf.json"
+    },
+    {
+      "name": "AT2025abdh",
+      "store_phot": 29,
+      "json_det": 1,
+      "store_spec": 0,
+      "json_spec": 0,
+      "publish_revision": null,
+      "path": "/Users/haseeb/Desktop/WorkingDev/sne.space/serve/www/astrocats/astrocats/supernovae/output/sne-2025-2029/AT2025abdh.json"
+    },
+    {
+      "name": "AT2025acsd",
+      "store_phot": 90,
+      "json_det": 1,
+      "store_spec": 0,
+      "json_spec": 0,
+      "publish_revision": null,
+      "path": "/Users/haseeb/Desktop/WorkingDev/sne.space/serve/www/astrocats/astrocats/supernovae/output/sne-2025-2029/AT2025acsd.json"
+    },
+    {
+      "name": "AT2025acse",
+      "store_phot": 20,
+      "json_det": 1,
+      "store_spec": 0,
+      "json_spec": 0,
+      "publish_revision": null,
+      "path": "/Users/haseeb/Desktop/WorkingDev/sne.space/serve/www/astrocats/astrocats/supernovae/output/sne-2025-2029/AT2025acse.json"
+    },
+    {
+      "name": "AT2025acvr",
+      "store_phot": 17,
+      "json_det": 1,
+      "store_spec": 0,
+      "json_spec": 0,
+      "publish_revision": null,
+      "path": "/Users/haseeb/Desktop/WorkingDev/sne.space/serve/www/astrocats/astrocats/supernovae/output/sne-2025-2029/AT2025acvr.json"
+    },
+    {
+      "name": "AT2025aesw",
+      "store_phot": 11,
+      "json_det": 1,
+      "store_spec": 0,
+      "json_spec": 0,
+      "publish_revision": null,
+      "path": "/Users/haseeb/Desktop/WorkingDev/sne.space/serve/www/astrocats/astrocats/supernovae/output/sne-2025-2029/AT2025aesw.json"
+    },
+    {
+      "name": "AT2025afsj",
+      "store_phot": 47,
+      "json_det": 1,
+      "store_spec": 0,
+      "json_spec": 0,
+      "publish_revision": null,
+      "path": "/Users/haseeb/Desktop/WorkingDev/sne.space/serve/www/astrocats/astrocats/supernovae/output/sne-2025-2029/AT2025afsj.json"
+    },
+    {
+      "name": "AT2025agcy",
+      "store_phot": 70,
+      "json_det": 1,
+      "store_spec": 0,
+      "json_spec": 0,
+      "publish_revision": null,
+      "path": "/Users/haseeb/Desktop/WorkingDev/sne.space/serve/www/astrocats/astrocats/supernovae/output/sne-2025-2029/AT2025agcy.json"
+    },
+    {
+      "name": "AT2025agmm",
+      "store_phot": 11,
+      "json_det": 1,
+      "store_spec": 0,
+      "json_spec": 0,
+      "publish_revision": null,
+      "path": "/Users/haseeb/Desktop/WorkingDev/sne.space/serve/www/astrocats/astrocats/supernovae/output/sne-2025-2029/AT2025agmm.json"
+    },
+    {
+      "name": "AT2025agwf",
+      "store_phot": 12,
+      "json_det": 1,
+      "store_spec": 0,
+      "json_spec": 0,
+      "publish_revision": null,
+      "path": "/Users/haseeb/Desktop/WorkingDev/sne.space/serve/www/astrocats/astrocats/supernovae/output/sne-2025-2029/AT2025agwf.json"
+    },
+    {
+      "name": "AT2025ahch",
+      "store_phot": 9,
+      "json_det": 1,
+      "store_spec": 0,
+      "json_spec": 0,
+      "publish_revision": null,
+      "path": "/Users/haseeb/Desktop/WorkingDev/sne.space/serve/www/astrocats/astrocats/supernovae/output/sne-2025-2029/AT2025ahch.json"
+    },
+    {
+      "name": "AT2025ahjt",
+      "store_phot": 10,
+      "json_det": 1,
+      "store_spec": 0,
+      "json_spec": 0,
+      "publish_revision": null,
+      "path": "/Users/haseeb/Desktop/WorkingDev/sne.space/serve/www/astrocats/astrocats/supernovae/output/sne-2025-2029/AT2025ahjt.json"
+    },
+    {
+      "name": "AT2025ahzx",
+      "store_phot": 5,
+      "json_det": 1,
+      "store_spec": 0,
+      "json_spec": 0,
+      "publish_revision": null,
+      "path": "/Users/haseeb/Desktop/WorkingDev/sne.space/serve/www/astrocats/astrocats/supernovae/output/sne-2025-2029/AT2025ahzx.json"
+    },
+    {
+      "name": "AT2025aiv",
+      "store_phot": 33,
+      "json_det": 1,
+      "store_spec": 0,
+      "json_spec": 0,
+      "publish_revision": null,
+      "path": "/Users/haseeb/Desktop/WorkingDev/sne.space/serve/www/astrocats/astrocats/supernovae/output/sne-2025-2029/AT2025aiv.json"
+    },
+    {
+      "name": "AT2025ajvk",
+      "store_phot": 74,
+      "json_det": 1,
+      "store_spec": 0,
+      "json_spec": 0,
+      "publish_revision": null,
+      "path": "/Users/haseeb/Desktop/WorkingDev/sne.space/serve/www/astrocats/astrocats/supernovae/output/sne-2025-2029/AT2025ajvk.json"
+    },
+    {
+      "name": "AT2025atx",
+      "store_phot": 3,
+      "json_det": 1,
+      "store_spec": 0,
+      "json_spec": 0,
+      "publish_revision": null,
+      "path": "/Users/haseeb/Desktop/WorkingDev/sne.space/serve/www/astrocats/astrocats/supernovae/output/sne-2025-2029/AT2025atx.json"
+    },
+    {
+      "name": "AT2025axj",
+      "store_phot": 201,
+      "json_det": 1,
+      "store_spec": 0,
+      "json_spec": 0,
+      "publish_revision": null,
+      "path": "/Users/haseeb/Desktop/WorkingDev/sne.space/serve/www/astrocats/astrocats/supernovae/output/sne-2025-2029/AT2025axj.json"
+    },
+    {
+      "name": "AT2025cfq",
+      "store_phot": 39,
+      "json_det": 1,
+      "store_spec": 0,
+      "json_spec": 0,
+      "publish_revision": null,
+      "path": "/Users/haseeb/Desktop/WorkingDev/sne.space/serve/www/astrocats/astrocats/supernovae/output/sne-2025-2029/AT2025cfq.json"
+    },
+    {
+      "name": "AT2025cly",
+      "store_phot": 5,
+      "json_det": 1,
+      "store_spec": 0,
+      "json_spec": 0,
+      "publish_revision": null,
+      "path": "/Users/haseeb/Desktop/WorkingDev/sne.space/serve/www/astrocats/astrocats/supernovae/output/sne-2025-2029/AT2025cly.json"
+    },
+    {
+      "name": "AT2025cwe",
+      "store_phot": 27,
+      "json_det": 1,
+      "store_spec": 0,
+      "json_spec": 0,
+      "publish_revision": null,
+      "path": "/Users/haseeb/Desktop/WorkingDev/sne.space/serve/www/astrocats/astrocats/supernovae/output/sne-2025-2029/AT2025cwe.json"
+    },
+    {
+      "name": "AT2025dda",
+      "store_phot": 134,
+      "json_det": 1,
+      "store_spec": 0,
+      "json_spec": 0,
+      "publish_revision": null,
+      "path": "/Users/haseeb/Desktop/WorkingDev/sne.space/serve/www/astrocats/astrocats/supernovae/output/sne-2025-2029/AT2025dda.json"
+    }
+  ],
+  "unreadable_sample": []
+}

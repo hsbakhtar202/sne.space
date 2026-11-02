@@ -475,11 +475,15 @@ def _pull_recent_body(days: int = 40) -> int:
             with event_file_lock(out_path):
                 atomic_write_json(out_path, event)
             published_paths.append(out_path)
+            # Durable: successful enrichment write must schedule publication.
+            # mark_ingested registers pending so recover_pending() replays it even
+            # if the process dies before _auto_publish_paths runs, and even after
+            # the event ages out of the TNS recent window.
             try:
                 from ingest.publication import mark_ingested
                 mark_ingested(cname, out_path)
-            except Exception:
-                pass
+            except Exception as exc:  # noqa: BLE001
+                print(f"[Publish] mark_ingested failed for {cname}: {exc}", flush=True)
             card = by_name.get(cname_raw)
             if card is not None and event is not None:
                 _card_fill_from_body(card, event.get(cname, {}))

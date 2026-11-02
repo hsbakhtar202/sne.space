@@ -1,0 +1,16 @@
+{
+  "drawn_at_utc": "2026-11-02T03:59:10.312953+00:00",
+  "root": "/Users/haseeb/Desktop/WorkingDev/sne.space/serve/www/astrocats/astrocats/supernovae/output",
+  "db": "/Users/haseeb/Desktop/WorkingDev/sne.space/serve/www/astrocats/astrocats/supernovae/output/.index/catalog.db",
+  "store_total_events": 110534,
+  "scanned_event_files": 1,
+  "ok": 1,
+  "missing_in_store": 0,
+  "stale_counts": 0,
+  "unreadable_files": 0,
+  "apply": false,
+  "live_data_untouched": true,
+  "missing_sample": [],
+  "stale_sample": [],
+  "unreadable_sample": []
+}

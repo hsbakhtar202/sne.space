@@ -1,0 +1,52 @@
+{
+  "event_json": {
+    "http": 200,
+    "bytes": 2847,
+    "phot_array": 2,
+    "detections": 1,
+    "limits": 1,
+    "mtime_hdr": null,
+    "etag": null,
+    "det_times": [
+      "61338.41260"
+    ],
+    "lim_times": [
+      "61334.25944"
+    ]
+  },
+  "api": {
+    "http": 200,
+    "total": 0,
+    "row": null,
+    "phot": null,
+    "publish_revision": null,
+    "has_publish_revision_field": null
+  },
+  "api_headers": {
+    "http": 200,
+    "server": "SimpleHTTP/0.6 Python/3.11.18",
+    "via": null,
+    "x_rev": null,
+    "cache": "public, max-age=30",
+    "cf": null,
+    "age": null
+  },
+  "homepage": {
+    "http": 200,
+    "server": "SimpleHTTP/0.6 Python/3.11.18",
+    "via": null,
+    "x_rev": null,
+    "cache": "public, max-age=60",
+    "cf": null,
+    "age": null
+  },
+  "healthz": {
+    "http": 200,
+    "server": "SimpleHTTP/0.6 Python/3.11.18",
+    "via": null,
+    "x_rev": null,
+    "cache": "no-store",
+    "cf": null,
+    "age": null
+  }
+}
