@@ -1,0 +1,30 @@
+name,idx_phot,idx_spec,json_http,json_det,json_lim,json_spec,api_total,api_phot,api_rev,first_failing_stage,outcome
+AT2026agub,0,0,200,1,1,0,1,1,1793593542.0,none,complete
+SN1993J,1838,100,200,1838,0,100,1,1838,,none,complete
+SN1987A,3332,36,200,3332,0,36,1,3332,,none,complete
+SN2014J,1482,133,200,1482,42,133,1,1482,,none,complete
+SN2011fe,3371,158,200,3371,105,158,1,3371,,none,complete
+SN1998bw,527,30,200,527,0,30,1,527,,none,complete
+SN2023ixf,110,5,200,110,0,5,1,110,,none,complete
+SN2013dy,2275,117,200,0,0,0,1,2275,,none,complete
+SN2010jl,964,49,200,0,0,0,1,964,,none,complete
+SN2009ip,1581,240,200,0,0,0,1,1581,,none,complete
+SN2002bo,773,64,200,0,0,0,1,773,,none,complete
+SN2006gy,69,19,200,0,0,0,1,69,,none,complete
+SDSS-II SN 6282,15,0,200,0,0,0,1,15,,none,complete
+SDSS-II SN 18593,51,0,200,0,0,0,1,51,,none,complete
+SN2003gn,78,3,200,0,0,0,1,78,,none,complete
+CSS111118:074033+240900,5,0,200,0,0,0,1,5,,publication(stale),defective_stale_counts
+CSS121113:091919+171410,26,0,200,0,0,0,1,26,,publication(stale),defective_stale_counts
+CSS130315:131135-042408,0,0,200,0,0,0,1,0,,publication(stale),defective_stale_counts
+CSS130515:144134-202021,12,0,200,0,0,0,1,12,,publication(stale),defective_stale_counts
+CSS130912:025702-001844,181,0,200,0,0,0,1,181,,publication(stale),defective_stale_counts
+CSS130925:010249-004431,125,0,200,0,0,0,1,125,,publication(stale),defective_stale_counts
+AT2021aak,8,3,200,0,0,0,26,1,,serving/index,defective_count_divergence
+AT2021gzn,4,0,200,0,0,0,1,1,,serving/index,defective_count_divergence
+AT2021lgi,8,0,200,0,0,0,1,1,,serving/index,defective_count_divergence
+AT2021lyb,7,0,200,0,0,0,1,1,,serving/index,defective_count_divergence
+AT2021xap,20,0,200,0,0,0,1,1,,serving/index,defective_count_divergence
+AT2021zzl,5,0,200,0,0,0,1,1,,serving/index,defective_count_divergence
+SN2021uhn,9,1,200,0,0,0,1,1,,serving/index,defective_count_divergence
+SN2021wrr,72,1,200,0,0,0,1,1,,serving/index,defective_count_divergence
