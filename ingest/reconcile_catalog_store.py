@@ -82,12 +82,84 @@ def _store_row(conn: sqlite3.Connection, name: str) -> Optional[dict[str, Any]]:
     }
 
 
+def _classify_reduction(det: int, lim: int, spec: int, row: dict[str, Any], path: Path) -> str:
+    """Categorise a json_poorer (store claims MORE than the local file) mismatch.
+
+    Categories drive a remediation path; none are auto-applied and none count as
+    reconciled. Best-effort ordering from most to least common cause.
+    """
+    store_phot = int(row.get("phot") or 0)
+    store_spec = int(row.get("spec") or 0)
+    # Local file holds nothing usable at all -> the local archive copy is missing/thin.
+    if det == 0 and lim == 0 and spec == 0:
+        return "missing_local_archive"
+    # Some observations exist locally but far fewer than the index claims ->
+    # enrichment has not yet pulled the full upstream record.
+    if (store_phot - det) >= 5 or (store_spec - spec) >= 1:
+        return "incomplete_enrichment"
+    # Small deltas are usually genuine source corrections (revised/deduplicated).
+    return "source_correction"
+
+
+_RESOLUTION = {
+    "missing_local_archive": "restore the event JSON from the authoritative archive, then re-run reconcile",
+    "incomplete_enrichment": "enqueue for enrichment (durable queue) to pull remaining upstream observations",
+    "source_correction": "review upstream; if the index is stale, apply the reduction via publication",
+}
+
+
+def _resolution_for(category: str) -> str:
+    return _RESOLUTION.get(category, "manual review")
+
+
+def _record_discrepancy(db_path: Path, entry: dict[str, Any]) -> None:
+    """Persist a held json_poorer mismatch to a resolution queue (writable conn)."""
+    try:
+        conn = sqlite3.connect(str(db_path), timeout=30.0)
+    except Exception:
+        return
+    try:
+        conn.execute(
+            "CREATE TABLE IF NOT EXISTS reconciliation_discrepancies ("
+            " name TEXT PRIMARY KEY, category TEXT, store_phot INTEGER, json_det INTEGER,"
+            " store_spec INTEGER, json_spec INTEGER, resolution TEXT, status TEXT DEFAULT 'open',"
+            " first_seen REAL, last_seen REAL)"
+        )
+        now = time.time()
+        conn.execute(
+            "INSERT INTO reconciliation_discrepancies"
+            " (name, category, store_phot, json_det, store_spec, json_spec, resolution, status, first_seen, last_seen)"
+            " VALUES(?,?,?,?,?,?,?, 'open', ?, ?)"
+            " ON CONFLICT(name) DO UPDATE SET category=excluded.category,"
+            "  store_phot=excluded.store_phot, json_det=excluded.json_det,"
+            "  store_spec=excluded.store_spec, json_spec=excluded.json_spec,"
+            "  resolution=excluded.resolution, last_seen=excluded.last_seen",
+            (
+                entry["name"], entry["category"], entry["store_phot"], entry["json_det"],
+                entry["store_spec"], entry["json_spec"], entry["resolution"], now, now,
+            ),
+        )
+        conn.commit()
+    except Exception:
+        pass
+    finally:
+        conn.close()
+
+
 def iter_event_files(root: Path, epochs: Iterable[str]) -> Iterable[Path]:
     for ep in epochs:
         d = root / ep
         if not d.is_dir():
             continue
         yield from sorted(d.glob("*.json"))
+
+
+def _count_by(rows: list[dict], key: str) -> dict[str, int]:
+    out: dict[str, int] = {}
+    for r in rows:
+        k = r.get(key) or "uncategorized"
+        out[k] = out.get(k, 0) + 1
+    return out
 
 
 def reconcile(
@@ -118,6 +190,7 @@ def reconcile(
 
         missing: list[dict] = []
         stale: list[dict] = []
+        held_reduction: list[dict] = []
         ok = 0
         unreadable: list[str] = []
         publish_paths: list[Path] = []
@@ -143,20 +216,33 @@ def reconcile(
                 )
                 publish_paths.append(path)
                 continue
-            # stale: store phot/spec disagree with JSON arrays
+            # stale: store phot/spec disagree with JSON arrays.
+            # SAFETY: distinguish direction. json>store means the local file is
+            # richer (safe to upsert). json<store means the inherited index claims
+            # MORE than the local file holds — a count *reduction* that must not be
+            # applied blindly (could destroy valid historical index claims).
             if int(row["phot"] or 0) != want_phot or int(row["spec"] or 0) != spec:
-                stale.append(
-                    {
-                        "name": name,
-                        "store_phot": row["phot"],
-                        "json_det": det,
-                        "store_spec": row["spec"],
-                        "json_spec": spec,
-                        "publish_revision": row["publish_revision"],
-                        "path": str(path),
-                    }
-                )
-                publish_paths.append(path)
+                richer = (want_phot > int(row["phot"] or 0)) or (spec > int(row["spec"] or 0))
+                entry = {
+                    "name": name,
+                    "store_phot": row["phot"],
+                    "json_det": det,
+                    "store_spec": row["spec"],
+                    "json_spec": spec,
+                    "publish_revision": row["publish_revision"],
+                    "path": str(path),
+                    "direction": "json_richer" if richer else "json_poorer",
+                }
+                stale.append(entry)
+                if richer:
+                    publish_paths.append(path)  # safe: local file has more data
+                else:
+                    # Classify the downward discrepancy and queue it for resolution.
+                    # Never auto-applied, never counted as reconciled.
+                    entry["category"] = _classify_reduction(det, lim, spec, row, path)
+                    entry["resolution"] = _resolution_for(entry["category"])
+                    held_reduction.append(entry)
+                    _record_discrepancy(db_path, entry)
                 continue
             ok += 1
     finally:
@@ -171,12 +257,20 @@ def reconcile(
         "ok": ok,
         "missing_in_store": len(missing),
         "stale_counts": len(stale),
+        "stale_json_richer": sum(1 for s in stale if s.get("direction") == "json_richer"),
+        "stale_json_poorer_held": len(held_reduction),
+        "held_by_category": _count_by(held_reduction, "category"),
+        "unresolved_discrepancies": len(held_reduction),
         "unreadable_files": len(unreadable),
         "apply": apply,
         "live_data_untouched": not apply,
         "missing_sample": missing[:25],
         "stale_sample": stale[:25],
+        "held_reduction_sample": held_reduction[:25],
         "unreadable_sample": unreadable[:25],
+        "note": "json_poorer reductions are HELD as UNRESOLVED discrepancies (queued to "
+                "reconciliation_discrepancies with category + remediation path) — never "
+                "auto-applied and never counted as reconciled.",
     }
 
     if apply and publish_paths:

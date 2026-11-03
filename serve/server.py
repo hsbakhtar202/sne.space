@@ -643,16 +643,51 @@ def _runtime_dir() -> Path:
     return runtime_write_path("recent-events.json").parent
 
 
+def _write_authoritative_catalog_stats() -> Path:
+    """Persist the authoritative catalog snapshot (total + revision) to the runtime
+    dir so the PHP homepage renders the SAME number /api/transients serves. Returns
+    the path written. Counting semantics: total = number of catalog events (rows)
+    in the published CatalogStore at the current publish_revision."""
+    total = 0
+    revision = 0
+    try:
+        revision = int(_CATALOG.max_publish_revision() or 0)
+    except Exception:
+        pass
+    try:
+        store = _get_catalog_store(rebuild_if_stale=False)
+        if store is not None:
+            ev = store.stats().get("events")
+            total = int(ev) if ev is not None else 0
+    except Exception:
+        total = 0
+    payload = {
+        "total": total,
+        "publish_revision": revision,
+        "updated_at": round(time.time(), 3),
+        "source": "catalog_store",
+        "semantics": "event rows in published CatalogStore at publish_revision",
+    }
+    try:
+        p = _runtime_dir() / "catalog-stats.json"
+        p.write_text(json.dumps(payload), encoding="utf-8")
+        return p
+    except Exception:
+        return WWW / "assets" / "catalog-stats.json"  # may not exist; PHP guards
+
+
 def _homepage_inputs() -> tuple[Path, ...]:
     """Files whose mtime+size version the cached homepage.
 
     Resolved per call rather than at import so a runtime directory that appears
     later (volume mounted after start) is picked up without a restart.
     """
+    stats = _write_authoritative_catalog_stats()
     return (
         WWW / "index.php",
         _runtime_asset("recent-catalog.min.json"),
         _runtime_asset("recent-events.json"),
+        stats,
     )
 
 
@@ -2117,11 +2152,55 @@ class _EnrichmentQueue:
                 self._wake.notify_all()
 
 
-_ENRICH_QUEUE = _EnrichmentQueue()
+# Durable SQLite-backed enrichment queue (survives restart, dedupes, retries with
+# backoff). In-memory fallback is permitted ONLY under an explicit development/test
+# setting; in production a missing durable backend must fail enrichment readiness,
+# not silently lose jobs on restart.
+def _env_truthy(name: str) -> bool:
+    return (os.environ.get(name) or "").strip().lower() in {"1", "true", "yes", "on"}
+
+
+_ENRICH_READY = True
+_ENRICH_ERROR = ""
+_ENRICH_BACKEND = "durable-sqlite"
+try:
+    from ingest.durable_enrich_queue import get_queue as _get_durable_queue
+
+    _ENRICH_QUEUE = _get_durable_queue()
+    # Probe that the backing store is actually writable (a read-only runtime dir
+    # surfaces here, not after jobs have been "accepted" into memory).
+    _ENRICH_QUEUE._conn.execute("SELECT 1 FROM enrich_jobs LIMIT 1")
+    if _env_truthy("SNE_ALLOW_INMEMORY_ENRICH"):
+        print("[EnrichQueue] WARNING: SNE_ALLOW_INMEMORY_ENRICH set but durable backend is healthy", flush=True)
+except Exception as _eq_exc:  # noqa: BLE001
+    if _env_truthy("SNE_ALLOW_INMEMORY_ENRICH"):
+        print(f"[EnrichQueue] DEV/TEST in-memory fallback ({_eq_exc})", flush=True)
+        _ENRICH_QUEUE = _EnrichmentQueue()
+        _ENRICH_BACKEND = "in-memory-dev"
+    else:
+        _ENRICH_QUEUE = None
+        _ENRICH_READY = False
+        _ENRICH_ERROR = str(_eq_exc)
+        print(f"[EnrichQueue] CRITICAL: durable enrichment unavailable: {_eq_exc}", flush=True)
+
+
+def enrich_subsystem_health() -> dict:
+    """Readiness for the durable enrichment subsystem. Exposed in health checks."""
+    return {
+        "ready": _ENRICH_READY,
+        "backend": _ENRICH_BACKEND,
+        "error": _ENRICH_ERROR or None,
+    }
 
 
 def _request_enrichment(name: str, need_lightcurve: bool = True, need_spectra: bool = True) -> bool:
-    """Non-blocking enrichment request used by HTTP handlers."""
+    """Non-blocking enrichment request. Refuses when durable storage is unavailable.
+
+    Returns False so the caller (and any readiness probe) sees the failure rather
+    than believing the job was durably accepted.
+    """
+    if not _ENRICH_READY or _ENRICH_QUEUE is None:
+        return False
     return _ENRICH_QUEUE.enqueue(name, need_lightcurve, need_spectra)
 
 
@@ -2140,6 +2219,40 @@ def _load_event_meta(path: Path | None, name: str) -> dict:
         return inner if isinstance(inner, dict) else {}
     inner = raw.get(name)
     return inner if isinstance(inner, dict) else raw
+
+
+def _authoritative_catalog_stats() -> dict:
+    """Single authoritative snapshot of catalog statistics from CatalogStore.
+
+    Homepage totals, /api/transients totals, and pagination should all derive from
+    this same revision snapshot so they never disagree. Reports the publish
+    revision and an update timestamp for cache freshness.
+    """
+    import time as _t
+
+    now = _t.time()
+    revision = 0
+    db_ok = False
+    try:
+        revision = int(_CATALOG.max_publish_revision() or 0)
+    except Exception:
+        pass
+    total = 0
+    try:
+        store = _get_catalog_store(rebuild_if_stale=False)
+        if store is not None:
+            db_ok = True
+            ev = store.stats().get("events")
+            total = int(ev) if ev is not None else 0
+    except Exception:
+        pass
+    return {
+        "authoritative_total": total if db_ok else None,
+        "publish_revision": revision,
+        "updated_at": round(now, 3),
+        "source": "catalog_store" if db_ok else "catalog_db_unavailable",
+        "semantics": "event rows in published CatalogStore at publish_revision",
+    }
 
 
 def _meta_is_useful(meta: dict) -> bool:
@@ -4514,6 +4627,10 @@ class Handler(SimpleHTTPRequestHandler):
             self._send(200, "application/json; charset=utf-8", json.dumps(resp, indent=2).encode("utf-8"))
             return
 
+        # Authoritative catalog statistics (single source for homepage + API totals).
+        if path in ("/api/catalog-stats", "/api/catalog/stats"):
+            _json_response(self, _authoritative_catalog_stats())
+            return
         # Native High-Performance Catalog Search & Filtering API: /api/transients, /api/catalog/search
         if path in ("/api/transients", "/api/transients/", "/api/catalog/search", "/api/catalog/filter"):
             engine = CatalogEngine.get_instance() if CatalogEngine is not None else None
@@ -5188,6 +5305,66 @@ def _recent_tns_loop() -> None:
         time.sleep(poll_s)
 
 
+def _aged_out_loop() -> None:
+    """Periodically re-enqueue aged-out events whose enrichment never completed.
+
+    Keeps events eligible for enrichment after they leave the TNS recent window.
+    Newest-first; only genuinely incomplete records are enqueued.
+    """
+    import time as _t
+
+    try:
+        interval = float(os.environ.get("SNE_AGED_OUT_INTERVAL", "3600"))
+    except ValueError:
+        interval = 3600.0
+    while True:
+        _t.sleep(max(60.0, interval))
+        try:
+            from ingest.aged_out_recovery import scan_and_enqueue
+
+            rep = scan_and_enqueue(queue=_ENRICH_QUEUE)
+            if rep.get("enqueued"):
+                print(f"[AgedOut] enqueued {rep['enqueued']} aged-out events", flush=True)
+        except Exception as exc:  # noqa: BLE001
+            print(f"[AgedOut] recovery pass failed: {exc}", flush=True)
+
+
+def _reconcile_loop() -> None:
+    """Bounded recurring reconciliation: committed event JSON vs CatalogStore.
+
+    Runs independently of the TNS recent window. Applies only *json_richer*
+    upserts (safe); json_poorer reductions are reported, never auto-applied.
+    """
+    import time as _t
+
+    try:
+        interval = float(os.environ.get("SNE_RECONCILE_INTERVAL", "21600"))  # 6h
+    except ValueError:
+        interval = 21600.0
+    # Let the store warm up first.
+    _t.sleep(120.0)
+    while True:
+        try:
+            from ingest.reconcile_catalog_store import reconcile
+            from serve import data_paths as _dp
+
+            root = _dp.resolve_output_dir()
+            db = root / ".index" / "catalog.db"
+            rep = reconcile(root=root, db_path=db, epochs=("sne-2025-2029", "sne-2020-2024"), apply=True)
+            missing = rep.get("missing_in_store", 0)
+            stale = rep.get("stale_counts", 0)
+            held = rep.get("stale_json_poorer_held", 0)
+            pub = (rep.get("publish") or {})
+            print(
+                f"[Reconcile] missing={missing} stale={stale} (applied richer) "
+                f"held_reductions={held} upserted={pub.get('upserted')}",
+                flush=True,
+            )
+        except Exception as exc:  # noqa: BLE001
+            print(f"[Reconcile] pass failed: {exc}", flush=True)
+        _t.sleep(max(600.0, interval))
+
+
 def _warm_catalog_store() -> None:
     """Build/refresh the SQLite catalog index and attach it to the engine.
 
@@ -5319,8 +5496,9 @@ def _health_payload() -> dict:
             "max_concurrent": _SNE_RENDER_MAX,
             "cache_hits_while_waiting": _RENDER_WAITS,
         },
-        "enrich_queue": _ENRICH_QUEUE.stats(),
-        "enrich_available": enrich_event is not None,
+        "enrich_queue": _ENRICH_QUEUE.stats() if _ENRICH_QUEUE is not None else {},
+        "enrich_subsystem": enrich_subsystem_health(),
+        "enrich_available": enrich_event is not None and _ENRICH_READY,
     }
 
 
@@ -5345,8 +5523,17 @@ def main():
     # Must be installed before any worker starts so background provider calls are
     # distinguishable from request-path calls in /api/internal/health.
     _install_outbound_counter()
-    _ENRICH_QUEUE.start()
+    if _ENRICH_READY and _ENRICH_QUEUE is not None:
+        # Durable queue workers take a worker count; in-memory dev fallback uses its own.
+        try:
+            _ENRICH_QUEUE.start(workers=max(1, int(os.environ.get("SNE_ENRICH_WORKERS", "2"))))
+        except TypeError:
+            _ENRICH_QUEUE.start()
+        threading.Thread(target=_aged_out_loop, name="aged-out-recovery", daemon=True).start()
+    else:
+        print(f"[EnrichQueue] enrichment DISABLED (not ready): {_ENRICH_ERROR}", flush=True)
     threading.Thread(target=_recent_tns_loop, name="tns-recent", daemon=True).start()
+    threading.Thread(target=_reconcile_loop, name="catalog-reconcile", daemon=True).start()
     httpd = ReusableThreadingServer((HOST, PORT), Handler)
     print(f"sne.space local server on http://{HOST}:{PORT}/", flush=True)
     httpd.serve_forever()
