@@ -98,9 +98,12 @@ def pick_fresh_event(base: str, token: str, fresh_days: float, explicit: str = "
         payload = json.loads(b.decode())
     except Exception as e:  # noqa: BLE001
         return {"name": None, "error": f"recent parse: {e}", "status": s}
-    items = payload.get("events") or payload.get("items") or payload.get("results") or []
     if isinstance(payload, list):
         items = payload
+    elif isinstance(payload, dict):
+        items = payload.get("events") or payload.get("items") or payload.get("results") or payload.get("data") or []
+    else:
+        items = []
     now = time.time()
     cutoff = now - fresh_days * 86400
     best = None
