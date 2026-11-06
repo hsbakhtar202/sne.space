@@ -1,11 +1,8 @@
 <?php
 /**
  * Plugin Name: Transient Table
- * Plugin URI: http://astrocrash.net
  * Description: DataTables implementation
  * Version: 1.0.0
- * Author: James Guillochon
- * Author URI: http://astrocrash.net
  * License: GPL2
  */
 
