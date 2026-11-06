@@ -1,4 +1,4 @@
-"""Open Supernova Catalog Model Context Protocol (MCP) Server.
+"""sne.space Model Context Protocol (MCP) Server.
 
 Provides tools for AI assistants (Claude, Cursor, LLM agents) to query
 110,000+ supernovae, light curves, spectra, cosmology, and sky observability.
@@ -43,7 +43,7 @@ except ImportError:
 # Initialize FastMCP app
 mcp = FastMCP(
     "sne-space-mcp",
-    instructions="Open Supernova Catalog (sne.space) - Query 110,000+ supernovae, photometry, and spectra",
+    instructions="sne.space (sne.space) - Query 110,000+ supernovae, photometry, and spectra",
 )
 
 

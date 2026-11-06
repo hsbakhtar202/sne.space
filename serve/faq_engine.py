@@ -1052,7 +1052,7 @@ def generate_supernova_faqs(
     if src_cnt > 0:
         cites_str = ", ".join(src_names[:4])
         lit_ans = (
-            f"{name} is documented across <strong>{src_cnt} scientific references and archival data sources</strong> in the Open Supernova Catalog. "
+            f"{name} is documented across <strong>{src_cnt} scientific references and archival data sources</strong> in the sne.space. "
             f"These include discovery circulars and research datasets from {cites_str}. "
             f"All raw photometry and spectroscopy points are cross-indexed to their original bibliographic records for peer-reviewed verification."
         )
@@ -1289,7 +1289,7 @@ def build_faq_html(faqs: List[Dict[str, str]], name: str) -> str:
             <span style="color:#38bdf8;">❓</span> Frequently Asked Questions About {name}
           </h3>
           <div style="font-size:0.82rem;color:var(--text-muted);">
-            Scientific &amp; observational Q&amp;As indexed from astronomical databases &amp; the Open Supernova Catalog
+            Scientific &amp; observational Q&amp;As indexed from astronomical databases &amp; the sne.space
           </div>
         </div>
         <div class="faq-expand-btns">
@@ -1325,7 +1325,7 @@ def build_faq_html(faqs: List[Dict[str, str]], name: str) -> str:
 
       <div style="margin-top:1.5rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;border-top:1px solid rgba(255,255,255,0.06);padding-top:1rem;">
         <span style="font-size:0.8rem;color:var(--text-muted);">
-          Data sourced from IAU TNS, ALeRCE, WISeREP, and the Open Supernova Catalog.
+          Data sourced from IAU TNS, ALeRCE, WISeREP, and the sne.space.
         </span>
         <a href="/faq" style="font-size:0.85rem;color:var(--accent);text-decoration:none;font-weight:600;">View All General Astrophysics FAQs &rarr;</a>
       </div>
@@ -1567,7 +1567,7 @@ def generate_story_article_html(
         <h2>The Scientific Surveillance Campaign</h2>
         <p>
           Following its discovery by {disc_who}, observatories worldwide swung their lenses toward {name}.
-          In the Open Supernova Catalog, {name} is documented across <strong>{p_cnt} photometric measurements</strong>
+          In the sne.space, {name} is documented across <strong>{p_cnt} photometric measurements</strong>
           {f"in passbands such as {bnds_str}" if photo_info["bands"] else ""} and <strong>{s_cnt} spectroscopic epochs</strong>.
           These multi-wavelength observations allow astrophysicists to model the expanding photosphere, measure shock velocities, and probe circumstellar interactions.
         </p>
@@ -1654,12 +1654,12 @@ def build_article_jsonld(
     "keywords": {keywords_json},
     "author": {{
       "@type": "Organization",
-      "name": "Open Supernova Catalog",
+      "name": "sne.space",
       "url": "https://sne.space"
     }},
     "publisher": {{
       "@type": "Organization",
-      "name": "Open Supernova Catalog",
+      "name": "sne.space",
       "url": "https://sne.space"
     }},
     "about": [

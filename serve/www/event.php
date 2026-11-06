@@ -62,7 +62,7 @@ function render_event_frame(string $name, ?string $entered = null): void {
         . '<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2422460022815514"'
         . ' crossorigin="anonymous"></script>'
         . '<meta charset="utf-8"><title>'
-        . htmlspecialchars($name) . ' — Open Supernova Catalog</title>'
+        . htmlspecialchars($name) . ' — sne.space</title>'
         . '<style>body{margin:0;background:#111}#warn{text-align:center;color:orange;padding:.5rem;background:#222}'
         . 'iframe{border:0;width:100%;min-height:100vh;display:block;background:#fff}</style></head><body>';
     if ($entered !== null) {

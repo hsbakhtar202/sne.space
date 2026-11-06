@@ -1,6 +1,6 @@
-# Open Supernova Catalog (sne.space) — Full Documentation for AI Agents & Systems
+# sne.space (sne.space) — Full Documentation for AI Agents & Systems
 
-> The Open Supernova Catalog (OSC) is an open-access astronomical repository of 110,222+ supernovae and explosive transients spanning more than a millennium of observational astronomy. This document serves as the comprehensive schema and API guide for autonomous agents, LLM tool integrations, and scientific workflows.
+> sne.space (OSC) is an open-access astronomical repository of 110,222+ supernovae and explosive transients spanning more than a millennium of observational astronomy. This document serves as the comprehensive schema and API guide for autonomous agents, LLM tool integrations, and scientific workflows.
 
 ## 1. URL Architecture & Routing
 

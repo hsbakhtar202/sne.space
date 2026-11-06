@@ -5,7 +5,7 @@
   "version": "1.0.0",
   "url": "https://sne.space/",
   "provider": {
-    "organization": "Open Supernova Catalog",
+    "organization": "sne.space",
     "url": "https://sne.space"
   },
   "capabilities": {

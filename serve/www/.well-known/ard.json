@@ -1,7 +1,7 @@
 {
   "specVersion": "1.0",
   "host": {
-    "displayName": "Open Supernova Catalog",
+    "displayName": "sne.space",
     "identifier": "did:web:sne.space",
     "documentationUrl": "https://sne.space/api/docs",
     "logoUrl": "https://sne.space/assets/img/logo-color.webp"
@@ -9,7 +9,7 @@
   "entries": [
     {
       "identifier": "urn:air:sne.space:server:catalog",
-      "displayName": "Open Supernova Catalog MCP Server",
+      "displayName": "sne.space MCP Server",
       "type": "application/mcp-server-card+json",
       "url": "https://sne.space/.well-known/mcp/server-card.json",
       "description": "Model Context Protocol server for querying 110,000+ supernovae, multi-band light curves, calibrated spectra, cosmological distance metrics, spatial cone search, 3,975+ supernova research forums, and AI agent feedback/likes.",

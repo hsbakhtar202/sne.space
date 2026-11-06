@@ -6,16 +6,16 @@ from typing import Dict, List, Tuple
 
 FAQ_CATEGORIES: List[Tuple[str, str, List[Dict[str, str]]]] = [
     (
-        "About the Open Supernova Catalog",
+        "About the sne.space",
         "Historical origins, modernization, and scientific mission.",
         [
             {
-                "q": "What is the Open Supernova Catalog (sne.space)?",
-                "a": "The Open Supernova Catalog is an open-access, community-curated astrophysical repository containing comprehensive data for over 110,222 supernovae and cosmic transients from 1000 AD to 2026+. It unifies multi-band optical, ultraviolet, and infrared light curves, calibrated spectra, host galaxy associations, cosmological distance parameters, and NASA ADS literature citations into a single standardized schema."
+                "q": "What is the sne.space (sne.space)?",
+                "a": "sne.space is an open-access, community-curated astrophysical repository containing comprehensive data for over 110,222 supernovae and cosmic transients from 1000 AD to 2026+. It unifies multi-band optical, ultraviolet, and infrared light curves, calibrated spectra, host galaxy associations, cosmological distance parameters, and NASA ADS literature citations into a single standardized schema."
             },
             {
                 "q": "Why was sne.space restored and modernized?",
-                "a": "The original Open Supernova Catalog went offline around 2021, scattering transient astronomy data across fragmented silos. We rebuilt sne.space from first principles into a high-performance, modern platform that combines deep historical records with real-time survey streams (TNS, ZTF, ATLAS), AI-native discovery tools (MCP and WebMCP), and a dual-experience architecture serving both professional astrophysicists and amateur stargazers."
+                "a": "The original sne.space went offline around 2021, scattering transient astronomy data across fragmented silos. We rebuilt sne.space from first principles into a high-performance, modern platform that combines deep historical records with real-time survey streams (TNS, ZTF, ATLAS), AI-native discovery tools (MCP and WebMCP), and a dual-experience architecture serving both professional astrophysicists and amateur stargazers."
             },
             {
                 "q": "How does sne.space differ from IAU TNS, WISeREP, and Alert Brokers?",
@@ -82,8 +82,8 @@ FAQ_CATEGORIES: List[Tuple[str, str, List[Dict[str, str]]]] = [
         "How to cite sne.space and original literature in research papers.",
         [
             {
-                "q": "How should I cite the Open Supernova Catalog in research papers?",
-                "a": "When using sne.space in academic publications, please cite Guillochon et al. (2017), 'An Open Supernova Catalog', The Astrophysical Journal Letters, 835(1), L64 (Bibcode: 2017ApJ...835L..64G). Every event page also provides a 'Copy BibTeX' button aggregating the primary discovery and data citations specific to that object."
+                "q": "How should I cite data from sne.space in research papers?",
+                "a": "sne.space is independently operated and aggregates publicly available transient data. Some historical records reference Guillochon et al. (2017), 'An Open Supernova Catalog', The Astrophysical Journal, 835(1), 64 (Bibcode: 2017ApJ...835L..64G) as the original source of that data; please cite the primary discovery and data sources shown on each event page. Citation of a source does not imply any affiliation with or endorsement of sne.space."
             }
         ]
     )
@@ -163,8 +163,8 @@ def render_faq_page() -> str:
        crossorigin="anonymous"></script>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Frequently Asked Questions — Open Supernova Catalog (sne.space)</title>
-  <meta name="description" content="Comprehensive astrophysics, API, AI agent (MCP/WebMCP), and observational astronomy FAQs for the Open Supernova Catalog (sne.space).">
+  <title>Frequently Asked Questions — sne.space (sne.space)</title>
+  <meta name="description" content="Comprehensive astrophysics, API, AI agent (MCP/WebMCP), and observational astronomy FAQs for the sne.space (sne.space).">
   <link rel="stylesheet" href="/assets/ia.css">
   <link rel="ai-catalog" href="/.well-known/ai-catalog.json" type="application/json">
   <link rel="ard" href="/.well-known/ard.json" type="application/json">
@@ -361,10 +361,10 @@ def render_faq_page() -> str:
 <body>
   <header class="cockpit-hdr">
     <div class="brand-group">
-      <a class="brand-title" href="/" title="sne.space — The Open Supernova Catalog">
+      <a class="brand-title" href="/" title="sne.space — sne.space">
         <img src="/assets/img/logo-color.webp" alt="sne.space" class="brand-logo-img">
       </a>
-      <span class="brand-badge">Open Supernova Catalog</span>
+      <span class="brand-badge">sne.space</span>
     </div>
     <form class="hdr-search-form" action="/" method="GET" 
           toolname="search_supernovae" 
@@ -527,7 +527,7 @@ def render_faq_page() -> str:
 
   <div class="faq-hero">
     <h1>Frequently Asked Questions</h1>
-    <p>Everything you need to know about the Open Supernova Catalog: astrophysical methodology, APIs, AI agents (MCP &amp; WebMCP), and observational tools.</p>
+    <p>Everything you need to know about the sne.space: astrophysical methodology, APIs, AI agents (MCP &amp; WebMCP), and observational tools.</p>
   </div>
 
   <main class="faq-container">

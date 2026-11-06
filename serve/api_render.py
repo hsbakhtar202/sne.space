@@ -20,8 +20,8 @@ def render_api_docs_page() -> str:
        crossorigin="anonymous"></script>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>API Documentation & Developer Protocols — Open Supernova Catalog (sne.space)</title>
-  <meta name="description" content="Official documentation for sne.space Open Supernova Catalog REST APIs, OACAPI endpoints, IVOA Cone Search, WebMCP, and FastMCP servers.">
+  <title>API Documentation & Developer Protocols — sne.space</title>
+  <meta name="description" content="Official documentation for the sne.space supernova & transient catalog REST APIs, OACAPI endpoints, IVOA Cone Search, WebMCP, and FastMCP servers.">
   <link rel="stylesheet" href="/assets/ia.css">
   <link rel="ai-catalog" href="/.well-known/ai-catalog.json" type="application/json">
   <link rel="ard" href="/.well-known/ard.json" type="application/json">
@@ -260,9 +260,9 @@ def render_api_docs_page() -> str:
 </head>
 <body>
   <header class="cockpit-hdr">
-    <a href="/" class="brand-link" title="sne.space — The Open Supernova Catalog">
+    <a href="/" class="brand-link" title="sne.space — Supernova & Transient Catalog">
       <img src="/assets/img/logo-color.webp" alt="sne.space" class="brand-logo-img">
-      <span class="brand-badge">Open Supernova Catalog</span>
+      <span class="brand-badge">sne.space</span>
     </a>
     <div class="nav-links">
       <a href="/">Catalog</a>

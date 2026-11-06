@@ -1721,15 +1721,15 @@ def render_pro_cockpit(
        crossorigin="anonymous"></script>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{name} — Open Supernova Catalog Cockpit</title>
-  <meta name="description" content="Supernova {name} ({claimedtype}): Multi-band light curves, spectra, cosmology, and deep host imaging from the Open Supernova Catalog.">
-  <meta property="og:title" content="{name} — Open Supernova Catalog Cockpit">
+  <title>{name} — sne.space Cockpit</title>
+  <meta name="description" content="Supernova {name} ({claimedtype}): Multi-band light curves, spectra, cosmology, and deep host imaging from the sne.space.">
+  <meta property="og:title" content="{name} — sne.space Cockpit">
   <meta property="og:description" content="Supernova {name} ({claimedtype}): Multi-band light curves, spectra, cosmology, and deep host imaging.">
   <meta property="og:image" content="https://sne.space/sne/{urllib.parse.quote(name)}/host.jpg">
   <meta property="og:url" content="https://sne.space/sne/{urllib.parse.quote(name)}/">
   <meta property="og:type" content="website">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="{name} ({claimedtype}) — Open Supernova Catalog">
+  <meta name="twitter:title" content="{name} ({claimedtype}) — sne.space">
   <meta name="twitter:description" content="Multi-band light curves, calibrated spectra, and deep optical host imaging from sne.space.">
   <meta name="twitter:image" content="https://sne.space/sne/{urllib.parse.quote(name)}/host.jpg">
   <link rel="stylesheet" href="/assets/ia.css">
@@ -1745,12 +1745,12 @@ def render_pro_cockpit(
     "@context": "https://schema.org",
     "@type": "Dataset",
     "name": "Supernova {name} Optical Photometry and Spectroscopy",
-    "description": "Multi-band light curves, calibrated spectra, and derived cosmological parameters for {name} ({claimedtype}) in the Open Supernova Catalog.",
+    "description": "Multi-band light curves, calibrated spectra, and derived cosmological parameters for {name} ({claimedtype}) in the sne.space.",
     "url": "https://sne.space/sne/{urllib.parse.quote(name)}/",
     "keywords": ["supernova", "{claimedtype}", "transient", "astrophysics", "light curve", "spectrum"],
     "creator": {{
       "@type": "Organization",
-      "name": "Open Supernova Catalog",
+      "name": "sne.space",
       "url": "https://sne.space"
     }}
   }}
@@ -2390,10 +2390,10 @@ def render_pro_cockpit(
 <body>
   <header class="cockpit-hdr">
     <div class="brand-group">
-      <a class="brand-title" href="/" title="sne.space — The Open Supernova Catalog">
+      <a class="brand-title" href="/" title="sne.space — sne.space">
         <img src="/assets/img/logo-color.webp" alt="sne.space" class="brand-logo-img">
       </a>
-      <span class="brand-badge">Open Supernova Catalog</span>
+      <span class="brand-badge">sne.space</span>
     </div>
     <input class="nav-toggle-input" type="checkbox" id="cockpit-nav">
     <label class="nav-toggle" for="cockpit-nav">Menu</label>
@@ -3511,7 +3511,7 @@ def render_pro_cockpit(
         alert('No photometry observations available to export.');
         return;
       }}
-      let csv = '# Open Supernova Catalog (sne.space)\\n# Transient: ' + EVENT_NAME + '\\n# Spectral Type: ' + CLAIMED_TYPE + '\\n# Redshift: ' + REDSHIFT + '\\n# Distance Modulus: ' + (DIST_MOD !== null ? DIST_MOD : 'N/A') + '\\n# Columns: Time_MJD,Apparent_Mag,Uncertainty,Band,Is_Upperlimit,Telescope,Source\\n';
+      let csv = '# sne.space (sne.space)\\n# Transient: ' + EVENT_NAME + '\\n# Spectral Type: ' + CLAIMED_TYPE + '\\n# Redshift: ' + REDSHIFT + '\\n# Distance Modulus: ' + (DIST_MOD !== null ? DIST_MOD : 'N/A') + '\\n# Columns: Time_MJD,Apparent_Mag,Uncertainty,Band,Is_Upperlimit,Telescope,Source\\n';
       csv += 'time_mjd,magnitude,e_magnitude,band,upperlimit,telescope,source\\n';
       PHOTO_DATA.forEach(p => {{
         csv += `${{p.time}},${{p.mag}},${{p.err !== null ? p.err : ''}},"${{p.band || ''}}",${{p.uplim ? 1 : 0}},"${{p.tel || ''}}","${{p.src || ''}}"\\n`;
@@ -3762,7 +3762,7 @@ def render_pro_cockpit(
         return;
       }}
       const s = SPEC_DATA[0];
-      let txt = '# Open Supernova Catalog (sne.space)\\n';
+      let txt = '# sne.space (sne.space)\\n';
       txt += '# Event: ' + EVENT_NAME + '\\n';
       txt += '# Spectral Type: ' + CLAIMED_TYPE + '\\n';
       txt += '# Redshift: ' + REDSHIFT + '\\n';
@@ -4563,7 +4563,7 @@ def render_story_mode(
     "url": "https://sne.space/sne/{urllib.parse.quote(name)}/story",
     "publisher": {{
       "@type": "Organization",
-      "name": "Open Supernova Catalog",
+      "name": "sne.space",
       "url": "https://sne.space"
     }}
   }}
@@ -5440,7 +5440,7 @@ def render_story_mode(
 
   <header class="cockpit-hdr">
     <div class="brand-group">
-      <a class="brand-title" href="/" title="sne.space — The Open Supernova Catalog">
+      <a class="brand-title" href="/" title="sne.space — sne.space">
         <img src="/assets/img/logo-color.webp" alt="sne.space" class="brand-logo-img">
       </a>
     </div>

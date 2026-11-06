@@ -356,7 +356,7 @@ def format_votable(hits: list[dict[str, Any]], ra: float, dec: float, sr: float)
 <VOTABLE version="1.4" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xmlns="http://www.ivoa.net/xml/VOTable/v1.4">
   <RESOURCE type="results">
-    <DESCRIPTION>Open Supernova Catalog (sne.space) IVOA Cone Search</DESCRIPTION>
+    <DESCRIPTION>sne.space (sne.space) IVOA Cone Search</DESCRIPTION>
     <INFO name="QUERY_STATUS" value="OK"/>
     <INFO name="POS" value="{ra:.6f},{dec:.6f}"/>
     <INFO name="SR" value="{sr:.6f}"/>

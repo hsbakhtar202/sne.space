@@ -517,7 +517,7 @@ def render_radar_page(obs_key: str = "keck", filter_mode: str = "active") -> str
 </head>
 <body>
   <header class="cockpit-hdr">
-    <a class="brand-title" href="/" title="sne.space — The Open Supernova Catalog" style="display:inline-flex;align-items:center;text-decoration:none;">
+    <a class="brand-title" href="/" title="sne.space — sne.space" style="display:inline-flex;align-items:center;text-decoration:none;">
       <img src="/assets/img/logo-color.webp" alt="sne.space" style="height:38px;width:auto;vertical-align:middle;filter:drop-shadow(0 0 10px rgba(56,189,248,0.4));">
     </a>
     <form class="hdr-search-form" action="/" method="GET" 

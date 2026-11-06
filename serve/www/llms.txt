@@ -1,6 +1,6 @@
-# Open Supernova Catalog (sne.space)
+# sne.space (sne.space)
 
-> The Open Supernova Catalog (OSC) is an open-access, community-curated repository containing data for over 110,222 supernovae and explosive cosmic transients from 1000 AD to 2026+. It provides multi-band optical, UV, and infrared light curves, calibrated spectra, host galaxy associations, NASA ADS literature provenance, and cosmological distance metrics.
+> sne.space (OSC) is an open-access, community-curated repository containing data for over 110,222 supernovae and explosive cosmic transients from 1000 AD to 2026+. It provides multi-band optical, UV, and infrared light curves, calibrated spectra, host galaxy associations, NASA ADS literature provenance, and cosmological distance metrics.
 
 ## Core Web Interfaces
 
@@ -9,7 +9,7 @@
 
 ## API & Structured Data Endpoints
 
-- [/sne/{name}.json](https://sne.space/sne/SN2011fe.json): Full Open Supernova Catalog JSON event schema containing complete metadata, photometry epochs, calibrated spectra data arrays, and source citations.
+- [/sne/{name}.json](https://sne.space/sne/SN2011fe.json): Full sne.space JSON event schema containing complete metadata, photometry epochs, calibrated spectra data arrays, and source citations.
 - [/sne/{name}.csv](https://sne.space/sne/SN2011fe.csv): Photometry CSV table including time (MJD), apparent magnitude, measurement uncertainty, photometric band, and telescope/instrument.
 - [/sne/{name}/host.jpg](https://sne.space/sne/SN2024nrb/host.jpg): Direct 302 redirect to high-resolution (0.262″/pixel) optical host galaxy cutout from DESI Legacy Survey DR10 or NASA SkyView DSS2 Color.
 - [/api/names.json](https://sne.space/api/names.json): Name resolution index mapping aliases, survey internal names (ZTF, ATLAS, Gaia, PS1), and IAU designations to canonical catalog identifiers.
@@ -17,7 +17,7 @@
 
 ## Model Context Protocol (MCP) & AI Agent Tools
 
-The Open Supernova Catalog hosts a native Model Context Protocol (MCP) server accessible via HTTP JSON-RPC 2.0 or local stdio:
+sne.space hosts a native Model Context Protocol (MCP) server accessible via HTTP JSON-RPC 2.0 or local stdio:
 
 - **Remote MCP Endpoint**: `https://sne.space/mcp` (POST with JSON-RPC 2.0: `tools/list`, `tools/call`, `initialize`)
 - **MCP Manifest**: [/.well-known/mcp.json](https://sne.space/.well-known/mcp.json) and [/mcp/manifest.json](https://sne.space/mcp/manifest.json)

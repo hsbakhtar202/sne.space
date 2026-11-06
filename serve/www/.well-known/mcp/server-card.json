@@ -2,7 +2,7 @@
   "$schema": "https://modelcontextprotocol.io/schemas/server-card.json",
   "name": "sne-space-mcp",
   "version": "1.0.0",
-  "description": "Open Supernova Catalog Model Context Protocol (MCP) server providing access to 110,000+ supernovae, photometry, and spectra.",
+  "description": "sne.space Model Context Protocol (MCP) server providing access to 110,000+ supernovae, photometry, and spectra.",
   "website": "https://sne.space",
   "transports": [
     {

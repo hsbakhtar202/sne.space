@@ -1,6 +1,6 @@
 <?php
 /**
- * Open Supernova Catalog — Modern Native Homepage.
+ * sne.space — Supernova & Transient Catalog homepage.
  * Fast, responsive, server-side rendered transient catalog with live API.
  */
 declare(strict_types=1);
@@ -76,8 +76,8 @@ function _fmt_field_val($field): string {
      crossorigin="anonymous"></script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Open Supernova Catalog — sne.space</title>
-<meta name="description" content="Comprehensive astrophysical archive containing multi-band light curves, calibrated spectra, and metadata for over 110,000 supernovae from 1000 AD to 2026+.">
+<title>sne.space — Supernova & Transient Catalog</title>
+<meta name="description" content="sne.space is an independently operated astrophysical archive containing multi-band light curves, calibrated spectra, and metadata for over 110,000 supernovae from 1000 AD to 2026+. Maintained by the sne.space project.">
 <link rel="ai-catalog" href="/.well-known/ai-catalog.json" type="application/json">
 <link rel="ard" href="/.well-known/ard.json" type="application/json">
 <link rel="webmcp-manifest" href="/.well-known/webmcp" type="application/json">
@@ -473,10 +473,10 @@ function _fmt_field_val($field): string {
 <body>
   <header class="global-nav">
     <div class="brand-group">
-      <a href="/" class="brand-title" title="sne.space — The Open Supernova Catalog">
+      <a href="/" class="brand-title" title="sne.space — Supernova & Transient Catalog">
         <img src="/assets/img/logo-color.webp" alt="sne.space" class="brand-logo-img" width="125" height="42" decoding="async">
       </a>
-      <span class="brand-pill">Open Supernova Catalog</span>
+      <span class="brand-pill">sne.space</span>
     </div>
     <form class="hdr-search-form" action="/" method="GET" 
           toolname="search_supernovae" 
@@ -649,7 +649,7 @@ function _fmt_field_val($field): string {
 
   <main>
     <section class="catalog-hero">
-      <h1 class="hero-headline">The Open Supernova Catalog</h1>
+      <h1 class="hero-headline">sne.space</h1>
       <p class="hero-subtext">A community-curated astronomical repository indexing <?php echo $CAT_TOTAL_LABEL; ?>+ explosive transients, multi-band optical light curves, and calibrated spectra from 1000 AD to 2026+.</p>
 
       <div class="stats-telemetry-row">
@@ -831,6 +831,9 @@ function _fmt_field_val($field): string {
       </div>
     </div>
   </main>
+  <footer class="site-footer" style="padding:1.2rem 1rem;text-align:center;font-size:0.85rem;color:#888;border-top:1px solid #e5e5e5;margin-top:2rem;">
+    <p><strong>sne.space</strong> is an independently operated supernova &amp; transient catalog, maintained by the sne.space project &mdash; <a href="mailto:hsbakhtar202@gmail.com">hsbakhtar202@gmail.com</a>. It is not affiliated with, endorsed by, or a continuation of any prior catalog or institution.</p>
+  </footer>
 <script src="/assets/catalog-table.js"></script>
 <script src="/assets/webmcp.js"></script>
 </body>

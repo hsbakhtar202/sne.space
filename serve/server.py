@@ -1333,7 +1333,7 @@ def _fallback_event_page(name: str, entered: str | None = None) -> bytes:
      crossorigin="anonymous"></script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>{name} — Open Supernova Catalog</title>
+<title>{name} — sne.space</title>
 <link rel="stylesheet" href="/assets/ia.css">
 <style>
   .warn {{ color: #b36b00; }}
@@ -1350,7 +1350,7 @@ def _fallback_event_page(name: str, entered: str | None = None) -> bytes:
   table.sub-table th {{ background: #f7f7f7; font-weight: 600; }}
 </style></head><body>
 <header class="site">
-  <a class="brand" href="/" title="sne.space — The Open Supernova Catalog"><img src="/assets/img/logo-plain.webp" alt="sne.space" class="brand-logo-ia"><span>Open Supernova Catalog</span></a>
+  <a class="brand" href="/" title="sne.space — Supernova & Transient Catalog"><img src="/assets/img/logo-plain.webp" alt="sne.space" class="brand-logo-ia"><span>sne.space</span></a>
   <nav><a href="/">Catalog</a><a href="/download/">Download</a></nav>
 </header>
 <main>
@@ -1411,7 +1411,7 @@ def _not_found_page(name: str) -> bytes:
 </head>
 <body>
   <header class="site">
-    <a href="/" title="sne.space — The Open Supernova Catalog"><img src="/assets/img/logo-color.webp" alt="sne.space" class="brand-logo-ia"></a>
+    <a href="/" title="sne.space — Supernova & Transient Catalog"><img src="/assets/img/logo-color.webp" alt="sne.space" class="brand-logo-ia"></a>
     <nav><a href="/">Catalog</a><a href="/radar">Radar</a><a href="/faq">FAQs</a><a href="/api/docs">API</a></nav>
   </header>
   <main class="nf-wrap">
@@ -4170,7 +4170,7 @@ class Handler(SimpleHTTPRequestHandler):
                     })
 
                 summary = {
-                    "service": "Open Supernova Catalog (sne.space)",
+                    "service": "sne.space Supernova & Transient Catalog",
                     "started_at": _API_STATS["started_at"],
                     "uptime_seconds": round(time.time() - _START_TIME, 1),
                     "total_requests": _API_STATS["total_requests"],

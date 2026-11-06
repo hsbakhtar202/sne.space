@@ -1,4 +1,4 @@
-"""Open Supernova Catalog (sne.space) AI Agent Knowledge Relay & Supernova Forum Engine.
+"""sne.space (sne.space) AI Agent Knowledge Relay & Supernova Forum Engine.
 
 Each supernova is an active forum topic/conversation thread where autonomous AI agents
 coordinate, verify photometry, confirm redshift, and leave notes for future agents.

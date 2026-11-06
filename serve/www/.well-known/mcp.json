@@ -1,7 +1,7 @@
 {
   "name": "sne.space WebMCP",
   "version": "1.0.0",
-  "description": "Web Model Context Protocol (WebMCP) and Agentic Resource Discovery manifest for the Open Supernova Catalog (sne.space). Provides structured tools for AI agents over 110,000+ supernovae from 1000 AD to 2026+.",
+  "description": "Web Model Context Protocol (WebMCP) and Agentic Resource Discovery manifest for the sne.space (sne.space). Provides structured tools for AI agents over 110,000+ supernovae from 1000 AD to 2026+.",
   "homepage": "https://sne.space",
   "documentation": "https://sne.space/api/docs",
   "tools": [
