@@ -469,13 +469,26 @@ def _pull_recent_body(days: int = 40) -> int:
                 card["redshift"] = str(hz[0]["value"])
 
     def _needs_enrich(cname_raw: str) -> bool:
-        """Re-enrich stubs: missing file, sparse photometry (<=1), or no spectra."""
+        """Re-enrich stubs: missing file, never attempted upstream, or stale (>6h) with sparse data."""
         hit = on_disk.get(cname_raw)
         if hit is None:
             return True
         _path, ex_data = hit
         key = next(iter(ex_data), cname_raw)
         body = ex_data.get(key, {}) if isinstance(ex_data, dict) else {}
+        pi = body.get("photometry_ingest") if isinstance(body.get("photometry_ingest"), dict) else {}
+        tns_st = (pi.get("tns") or {}).get("status") if isinstance(pi.get("tns"), dict) else None
+        al_st = (pi.get("alerce") or {}).get("status") if isinstance(pi.get("alerce"), dict) else None
+        attempted = (tns_st in ("ok", "empty")) or (al_st in ("ok", "empty"))
+        if not attempted:
+            return True
+        # Already queried upstream: do not re-fetch on every 15-min tick so the
+        # inline budget advances through the rest of the recent window.
+        try:
+            if (time.time() - _path.stat().st_mtime) < 6 * 3600:
+                return False
+        except OSError:
+            pass
         if _usable_photo_count(body) <= 1:
             return True
         if len(body.get("spectra") or []) == 0:

@@ -67,6 +67,7 @@ class DurableEnrichmentQueue:
         lease_seconds: float = 90.0,
         aged_share: float = 0.5,
         aging_seconds: float = 3600.0,
+        done_ttl_seconds: float = 21600.0,
     ) -> None:
         self.db = db or _db_path()
         self.max_attempts = max_attempts
@@ -75,6 +76,7 @@ class DurableEnrichmentQueue:
         self.backoff_cap = backoff_cap
         self.rate_limit_cooldown = rate_limit_cooldown
         self.lease_seconds = lease_seconds
+        self.done_ttl_seconds = done_ttl_seconds
         # Weighted fair scheduling: roughly ``aged_share`` of claims go to aged
         # backlog (priority=1), the rest to fresh work — so neither class starves
         # even under continuous arrivals on the other side.
@@ -139,7 +141,7 @@ class DurableEnrichmentQueue:
         now = time.time()
         with self._lock:
             row = self._conn.execute(
-                "SELECT status, enqueued_at FROM enrich_jobs WHERE name = ?", (name,)
+                "SELECT status, enqueued_at, updated_at FROM enrich_jobs WHERE name = ?", (name,)
             ).fetchone()
             if row is not None and row[0] in ("queued", "leased", "retry"):
                 # Escalate to priority if requested OR if the job has waited past
@@ -153,6 +155,10 @@ class DurableEnrichmentQueue:
                         )
                 self.deduped += 1
                 return False
+            if row is not None and row[0] in ("done", "failed"):
+                if (now - float(row[2] or 0.0)) < self.done_ttl_seconds:
+                    self.deduped += 1
+                    return False
             with self._conn:
                 self._conn.execute(
                     "INSERT INTO enrich_jobs(name, fetch_lc, fetch_spec, status, attempts, "

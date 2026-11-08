@@ -943,11 +943,9 @@ def _fetch_remote_event(name: str) -> tuple[str | None, Path | None]:
             if candidate.is_file():
                 return cand_name, candidate
 
-    # Nothing on disk. Only queue enrichment for current-era (2025+) events so
-    # historical lookups never flood the queue with tens of thousands of jobs.
-    if enrich_event is not None and year >= 2025:
-        _request_enrichment(clean, need_lightcurve=True, need_spectra=True)
-
+    # Do not queue enrichment from _fetch_remote_event: this helper is called by
+    # _find_event_file across search/MCP/sitemap lookups. Explicit event views
+    # (/sne/<name>, /api/<name>/enrich, /<name>.json) and pull_recent queue work.
     return None, None
 
 
