@@ -1,0 +1,125 @@
+{
+  "SN2026ahrz": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "SN2026ahrz",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/2026ahrz",
+        "alias": "1"
+      },
+      {
+        "name": "2026TNSTR4390....1O",
+        "bibcode": "2026TNSTR4390....1O",
+        "reference": "GOTO_bot",
+        "alias": "2"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "3"
+      }
+    ],
+    "alias": [
+      {
+        "value": "2026ahrz",
+        "source": "1"
+      },
+      {
+        "value": "GOTO26lra",
+        "source": "1"
+      },
+      {
+        "value": "AT2026ahrz",
+        "source": "1"
+      },
+      {
+        "value": "SN2026ahrz",
+        "source": "1"
+      },
+      {
+        "value": "SN 2026ahrz",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "01:19:16.954",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "-13:54:07.86",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "claimedtype": [
+      {
+        "value": "Ia",
+        "source": "1"
+      }
+    ],
+    "redshift": [
+      {
+        "value": "0.040715",
+        "kind": "spectroscopic",
+        "source": "1"
+      }
+    ],
+    "host": [
+      {
+        "value": "PGC931661",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "GOTO_bot",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2026/10/28",
+        "source": "1"
+      }
+    ],
+    "discoverymag": [
+      {
+        "value": "19.95",
+        "kind": "discovery",
+        "source": "2",
+        "band": "L-GOTO",
+        "time": "61341.46770",
+        "u_time": "MJD"
+      }
+    ],
+    "photometry": [],
+    "photometry_ingest": {
+      "alerce": {
+        "status": "unavailable"
+      },
+      "tns": {
+        "status": "unavailable",
+        "n_detections": 0,
+        "n_limits": 0,
+        "source": null,
+        "fetched_at": null,
+        "error": null
+      }
+    },
+    "maxappmag": [
+      {
+        "value": "19.95",
+        "kind": "discovery",
+        "source": "2"
+      }
+    ]
+  }
+}

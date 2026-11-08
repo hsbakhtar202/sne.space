@@ -35,7 +35,11 @@ except ImportError:  # running as a script with ingest/ on sys.path
     _sys.path.insert(0, str(ROOT))
     from serve.data_paths import runtime_write_path as _runtime_write_path
 
-RECENT_PATH = _runtime_write_path("recent-events.json")
+def _recent_events_path() -> Path:
+    return _runtime_write_path("recent-events.json")
+
+
+RECENT_PATH = _recent_events_path()
 
 
 PAGE_SIZE = 100
@@ -70,12 +74,20 @@ def _tns_search_base() -> str:
 
 def _fetch_page(url: str) -> list[dict[str, str]]:
     """Fetch one TNS search page, honouring 429 reset headers."""
+    from ingest.tns_spectra import TNS_USER_AGENT
+
     # Rewrite production TNS host when a fixture base is configured.
     fixture_base = os.environ.get("SNE_TNS_SEARCH_BASE", "").strip()
     if fixture_base and "wis-tns.org/search" in url:
         q = url.split("?", 1)[1] if "?" in url else ""
         url = fixture_base + (("?" + q) if q else "")
-    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 (sne.space Ingestion)"})
+    req = urllib.request.Request(
+        url,
+        headers={
+            "User-Agent": TNS_USER_AGENT,
+            "Accept": "text/csv,text/plain,application/xhtml+xml,*/*",
+        },
+    )
     for attempt in range(4):
         try:
             provider_quota.acquire("tns")
@@ -208,7 +220,7 @@ def _publish(written: list[dict]) -> None:
         return
     written.sort(key=lambda r: r["sort"], reverse=True)
     cards = [{k: v for k, v in row.items() if k != "sort"} for row in written[:8]]
-    _atomic_write_text(RECENT_PATH, json.dumps(cards, indent=2) + "\n")
+    _atomic_write_text(_recent_events_path(), json.dumps(cards, indent=2) + "\n")
     # Prefer catalog rows derived from on-disk event JSON so photolink includes
     # detections + limits and publish_revision is stamped. Fall back to the TNS
     # card only when no event file exists yet.
@@ -322,15 +334,63 @@ def _pull_recent_body(days: int = 40) -> int:
     except Exception as exc:  # noqa: BLE001
         print(f"[Publish] recover_pending skipped: {exc}", flush=True)
 
-    items = fetch_classified(days=days)
+    # Fast-path first page: fetch page 0 of classified + page 0 of recent discoveries
+    # and publish immediately so the homepage and CatalogStore update within seconds
+    # of boot, even if later pages encounter TNS rate-limit sleeps.
+    max_pages = max(1, int(os.environ.get("SNE_TNS_MAX_PAGES", "10")))
+    fast_classified = fetch_classified(days=days, max_pages=1)
+    try:
+        fast_discoveries = fetch_recent_discoveries(days=7, max_pages=1)
+    except Exception as exc:
+        print(f"[TNS Discovery] fast lane skipped: {exc}", flush=True)
+        fast_discoveries = []
+
+    def _rows_to_written(raw_items: list[dict[str, str]]) -> tuple[list[dict], list[tuple[str, dict, dict]]]:
+        w_out: list[dict] = []
+        p_out: list[tuple[str, dict, dict]] = []
+        for item in raw_items:
+            row = _row(item)
+            if row is None:
+                continue
+            cname_raw = f"{row.get('name_prefix', 'SN')}{row['name']}"
+            w_out.append({
+                "name": cname_raw,
+                "date": row["discoverydate"][:10],
+                "type": row.get("type") or "unclassified",
+                "discoverer": (row.get("reporters") or "")[:48],
+                "ra": item.get("RA", ""),
+                "dec": item.get("DEC", ""),
+                "discoverymag": (row.get("discoverymag") or "").strip(),
+                "maxappmag": "",
+                "spectra_count": 0,
+                "photo_count": 0,
+                "host": (row.get("host") or item.get("Host Name") or "").strip(),
+                "redshift": (row.get("redshift") or item.get("Redshift") or "").strip(),
+                "sort": row["discoverydate"],
+            })
+            p_out.append((cname_raw, row, item))
+        return w_out, p_out
+
+    fast_items = list(fast_classified)
+    fast_known = {(i.get("Name") or "").strip() for i in fast_items}
+    for d in fast_discoveries:
+        key = (d.get("Name") or "").strip()
+        if key and key not in fast_known:
+            fast_items.append(d)
+            fast_known.add(key)
+    fast_written, _ = _rows_to_written(fast_items)
+    if fast_written:
+        _publish(fast_written)
+
+    items = fetch_classified(days=days, max_pages=max_pages) if max_pages > 1 else fast_classified
 
     # Second lane: recent discoveries regardless of classification, so objects
     # found in the last few days are not invisible while waiting for a report.
     try:
-        discoveries = fetch_recent_discoveries(days=7)
+        discoveries = fetch_recent_discoveries(days=7, max_pages=min(5, max_pages)) if max_pages > 1 else fast_discoveries
     except Exception as exc:
         print(f"[TNS Discovery] lane skipped: {exc}", flush=True)
-        discoveries = []
+        discoveries = fast_discoveries
     known = {(i.get("Name") or "").strip() for i in items}
     for d in discoveries:
         key = (d.get("Name") or "").strip()
@@ -339,31 +399,7 @@ def _pull_recent_body(days: int = 40) -> int:
             known.add(key)
     print(f"[TNS Recent] {len(items)} rows total ({len(discoveries)} discovery lane)", flush=True)
 
-    written = []
-    pending = []
-    for item in items:
-        row = _row(item)
-        if row is None:
-            continue
-        cname_raw = f"{row.get('name_prefix', 'SN')}{row['name']}"
-        written.append({
-            "name": cname_raw,
-            "date": row["discoverydate"][:10],
-            # An unclassified transient must not render as a blank type; say so.
-            "type": row.get("type") or "unclassified",
-            "discoverer": (row.get("reporters") or "")[:48],
-            "ra": item.get("RA", ""),
-            "dec": item.get("DEC", ""),
-            "discoverymag": (row.get("discoverymag") or "").strip(),
-            "maxappmag": "",
-            "spectra_count": 0,
-            # Honest default: no persisted photometry until enrich writes points.
-            "photo_count": 0,
-            "host": (row.get("host") or item.get("Host Name") or "").strip(),
-            "redshift": (row.get("redshift") or item.get("Redshift") or "").strip(),
-            "sort": row["discoverydate"],
-        })
-        pending.append((cname_raw, row, item))
+    written, pending = _rows_to_written(items)
     _publish(written)
     if not written:
         return 0
@@ -447,13 +483,77 @@ def _pull_recent_body(days: int = 40) -> int:
         return False
 
     # Newest first so fresh discoveries are enriched before anything else.
+    # Include both the newest discoveries AND the newest classified supernovae in
+    # the inline batch so both lanes get immediate photometry/spectra enrichment.
     pending.sort(key=lambda p: p[1]["discoverydate"], reverse=True)
     todo = [p for p in pending if _needs_enrich(p[0])]
     skipped = len(pending) - len(todo)
-    print(f"[TNS Enrich] {len(todo)} need enrichment, {skipped} already enriched", flush=True)
+    max_inline = max(1, int(os.environ.get("SNE_PULL_RECENT_MAX_ENRICH", "15")))
+    inline_todo: list[tuple[str, dict, dict]] = []
+    inline_names: set[str] = set()
+    half = max(1, max_inline // 2)
+    for p in todo:
+        if len(inline_todo) >= half:
+            break
+        inline_todo.append(p)
+        inline_names.add(p[0])
+    for p in todo:
+        if len(inline_todo) >= max_inline:
+            break
+        if p[0] not in inline_names and (p[1].get("type") or "").strip():
+            inline_todo.append(p)
+            inline_names.add(p[0])
+    for p in todo:
+        if len(inline_todo) >= max_inline:
+            break
+        if p[0] not in inline_names:
+            inline_todo.append(p)
+            inline_names.add(p[0])
+    deferred_todo = [p for p in todo if p[0] not in inline_names]
+    print(
+        f"[TNS Enrich] {len(todo)} need enrichment "
+        f"(inline={len(inline_todo)}, deferred_queue={len(deferred_todo)}), {skipped} already enriched",
+        flush=True,
+    )
 
     published_paths: list[Path] = []
-    for cname_raw, row, item in todo:
+    # Materialise stub files for deferred items (purely local, 0 network calls) and
+    # enqueue them in the durable queue so they are searchable immediately and
+    # enriched asynchronously without holding recent_ingest_priority() for hours.
+    try:
+        from ingest.durable_enrich_queue import get_queue as _get_durable_q
+        _dq = _get_durable_q()
+    except Exception:
+        _dq = None
+    _no_net_phot = {"status": "unavailable", "rows": [], "n_detections": 0, "n_limits": 0}
+    for cname_raw, row, item in deferred_todo:
+        year = int(row["discoverydate"][:4]) if row["discoverydate"][:4].isdigit() else 2026
+        dest = get_target_repo_folder(year)
+        dest.mkdir(parents=True, exist_ok=True)
+        out_path = dest / f"{cname_raw}.json"
+        if not out_path.is_file():
+            try:
+                cname, stub_ev = build_event_dict(
+                    row,
+                    enrich_alerce=False,
+                    enrich_wiserep=False,
+                    enrich_tns_spectra=False,
+                    tns_photometry_result=_no_net_phot,
+                )
+                out_path = dest / f"{cname}.json"
+                from ingest.event_file_lock import event_file_lock
+                with event_file_lock(out_path):
+                    atomic_write_json(out_path, stub_ev)
+                published_paths.append(out_path)
+            except Exception:
+                pass
+        if _dq is not None:
+            try:
+                _dq.enqueue(cname_raw, fetch_lightcurve=True, fetch_spectra=True, priority=False)
+            except Exception:
+                pass
+
+    for cname_raw, row, item in inline_todo:
         year = int(row["discoverydate"][:4]) if row["discoverydate"][:4].isdigit() else 2026
         dest = get_target_repo_folder(year)
         dest.mkdir(parents=True, exist_ok=True)

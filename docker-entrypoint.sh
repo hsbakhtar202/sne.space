@@ -111,12 +111,23 @@ runtime_count=0
 for name in recent-events.json recent-catalog.min.json; do
     src="$BAKED_ASSETS/$name"
     dst="$RUNTIME_DIR/$name"
+    replace_stale=0
     if [ -f "$dst" ]; then
+        dst_size=$(wc -c < "$dst" | tr -d ' ')
+        if [ "$dst_size" -lt 500 ] || grep -q "NGC 123" "$dst" 2>/dev/null; then
+            echo "[entrypoint] replacing corrupted/stub runtime asset: $name (${dst_size} bytes)"
+            replace_stale=1
+        elif [ -f "$src" ] && [ "$src" -nt "$dst" ]; then
+            echo "[entrypoint] baked $name is newer than volume copy; refreshing"
+            replace_stale=1
+        fi
+    fi
+    if [ -f "$dst" ] && [ "$replace_stale" -eq 0 ]; then
         # Existing data is authoritative: it reflects real ingest, not a build snapshot.
         runtime_count=$((runtime_count + 1))
         echo "[entrypoint] runtime asset present, keeping: $name ($(wc -c < "$dst") bytes)"
     elif [ -f "$src" ]; then
-        # Seed once, atomically, so a crash mid-copy cannot leave a truncated file.
+        # Seed atomically so a crash mid-copy cannot leave a truncated file.
         tmp="$RUNTIME_DIR/.$name.seed.$$"
         if cp -a "$src" "$tmp" 2>/dev/null; then
             mv -f "$tmp" "$dst" 2>/dev/null && echo "[entrypoint] seeded runtime asset: $name"

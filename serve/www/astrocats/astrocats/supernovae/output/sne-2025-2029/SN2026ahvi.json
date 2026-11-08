@@ -1,0 +1,121 @@
+{
+  "SN2026ahvi": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "SN2026ahvi",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/2026ahvi",
+        "alias": "1"
+      },
+      {
+        "name": "2026TNSTR4401....1I",
+        "bibcode": "2026TNSTR4401....1I",
+        "reference": "Koichi Itagaki",
+        "alias": "2"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "3"
+      }
+    ],
+    "alias": [
+      {
+        "value": "2026ahvi",
+        "source": "1"
+      },
+      {
+        "value": "AT2026ahvi",
+        "source": "1"
+      },
+      {
+        "value": "SN2026ahvi",
+        "source": "1"
+      },
+      {
+        "value": "SN 2026ahvi",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "12:13:50.450",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "+13:25:26.50",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "claimedtype": [
+      {
+        "value": "Ia",
+        "source": "1"
+      }
+    ],
+    "redshift": [
+      {
+        "value": "0.006997",
+        "kind": "spectroscopic",
+        "source": "1"
+      }
+    ],
+    "host": [
+      {
+        "value": "NGC4189",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "Koichi Itagaki",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2026/11/02",
+        "source": "1"
+      }
+    ],
+    "discoverymag": [
+      {
+        "value": "16.1",
+        "kind": "discovery",
+        "source": "2",
+        "band": "Clear-",
+        "time": "61346.83047",
+        "u_time": "MJD"
+      }
+    ],
+    "photometry": [],
+    "photometry_ingest": {
+      "alerce": {
+        "status": "unavailable"
+      },
+      "tns": {
+        "status": "unavailable",
+        "n_detections": 0,
+        "n_limits": 0,
+        "source": null,
+        "fetched_at": null,
+        "error": null
+      }
+    },
+    "maxappmag": [
+      {
+        "value": "16.1",
+        "kind": "discovery",
+        "source": "2"
+      }
+    ]
+  }
+}

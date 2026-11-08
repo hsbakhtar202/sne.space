@@ -1,0 +1,127 @@
+{
+  "AT2026aisp": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "AT2026aisp",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/2026aisp",
+        "alias": "1"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "2"
+      }
+    ],
+    "alias": [
+      {
+        "value": "2026aisp",
+        "source": "1"
+      },
+      {
+        "value": "AT2026aisp",
+        "source": "1"
+      },
+      {
+        "value": "ATLAS26njv",
+        "source": "1"
+      },
+      {
+        "value": "SN2026aisp",
+        "source": "1"
+      },
+      {
+        "value": "AT 2026aisp",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "01:49:01.741",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "-52:00:46.16",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "ATLAS_Bot1",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2026/11/08",
+        "source": "1"
+      }
+    ],
+    "discoverymag": [
+      {
+        "value": "19.471",
+        "kind": "discovery",
+        "source": "1",
+        "band": "cyan-ATLAS",
+        "time": "61352.16420",
+        "u_time": "MJD",
+        "e_value": "0.341"
+      }
+    ],
+    "photometry": [
+      {
+        "time": "61350.12220",
+        "magnitude": "19.71",
+        "band": "cyan-ATLAS",
+        "u_time": "MJD",
+        "upperlimit": true,
+        "kind": "non_detection",
+        "telescope": "ATLAS-CHL_ATLAS-04",
+        "tns_photometry_id": "634142",
+        "candid": "tns:634142",
+        "source": "1"
+      },
+      {
+        "time": "61352.14887",
+        "magnitude": "19.471",
+        "band": "cyan-ATLAS",
+        "u_time": "MJD",
+        "upperlimit": false,
+        "kind": "detection",
+        "e_magnitude": "0.341",
+        "telescope": "ATLAS-CHL_ATLAS-04",
+        "tns_photometry_id": "634143",
+        "candid": "tns:634143",
+        "source": "1"
+      }
+    ],
+    "photometry_ingest": {
+      "alerce": {
+        "status": "unavailable"
+      },
+      "tns": {
+        "status": "ok",
+        "n_detections": 1,
+        "n_limits": 1,
+        "source": "tns_html",
+        "fetched_at": "2026-11-08T20:11:01Z",
+        "error": null
+      }
+    },
+    "maxappmag": [
+      {
+        "value": "19.471",
+        "kind": "discovery",
+        "source": "1"
+      }
+    ]
+  }
+}

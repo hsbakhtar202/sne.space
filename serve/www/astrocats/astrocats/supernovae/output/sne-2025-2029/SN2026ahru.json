@@ -1,0 +1,119 @@
+{
+  "SN2026ahru": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "SN2026ahru",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/2026ahru",
+        "alias": "1"
+      },
+      {
+        "name": "2026TNSTR4392....1C",
+        "bibcode": "2026TNSTR4392....1C",
+        "reference": "PS1_Bot1",
+        "alias": "2"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "3"
+      }
+    ],
+    "alias": [
+      {
+        "value": "PS26kll",
+        "source": "1"
+      },
+      {
+        "value": "2026ahru",
+        "source": "1"
+      },
+      {
+        "value": "AT2026ahru",
+        "source": "1"
+      },
+      {
+        "value": "SN2026ahru",
+        "source": "1"
+      },
+      {
+        "value": "SN 2026ahru",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "21:23:37.892",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "-05:55:30.79",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "claimedtype": [
+      {
+        "value": "Ia",
+        "source": "1"
+      }
+    ],
+    "redshift": [
+      {
+        "value": "0.029",
+        "kind": "spectroscopic",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "PS1_Bot1",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2026/10/31",
+        "source": "1"
+      }
+    ],
+    "discoverymag": [
+      {
+        "value": "20.33",
+        "kind": "discovery",
+        "source": "2",
+        "band": "w-P1",
+        "time": "61344.25668",
+        "u_time": "MJD"
+      }
+    ],
+    "photometry": [],
+    "photometry_ingest": {
+      "alerce": {
+        "status": "unavailable"
+      },
+      "tns": {
+        "status": "unavailable",
+        "n_detections": 0,
+        "n_limits": 0,
+        "source": null,
+        "fetched_at": null,
+        "error": null
+      }
+    },
+    "maxappmag": [
+      {
+        "value": "20.33",
+        "kind": "discovery",
+        "source": "2"
+      }
+    ]
+  }
+}

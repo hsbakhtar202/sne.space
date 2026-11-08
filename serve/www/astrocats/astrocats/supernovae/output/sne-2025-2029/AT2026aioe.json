@@ -1,0 +1,106 @@
+{
+  "AT2026aioe": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "AT2026aioe",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/2026aioe",
+        "alias": "1"
+      },
+      {
+        "name": "2026TNSTR4488....1F",
+        "bibcode": "2026TNSTR4488....1F",
+        "reference": "ALeRCE",
+        "alias": "2"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "3"
+      }
+    ],
+    "alias": [
+      {
+        "value": "2026aioe",
+        "source": "1"
+      },
+      {
+        "value": "AT2026aioe",
+        "source": "1"
+      },
+      {
+        "value": "SN2026aioe",
+        "source": "1"
+      },
+      {
+        "value": "AT 2026aioe",
+        "source": "1"
+      },
+      {
+        "value": "ZTF26acfhigc",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "20:43:29.715",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "-09:26:46.61",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "ALeRCE",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2026/11/07",
+        "source": "1"
+      }
+    ],
+    "discoverymag": [
+      {
+        "value": "18.5669",
+        "kind": "discovery",
+        "source": "2",
+        "band": "r-ZTF",
+        "time": "61351.13268",
+        "u_time": "MJD"
+      }
+    ],
+    "photometry": [],
+    "photometry_ingest": {
+      "alerce": {
+        "status": "unavailable"
+      },
+      "tns": {
+        "status": "unavailable",
+        "n_detections": 0,
+        "n_limits": 0,
+        "source": null,
+        "fetched_at": "2026-11-08T20:13:06Z",
+        "error": "tns rate limited"
+      }
+    },
+    "maxappmag": [
+      {
+        "value": "18.5669",
+        "kind": "discovery",
+        "source": "2"
+      }
+    ]
+  }
+}

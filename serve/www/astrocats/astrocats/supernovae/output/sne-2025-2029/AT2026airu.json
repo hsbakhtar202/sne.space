@@ -1,0 +1,134 @@
+{
+  "AT2026airu": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "AT2026airu",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/2026airu",
+        "alias": "1"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "2"
+      }
+    ],
+    "alias": [
+      {
+        "value": "2026airu",
+        "source": "1"
+      },
+      {
+        "value": "AT2026airu",
+        "source": "1"
+      },
+      {
+        "value": "SN2026airu",
+        "source": "1"
+      },
+      {
+        "value": "AT 2026airu",
+        "source": "1"
+      },
+      {
+        "value": "LSST-AP-DO-171180770397258896",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "20:53:31.428",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "-28:15:27.94",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "ALeRCE",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2026/11/08",
+        "source": "1"
+      }
+    ],
+    "discoverymag": [
+      {
+        "value": "21.4856",
+        "kind": "discovery",
+        "source": "1",
+        "band": "i-LSST",
+        "time": "61352.04692",
+        "u_time": "MJD",
+        "e_value": "0.055104"
+      }
+    ],
+    "photometry": [
+      {
+        "time": "61352.01834",
+        "magnitude": "21.4856",
+        "band": "i-LSST",
+        "u_time": "MJD",
+        "upperlimit": false,
+        "kind": "detection",
+        "e_magnitude": "0.050607",
+        "telescope": "Rubin_LSSTCam",
+        "tns_photometry_id": "634092",
+        "candid": "tns:634092",
+        "source": "1"
+      },
+      {
+        "time": "61352.01878",
+        "magnitude": "21.43",
+        "band": "i-LSST",
+        "u_time": "MJD",
+        "upperlimit": false,
+        "kind": "detection",
+        "e_magnitude": "0.055104",
+        "telescope": "Rubin_LSSTCam",
+        "tns_photometry_id": "634093",
+        "candid": "tns:634093",
+        "source": "1"
+      }
+    ],
+    "photometry_ingest": {
+      "alerce": {
+        "status": "unavailable"
+      },
+      "tns": {
+        "status": "ok",
+        "n_detections": 2,
+        "n_limits": 0,
+        "source": "tns_html",
+        "fetched_at": "2026-11-08T20:11:31Z",
+        "error": null
+      }
+    },
+    "maxappmag": [
+      {
+        "value": "21.43",
+        "kind": "brightest_observed",
+        "source": "1"
+      }
+    ],
+    "maxdate": [
+      {
+        "value": "2026/11/08",
+        "source": "1"
+      }
+    ]
+  }
+}

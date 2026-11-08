@@ -32,7 +32,7 @@ import time
 from pathlib import Path
 from typing import Any, Iterable, Iterator
 
-_SCHEMA_VERSION = 4
+_SCHEMA_VERSION = 5
 
 # Columns kept as real SQL columns so filtering/sorting happens in SQLite rather
 # than in a Python list comprehension over 110k dicts.
@@ -415,6 +415,9 @@ class CatalogStore:
                     str(r["key"]): str(r["value"])
                     for r in conn.execute("SELECT key, value FROM meta").fetchall()
                 }
+                # Verify table scan and collation sort do not hit corrupt pages.
+                conn.execute("SELECT name FROM events WHERE search_blob LIKE '%1987a%' LIMIT 1").fetchone()
+                conn.execute("SELECT name FROM events ORDER BY name COLLATE NOCASE ASC LIMIT 1").fetchone()
             finally:
                 conn.close()
         except sqlite3.Error:
@@ -862,10 +865,8 @@ class CatalogStore:
             ).fetchall()
         except sqlite3.Error as exc:
             print(f"[CatalogStore] query failed: {exc}", flush=True)
-            return {
-                "total": 0, "page": 1, "limit": limit, "pages": 1,
-                "has_next": False, "has_prev": False, "items": [],
-            }
+            self.close()
+            raise
 
         items = []
         for row in rows:

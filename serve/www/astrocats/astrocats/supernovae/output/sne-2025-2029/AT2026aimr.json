@@ -1,0 +1,119 @@
+{
+  "AT2026aimr": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "AT2026aimr",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/2026aimr",
+        "alias": "1"
+      },
+      {
+        "name": "2026TNSTR4491....1T",
+        "bibcode": "2026TNSTR4491....1T",
+        "reference": "BlackGEM_Bot1",
+        "alias": "2"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "3"
+      }
+    ],
+    "alias": [
+      {
+        "value": "2026aimr",
+        "source": "1"
+      },
+      {
+        "value": "AT2026aimr",
+        "source": "1"
+      },
+      {
+        "value": "SN2026aimr",
+        "source": "1"
+      },
+      {
+        "value": "AT 2026aimr",
+        "source": "1"
+      },
+      {
+        "value": "BGEM J061418.92-624038.8",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "06:14:18.922",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "-62:40:38.77",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "BlackGEM_Bot1",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2026/11/07",
+        "source": "1"
+      }
+    ],
+    "discoverymag": [
+      {
+        "value": "19.51",
+        "kind": "discovery",
+        "source": "2",
+        "band": "BG-q-BlackGem",
+        "time": "61351.17714",
+        "u_time": "MJD"
+      }
+    ],
+    "photometry": [
+      {
+        "time": "60623.32527",
+        "magnitude": "21.3",
+        "band": "BG-q-BlackGem",
+        "u_time": "MJD",
+        "upperlimit": true,
+        "kind": "non_detection",
+        "telescope": "BG3_BlackGEM-Cam3",
+        "tns_photometry_id": "633729",
+        "candid": "tns:633729",
+        "source": "1"
+      }
+    ],
+    "photometry_ingest": {
+      "alerce": {
+        "status": "unavailable"
+      },
+      "tns": {
+        "status": "ok",
+        "n_detections": 0,
+        "n_limits": 1,
+        "source": "tns_html",
+        "fetched_at": "2026-11-08T20:13:00Z",
+        "error": null
+      }
+    },
+    "maxappmag": [
+      {
+        "value": "19.51",
+        "kind": "discovery",
+        "source": "2"
+      }
+    ]
+  }
+}

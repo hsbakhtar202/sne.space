@@ -1,0 +1,115 @@
+{
+  "AT2026aisa": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "AT2026aisa",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/2026aisa",
+        "alias": "1"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "2"
+      }
+    ],
+    "alias": [
+      {
+        "value": "2026aisa",
+        "source": "1"
+      },
+      {
+        "value": "AT2026aisa",
+        "source": "1"
+      },
+      {
+        "value": "SN2026aisa",
+        "source": "1"
+      },
+      {
+        "value": "AT 2026aisa",
+        "source": "1"
+      },
+      {
+        "value": "LSST-AP-DO-171180769865629882",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "21:01:44.835",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "-19:57:09.34",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "ALeRCE",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2026/11/08",
+        "source": "1"
+      }
+    ],
+    "discoverymag": [
+      {
+        "value": "21.8096",
+        "kind": "discovery",
+        "source": "1",
+        "band": "i-LSST",
+        "time": "61352.05388",
+        "u_time": "MJD",
+        "e_value": "0.069717"
+      }
+    ],
+    "photometry": [
+      {
+        "time": "61352.01651",
+        "magnitude": "21.8096",
+        "band": "i-LSST",
+        "u_time": "MJD",
+        "upperlimit": false,
+        "kind": "detection",
+        "e_magnitude": "0.069717",
+        "telescope": "Rubin_LSSTCam",
+        "tns_photometry_id": "634105",
+        "candid": "tns:634105",
+        "source": "1"
+      }
+    ],
+    "photometry_ingest": {
+      "alerce": {
+        "status": "unavailable"
+      },
+      "tns": {
+        "status": "ok",
+        "n_detections": 1,
+        "n_limits": 0,
+        "source": "tns_html",
+        "fetched_at": "2026-11-08T20:11:36Z",
+        "error": null
+      }
+    },
+    "maxappmag": [
+      {
+        "value": "21.8096",
+        "kind": "discovery",
+        "source": "1"
+      }
+    ]
+  }
+}

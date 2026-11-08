@@ -1,0 +1,100 @@
+{
+  "AT2026aiug": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "AT2026aiug",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/2026aiug",
+        "alias": "1"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "2"
+      }
+    ],
+    "alias": [
+      {
+        "value": "2026aiug",
+        "source": "1"
+      },
+      {
+        "value": "AT2026aiug",
+        "source": "1"
+      },
+      {
+        "value": "SN2026aiug",
+        "source": "1"
+      },
+      {
+        "value": "AT 2026aiug",
+        "source": "1"
+      },
+      {
+        "value": "ZTF26acdzzhp",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "20:45:30.264",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "-03:23:02.68",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "ZTF_LIONS",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2026/11/03",
+        "source": "1"
+      }
+    ],
+    "discoverymag": [
+      {
+        "value": "19.8911",
+        "kind": "discovery",
+        "source": "1",
+        "band": "r-ZTF",
+        "time": "61347.13514",
+        "u_time": "MJD"
+      }
+    ],
+    "photometry": [],
+    "photometry_ingest": {
+      "alerce": {
+        "status": "unavailable"
+      },
+      "tns": {
+        "status": "unavailable",
+        "n_detections": 0,
+        "n_limits": 0,
+        "source": null,
+        "fetched_at": null,
+        "error": null
+      }
+    },
+    "maxappmag": [
+      {
+        "value": "19.8911",
+        "kind": "discovery",
+        "source": "1"
+      }
+    ]
+  }
+}

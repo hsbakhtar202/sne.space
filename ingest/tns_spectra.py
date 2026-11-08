@@ -86,8 +86,15 @@ def search_tns_spectra(
     html = ""
     for attempt in range(2):
         try:
+            try:
+                from ingest import provider_quota
+                provider_quota.acquire("tns")
+            except Exception:
+                provider_quota = None  # type: ignore
             with urllib.request.urlopen(req, timeout=timeout) as resp:
                 html = resp.read().decode("utf-8", errors="replace")
+                if provider_quota is not None:
+                    provider_quota.record_success("tns")
                 break
         except urllib.error.HTTPError as e:
             if e.code == 429:
@@ -96,6 +103,8 @@ def search_tns_spectra(
                     wait_sec = float(reset_val) + 1.0
                 except (ValueError, TypeError):
                     wait_sec = 10.0 * (attempt + 1)
+                if provider_quota is not None:
+                    provider_quota.record_429("tns", wait_sec)
                 logger.warning(f"TNS 429 rate limit hit for {clean_name}. Backing off for {wait_sec:.1f}s (reset header)...")
                 time.sleep(wait_sec)
                 continue

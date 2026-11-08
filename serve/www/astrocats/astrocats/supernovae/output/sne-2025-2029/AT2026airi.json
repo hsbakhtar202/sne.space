@@ -1,0 +1,127 @@
+{
+  "AT2026airi": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "AT2026airi",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/2026airi",
+        "alias": "1"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "2"
+      }
+    ],
+    "alias": [
+      {
+        "value": "2026airi",
+        "source": "1"
+      },
+      {
+        "value": "GOTO26mbk",
+        "source": "1"
+      },
+      {
+        "value": "AT2026airi",
+        "source": "1"
+      },
+      {
+        "value": "SN2026airi",
+        "source": "1"
+      },
+      {
+        "value": "AT 2026airi",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "01:39:20.357",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "-05:43:00.48",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "GOTO_bot",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2026/11/07",
+        "source": "1"
+      }
+    ],
+    "discoverymag": [
+      {
+        "value": "20.14",
+        "kind": "discovery",
+        "source": "1",
+        "band": "L-GOTO",
+        "time": "61351.48016",
+        "u_time": "MJD",
+        "e_value": "0.19"
+      }
+    ],
+    "photometry": [
+      {
+        "time": "61350.46599",
+        "magnitude": "20.5",
+        "band": "L-GOTO",
+        "u_time": "MJD",
+        "upperlimit": true,
+        "kind": "non_detection",
+        "telescope": "GOTO-S_GOTO-3",
+        "tns_photometry_id": "634068",
+        "candid": "tns:634068",
+        "source": "1"
+      },
+      {
+        "time": "61351.46350",
+        "magnitude": "20.14",
+        "band": "L-GOTO",
+        "u_time": "MJD",
+        "upperlimit": false,
+        "kind": "detection",
+        "e_magnitude": "0.19",
+        "telescope": "GOTO-S_GOTO-3",
+        "tns_photometry_id": "634069",
+        "candid": "tns:634069",
+        "source": "1"
+      }
+    ],
+    "photometry_ingest": {
+      "alerce": {
+        "status": "unavailable"
+      },
+      "tns": {
+        "status": "ok",
+        "n_detections": 1,
+        "n_limits": 1,
+        "source": "tns_html",
+        "fetched_at": "2026-11-08T20:12:52Z",
+        "error": null
+      }
+    },
+    "maxappmag": [
+      {
+        "value": "20.14",
+        "kind": "discovery",
+        "source": "1"
+      }
+    ]
+  }
+}

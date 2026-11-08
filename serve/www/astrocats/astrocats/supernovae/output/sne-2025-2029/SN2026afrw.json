@@ -1,0 +1,119 @@
+{
+  "SN2026afrw": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "SN2026afrw",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/2026afrw",
+        "alias": "1"
+      },
+      {
+        "name": "2026TNSTR4188....1S",
+        "bibcode": "2026TNSTR4188....1S",
+        "reference": "Fritz",
+        "alias": "2"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "3"
+      }
+    ],
+    "alias": [
+      {
+        "value": "2026afrw",
+        "source": "1"
+      },
+      {
+        "value": "AT2026afrw",
+        "source": "1"
+      },
+      {
+        "value": "SN2026afrw",
+        "source": "1"
+      },
+      {
+        "value": "SN 2026afrw",
+        "source": "1"
+      },
+      {
+        "value": "ZTF26acbwfae",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "08:27:47.094",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "+32:45:50.98",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "claimedtype": [
+      {
+        "value": "Ia",
+        "source": "1"
+      }
+    ],
+    "redshift": [
+      {
+        "value": "0.095",
+        "kind": "spectroscopic",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "Fritz",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2026/10/18",
+        "source": "1"
+      }
+    ],
+    "discoverymag": [
+      {
+        "value": "19.9801",
+        "kind": "discovery",
+        "source": "2",
+        "band": "r-ZTF",
+        "time": "61331.53107",
+        "u_time": "MJD"
+      }
+    ],
+    "photometry": [],
+    "photometry_ingest": {
+      "alerce": {
+        "status": "unavailable"
+      },
+      "tns": {
+        "status": "unavailable",
+        "n_detections": 0,
+        "n_limits": 0,
+        "source": null,
+        "fetched_at": null,
+        "error": null
+      }
+    },
+    "maxappmag": [
+      {
+        "value": "19.9801",
+        "kind": "discovery",
+        "source": "2"
+      }
+    ]
+  }
+}

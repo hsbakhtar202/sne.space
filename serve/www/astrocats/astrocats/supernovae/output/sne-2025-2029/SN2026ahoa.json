@@ -1,0 +1,115 @@
+{
+  "SN2026ahoa": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "SN2026ahoa",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/2026ahoa",
+        "alias": "1"
+      },
+      {
+        "name": "2026TNSTR4382....1C",
+        "bibcode": "2026TNSTR4382....1C",
+        "reference": "Antonio Martin-Carrillo",
+        "alias": "2"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "3"
+      }
+    ],
+    "alias": [
+      {
+        "value": "2026ahoa",
+        "source": "1"
+      },
+      {
+        "value": "AT2026ahoa",
+        "source": "1"
+      },
+      {
+        "value": "SN2026ahoa",
+        "source": "1"
+      },
+      {
+        "value": "SN 2026ahoa",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "02:57:19.830",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "-13:21:17.30",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "claimedtype": [
+      {
+        "value": "Ic-BL",
+        "source": "1"
+      }
+    ],
+    "redshift": [
+      {
+        "value": "0.31",
+        "kind": "spectroscopic",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "Antonio Martin-Carrillo",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2026/10/16",
+        "source": "1"
+      }
+    ],
+    "discoverymag": [
+      {
+        "value": "22.74",
+        "kind": "discovery",
+        "source": "2",
+        "band": "r-Sloan",
+        "time": "61329.12428",
+        "u_time": "MJD"
+      }
+    ],
+    "photometry": [],
+    "photometry_ingest": {
+      "alerce": {
+        "status": "unavailable"
+      },
+      "tns": {
+        "status": "unavailable",
+        "n_detections": 0,
+        "n_limits": 0,
+        "source": null,
+        "fetched_at": null,
+        "error": null
+      }
+    },
+    "maxappmag": [
+      {
+        "value": "22.74",
+        "kind": "discovery",
+        "source": "2"
+      }
+    ]
+  }
+}

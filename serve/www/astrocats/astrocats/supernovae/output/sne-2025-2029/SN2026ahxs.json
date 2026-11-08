@@ -1,0 +1,119 @@
+{
+  "SN2026ahxs": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "SN2026ahxs",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/2026ahxs",
+        "alias": "1"
+      },
+      {
+        "name": "2026TNSTR4418....1R",
+        "bibcode": "2026TNSTR4418....1R",
+        "reference": "BTSbot_bot",
+        "alias": "2"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "3"
+      }
+    ],
+    "alias": [
+      {
+        "value": "2026ahxs",
+        "source": "1"
+      },
+      {
+        "value": "AT2026ahxs",
+        "source": "1"
+      },
+      {
+        "value": "SN2026ahxs",
+        "source": "1"
+      },
+      {
+        "value": "SN 2026ahxs",
+        "source": "1"
+      },
+      {
+        "value": "ZTF26acdhujr",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "02:06:11.034",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "+15:07:57.93",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "claimedtype": [
+      {
+        "value": "Ia",
+        "source": "1"
+      }
+    ],
+    "redshift": [
+      {
+        "value": "0.044",
+        "kind": "spectroscopic",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "BTSbot_bot",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2026/10/28",
+        "source": "1"
+      }
+    ],
+    "discoverymag": [
+      {
+        "value": "17.4987",
+        "kind": "discovery",
+        "source": "2",
+        "band": "g-ZTF",
+        "time": "61341.22688",
+        "u_time": "MJD"
+      }
+    ],
+    "photometry": [],
+    "photometry_ingest": {
+      "alerce": {
+        "status": "unavailable"
+      },
+      "tns": {
+        "status": "unavailable",
+        "n_detections": 0,
+        "n_limits": 0,
+        "source": null,
+        "fetched_at": null,
+        "error": null
+      }
+    },
+    "maxappmag": [
+      {
+        "value": "17.4987",
+        "kind": "discovery",
+        "source": "2"
+      }
+    ]
+  }
+}

@@ -295,6 +295,7 @@ def _merge_recent_into_query_result(
     order: str = "desc",
     page: int = 1,
     limit: int = 50,
+    store: Any = None,
 ) -> dict[str, Any]:
     """Ensure runtime recent-catalog rows appear in /api/transients results."""
     recent = _load_recent_query_items()
@@ -337,6 +338,9 @@ def _merge_recent_into_query_result(
             continue
         if name in store_by_name:
             chosen = _prefer_authoritative_query_item(store_by_name[name], r)
+        elif store is not None and hasattr(store, "canonical_name") and store.canonical_name(name) is not None:
+            # Already in CatalogStore (on another page for this sort/filter); do not force onto page 1.
+            continue
         else:
             chosen = r
         merged_pool.append(chosen)
@@ -355,6 +359,16 @@ def _merge_recent_into_query_result(
         merged_pool.sort(key=lambda x: str(x.get("name") or "").lower(), reverse=reverse)
     elif sort_key in ("claimedtype", "type"):
         merged_pool.sort(key=lambda x: str(x.get("type") or "").lower(), reverse=reverse)
+    elif sort_key in ("redshift", "z"):
+        if reverse:
+            merged_pool.sort(key=lambda x: (x.get("z") is not None, x.get("z") if x.get("z") is not None else -999.0), reverse=True)
+        else:
+            merged_pool.sort(key=lambda x: (x.get("z") is None, x.get("z") if x.get("z") is not None else 999.0))
+    elif sort_key in ("maxappmag", "mag"):
+        if reverse:
+            merged_pool.sort(key=lambda x: (x.get("mag") is not None, x.get("mag") if x.get("mag") is not None else -999.0), reverse=True)
+        else:
+            merged_pool.sort(key=lambda x: (x.get("mag") is None, x.get("mag") if x.get("mag") is not None else 999.0))
     elif sort_key in ("photolink", "phot"):
         merged_pool.sort(key=lambda x: int(x.get("phot") or 0), reverse=reverse)
     elif sort_key in ("spectralink", "spec"):
@@ -362,7 +376,14 @@ def _merge_recent_into_query_result(
 
     store_total = int(result.get("total") or 0)
     store_names = {i.get("name") for i in store_items}
-    recent_only = sum(1 for r in recent if r["name"] not in store_names)
+    if store is not None and hasattr(store, "canonical_name"):
+        recent_only = sum(
+            1
+            for r in recent
+            if r["name"] not in store_names and store.canonical_name(r["name"]) is None
+        )
+    else:
+        recent_only = sum(1 for r in recent if r["name"] not in store_names)
     extra = 0
     if not (q or "").strip() and (not type_filter or type_filter in ("", "all", "any")):
         extra = recent_only
@@ -680,6 +701,7 @@ class CatalogEngine:
                     order=order,
                     page=page,
                     limit=limit,
+                    store=store,
                 )
             except Exception as exc:
                 logger.warning("CatalogStore query failed, falling back: %s", exc)

@@ -95,6 +95,20 @@ class DurableEnrichmentQueue:
             self._conn.commit()
         except sqlite3.OperationalError:
             pass  # column already exists
+        # Purge pre-2025 stampede backlog if the queue was flooded (>1,000 pending
+        # rows from _fetch_remote_event scanning historical names).
+        try:
+            n_pend = self._conn.execute(
+                "SELECT COUNT(*) FROM enrich_jobs WHERE status IN ('queued','retry')"
+            ).fetchone()[0]
+            if int(n_pend or 0) > 1000:
+                with self._conn:
+                    self._conn.execute(
+                        "DELETE FROM enrich_jobs WHERE status IN ('queued','retry') "
+                        "AND name NOT LIKE '%2025%' AND name NOT LIKE '%2026%'"
+                    )
+        except sqlite3.OperationalError:
+            pass
         self._started = False
         self._stop = False
         self._wake = threading.Condition(self._lock)
@@ -278,10 +292,16 @@ class DurableEnrichmentQueue:
     # -- worker ----------------------------------------------------------
 
     def _execute(self, name: str, lc: bool, sp: bool) -> bool:
-        """Run one enrichment job. Isolated so tests can stub the network out."""
-        from ingest.manager import enrich_event
+        """Run one enrichment job. Isolated so tests can stub the network out.
 
-        return bool(enrich_event(name, fetch_lightcurve=lc, fetch_spectra=sp, force=False))
+        Runs inside ``provider_quota.backfill_mode()`` so background queue workers
+        always yield to ``pull_recent()`` when discovery ingest holds priority.
+        """
+        from ingest.manager import enrich_event
+        from ingest import provider_quota
+
+        with provider_quota.backfill_mode():
+            return bool(enrich_event(name, fetch_lightcurve=lc, fetch_spectra=sp, force=False))
 
     def start(self, workers: int = 2) -> None:
         with self._lock:
@@ -328,13 +348,14 @@ class DurableEnrichmentQueue:
             if ok:
                 self._finish_ok(name)
                 try:
-                    # Acknowledged only after committed output — schedule publication.
-                    from ingest.publication import mark_ingested
+                    # Acknowledged only after committed output — schedule and run publication.
+                    from ingest.publication import mark_ingested, publish_event_paths
                     from ingest.manager import SUPERNOVAE_OUTPUT
 
                     hits = list(Path(SUPERNOVAE_OUTPUT).glob(f"sne-*/{name}.json"))
                     if hits:
                         mark_ingested(name, hits[0])
+                        publish_event_paths([hits[0]])
                 except Exception:
                     pass
             else:

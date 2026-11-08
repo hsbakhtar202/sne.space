@@ -1,0 +1,146 @@
+{
+  "AT2026airg": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "AT2026airg",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/2026airg",
+        "alias": "1"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "2"
+      }
+    ],
+    "alias": [
+      {
+        "value": "2026airg",
+        "source": "1"
+      },
+      {
+        "value": "AT2026airg",
+        "source": "1"
+      },
+      {
+        "value": "SN2026airg",
+        "source": "1"
+      },
+      {
+        "value": "AT 2026airg",
+        "source": "1"
+      },
+      {
+        "value": "ZTF26acflddl",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "04:51:58.824",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "+06:35:15.35",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "Fritz",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2026/11/07",
+        "source": "1"
+      }
+    ],
+    "discoverymag": [
+      {
+        "value": "19.9319",
+        "kind": "discovery",
+        "source": "1",
+        "band": "r-ZTF",
+        "time": "61351.44045",
+        "u_time": "MJD",
+        "e_value": "0.099054"
+      }
+    ],
+    "photometry": [
+      {
+        "time": "61350.39998",
+        "magnitude": "20.1167",
+        "band": "r-ZTF",
+        "u_time": "MJD",
+        "upperlimit": true,
+        "kind": "non_detection",
+        "telescope": "P48_ZTF-Cam",
+        "tns_photometry_id": "634059",
+        "candid": "tns:634059",
+        "source": "1"
+      },
+      {
+        "time": "61351.39888",
+        "magnitude": "19.9319",
+        "band": "r-ZTF",
+        "u_time": "MJD",
+        "upperlimit": false,
+        "kind": "detection",
+        "e_magnitude": "0.126508",
+        "telescope": "P48_ZTF-Cam",
+        "tns_photometry_id": "634060",
+        "candid": "tns:634060",
+        "source": "1"
+      },
+      {
+        "time": "61352.35177",
+        "magnitude": "19.2237",
+        "band": "r-ZTF",
+        "u_time": "MJD",
+        "upperlimit": false,
+        "kind": "detection",
+        "e_magnitude": "0.099054",
+        "telescope": "P48_ZTF-Cam",
+        "tns_photometry_id": "634061",
+        "candid": "tns:634061",
+        "source": "1"
+      }
+    ],
+    "photometry_ingest": {
+      "alerce": {
+        "status": "unavailable"
+      },
+      "tns": {
+        "status": "ok",
+        "n_detections": 2,
+        "n_limits": 1,
+        "source": "tns_html",
+        "fetched_at": "2026-11-08T20:12:57Z",
+        "error": null
+      }
+    },
+    "maxappmag": [
+      {
+        "value": "19.2237",
+        "kind": "brightest_observed",
+        "source": "1"
+      }
+    ],
+    "maxdate": [
+      {
+        "value": "2026/11/07",
+        "source": "1"
+      }
+    ]
+  }
+}

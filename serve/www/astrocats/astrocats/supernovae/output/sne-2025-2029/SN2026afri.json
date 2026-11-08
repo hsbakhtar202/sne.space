@@ -1,0 +1,118 @@
+{
+  "SN2026afri": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "SN2026afri",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/2026afri",
+        "alias": "1"
+      },
+      {
+        "name": "2026TNSTR4189....1F",
+        "bibcode": "2026TNSTR4189....1F",
+        "reference": "Minrui Ning",
+        "alias": "2"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "3"
+      }
+    ],
+    "alias": [
+      {
+        "value": "2026afri",
+        "source": "1"
+      },
+      {
+        "value": "AT2026afri",
+        "source": "1"
+      },
+      {
+        "value": "SN2026afri",
+        "source": "1"
+      },
+      {
+        "value": "SN 2026afri",
+        "source": "1"
+      },
+      {
+        "value": "ZTF26acbkfha",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "02:29:21.181",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "+20:18:34.13",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "claimedtype": [
+      {
+        "value": "Ia-91T-like",
+        "source": "1"
+      }
+    ],
+    "host": [
+      {
+        "value": "WISEJ022921.24+201832.6",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "Minrui Ning",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2026/10/15",
+        "source": "1"
+      }
+    ],
+    "discoverymag": [
+      {
+        "value": "19.84",
+        "kind": "discovery",
+        "source": "2",
+        "band": "g-ZTF",
+        "time": "61328.37948",
+        "u_time": "MJD"
+      }
+    ],
+    "photometry": [],
+    "photometry_ingest": {
+      "alerce": {
+        "status": "unavailable"
+      },
+      "tns": {
+        "status": "unavailable",
+        "n_detections": 0,
+        "n_limits": 0,
+        "source": null,
+        "fetched_at": null,
+        "error": null
+      }
+    },
+    "maxappmag": [
+      {
+        "value": "19.84",
+        "kind": "discovery",
+        "source": "2"
+      }
+    ]
+  }
+}

@@ -1,0 +1,100 @@
+{
+  "AT2026airr": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "AT2026airr",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/2026airr",
+        "alias": "1"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "2"
+      }
+    ],
+    "alias": [
+      {
+        "value": "2026airr",
+        "source": "1"
+      },
+      {
+        "value": "AT2026airr",
+        "source": "1"
+      },
+      {
+        "value": "SN2026airr",
+        "source": "1"
+      },
+      {
+        "value": "AT 2026airr",
+        "source": "1"
+      },
+      {
+        "value": "LSST-AP-DO-171171984928407592",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "00:32:48.778",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "-42:34:12.28",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "ALeRCE",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2026/11/06",
+        "source": "1"
+      }
+    ],
+    "discoverymag": [
+      {
+        "value": "23.6227",
+        "kind": "discovery",
+        "source": "1",
+        "band": "r-LSST",
+        "time": "61350.11050",
+        "u_time": "MJD"
+      }
+    ],
+    "photometry": [],
+    "photometry_ingest": {
+      "alerce": {
+        "status": "unavailable"
+      },
+      "tns": {
+        "status": "unavailable",
+        "n_detections": 0,
+        "n_limits": 0,
+        "source": null,
+        "fetched_at": null,
+        "error": null
+      }
+    },
+    "maxappmag": [
+      {
+        "value": "23.6227",
+        "kind": "discovery",
+        "source": "1"
+      }
+    ]
+  }
+}

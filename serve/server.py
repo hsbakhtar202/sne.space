@@ -651,16 +651,14 @@ def _write_authoritative_catalog_stats() -> Path:
     total = 0
     revision = 0
     try:
-        revision = int(_CATALOG.max_publish_revision() or 0)
-    except Exception:
-        pass
-    try:
         store = _get_catalog_store(rebuild_if_stale=False)
         if store is not None:
             ev = store.stats().get("events")
             total = int(ev) if ev is not None else 0
+            from ingest.catalog_publish import authoritative_publish_revision_high_water
+            revision = int(authoritative_publish_revision_high_water(catalog_db=store.db_path) or 0)
     except Exception:
-        total = 0
+        pass
     payload = {
         "total": total,
         "publish_revision": revision,
@@ -945,9 +943,9 @@ def _fetch_remote_event(name: str) -> tuple[str | None, Path | None]:
             if candidate.is_file():
                 return cand_name, candidate
 
-    # Nothing on disk. Queue the fetch instead of performing it inline, and let
-    # the caller fall back to catalog metadata for this response.
-    if enrich_event is not None and year >= 2018:
+    # Nothing on disk. Only queue enrichment for current-era (2025+) events so
+    # historical lookups never flood the queue with tens of thousands of jobs.
+    if enrich_event is not None and year >= 2025:
         _request_enrichment(clean, need_lightcurve=True, need_spectra=True)
 
     return None, None
@@ -2233,10 +2231,6 @@ def _authoritative_catalog_stats() -> dict:
     now = _t.time()
     revision = 0
     db_ok = False
-    try:
-        revision = int(_CATALOG.max_publish_revision() or 0)
-    except Exception:
-        pass
     total = 0
     try:
         store = _get_catalog_store(rebuild_if_stale=False)
@@ -2244,6 +2238,8 @@ def _authoritative_catalog_stats() -> dict:
             db_ok = True
             ev = store.stats().get("events")
             total = int(ev) if ev is not None else 0
+            from ingest.catalog_publish import authoritative_publish_revision_high_water
+            revision = int(authoritative_publish_revision_high_water(catalog_db=store.db_path) or 0)
     except Exception:
         pass
     return {
@@ -2573,24 +2569,13 @@ def _execute_mcp_tool_by_name(tool_name: str, args: dict, client_meta: dict) -> 
         elif tool_name in ("search_by_type", "by_type"):
             req_type = str(args.get("type", "")).strip().lower()
             limit = int(args.get("limit", 25))
-            canon_map, _ = _names_maps()
             results = []
             if req_type:
-                for c_name in canon_map.keys():
-                    _, fp = _find_event_file(c_name)
-                    if fp and fp.is_file():
-                        try:
-                            raw = json.loads(fp.read_text(encoding="utf-8", errors="replace"))
-                            ev_data = next(iter(raw.values())) if len(raw) == 1 else raw.get(c_name, {})
-                            ct = ev_data.get("claimedtype", [])
-                            if ct:
-                                t_val = ct[0].get("value") if isinstance(ct[0], dict) else str(ct[0])
-                                if req_type in t_val.lower():
-                                    results.append({"name": c_name, "claimed_type": t_val})
-                                    if len(results) >= limit:
-                                        break
-                        except Exception:
-                            pass
+                store = _get_catalog_store()
+                if store is not None:
+                    q_res = store.query(type_filter=req_type, limit=limit)
+                    for rec in q_res.get("items", []):
+                        results.append({"name": rec["name"], "claimed_type": rec["type"]})
             res = {"results": results, "count": len(results), "type": req_type}
 
         elif tool_name in ("get_recent_discoveries", "recent"):
@@ -4629,7 +4614,8 @@ class Handler(SimpleHTTPRequestHandler):
 
         # Authoritative catalog statistics (single source for homepage + API totals).
         if path in ("/api/catalog-stats", "/api/catalog/stats"):
-            _json_response(self, _authoritative_catalog_stats())
+            body = json.dumps(_authoritative_catalog_stats(), indent=2).encode("utf-8")
+            self._send(200, "application/json; charset=utf-8", body, {"Cache-Control": "no-cache"})
             return
         # Native High-Performance Catalog Search & Filtering API: /api/transients, /api/catalog/search
         if path in ("/api/transients", "/api/transients/", "/api/catalog/search", "/api/catalog/filter"):
@@ -5299,6 +5285,8 @@ def _recent_tns_loop() -> None:
         try:
             from ingest.pull_recent import pull_recent
             count = pull_recent()
+            _write_authoritative_catalog_stats()
+            _invalidate_page_cache()
             print(f"TNS recent pull stored {count} classified supernovae", flush=True)
         except Exception as exc:
             print(f"TNS recent pull failed: {exc}", flush=True)
@@ -5379,6 +5367,8 @@ def _warm_catalog_store() -> None:
             return
         if CatalogEngine is not None:
             CatalogEngine.get_instance().attach_store(store)
+        _write_authoritative_catalog_stats()
+        _invalidate_page_cache()
         print(
             f"[CatalogStore] ready: {store.count()} events, "
             f"db={store.db_path}",

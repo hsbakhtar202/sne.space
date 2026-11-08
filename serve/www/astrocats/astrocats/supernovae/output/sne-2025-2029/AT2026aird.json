@@ -1,0 +1,100 @@
+{
+  "AT2026aird": {
+    "schema": "https://github.com/astrocatalogs/supernovae/blob/d3ef5fc/SCHEMA.md",
+    "name": "AT2026aird",
+    "sources": [
+      {
+        "name": "Transient Name Server",
+        "url": "https://www.wis-tns.org/object/2026aird",
+        "alias": "1"
+      },
+      {
+        "name": "The Open Supernova Catalog",
+        "bibcode": "2017ApJ...835...64G",
+        "reference": "Guillochon et al. (2017)",
+        "secondary": true,
+        "url": "https://sne.space",
+        "alias": "2"
+      }
+    ],
+    "alias": [
+      {
+        "value": "2026aird",
+        "source": "1"
+      },
+      {
+        "value": "AT2026aird",
+        "source": "1"
+      },
+      {
+        "value": "SN2026aird",
+        "source": "1"
+      },
+      {
+        "value": "AT 2026aird",
+        "source": "1"
+      },
+      {
+        "value": "WFST261104arnlg",
+        "source": "1"
+      }
+    ],
+    "ra": [
+      {
+        "value": "01:26:07.560",
+        "u_value": "hours",
+        "source": "1"
+      }
+    ],
+    "dec": [
+      {
+        "value": "+28:54:43.51",
+        "u_value": "degrees",
+        "source": "1"
+      }
+    ],
+    "discoverer": [
+      {
+        "value": "WFST_SN",
+        "source": "1"
+      }
+    ],
+    "discoverdate": [
+      {
+        "value": "2026/11/04",
+        "source": "1"
+      }
+    ],
+    "discoverymag": [
+      {
+        "value": "21.4",
+        "kind": "discovery",
+        "source": "1",
+        "band": "r-WFST",
+        "time": "61348.89532",
+        "u_time": "MJD"
+      }
+    ],
+    "photometry": [],
+    "photometry_ingest": {
+      "alerce": {
+        "status": "unavailable"
+      },
+      "tns": {
+        "status": "unavailable",
+        "n_detections": 0,
+        "n_limits": 0,
+        "source": null,
+        "fetched_at": null,
+        "error": null
+      }
+    },
+    "maxappmag": [
+      {
+        "value": "21.4",
+        "kind": "discovery",
+        "source": "1"
+      }
+    ]
+  }
+}
