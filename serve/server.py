@@ -1324,6 +1324,13 @@ def _fallback_event_page(name: str, entered: str | None = None) -> bytes:
 
   gtag('config', 'G-P1SCVZ0V7T');
 </script>
+<!-- Adcash Autotag -->
+<script id="aclib" type="text/javascript" src="//acscdn.com/script/aclib.js"></script>
+<script type="text/javascript">
+  aclib.runAutoTag({{
+    zoneId: 'uysq5alvyt',
+  }});
+</script>
 <!-- Google AdSense -->
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2422460022815514"
      crossorigin="anonymous"></script>
@@ -1376,6 +1383,13 @@ def _not_found_page(name: str) -> bytes:
     gtag('js', new Date());
 
     gtag('config', 'G-P1SCVZ0V7T');
+  </script>
+  <!-- Adcash Autotag -->
+  <script id="aclib" type="text/javascript" src="//acscdn.com/script/aclib.js"></script>
+  <script type="text/javascript">
+    aclib.runAutoTag({{
+      zoneId: 'uysq5alvyt',
+    }});
   </script>
   <!-- Google AdSense -->
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2422460022815514"
@@ -2828,6 +2842,13 @@ def _render_logs_page(current_ip: str = "", current_client: dict | None = None) 
     function gtag(){{dataLayer.push(arguments);}}
     gtag('js', new Date());
     gtag('config', 'G-P1SCVZ0V7T');
+  </script>
+  <!-- Adcash Autotag -->
+  <script id="aclib" type="text/javascript" src="//acscdn.com/script/aclib.js"></script>
+  <script type="text/javascript">
+    aclib.runAutoTag({{
+      zoneId: 'uysq5alvyt',
+    }});
   </script>
   <!-- Google AdSense -->
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2422460022815514"

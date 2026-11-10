@@ -15,6 +15,12 @@ def render_api_docs_page() -> str:
 
     gtag('config', 'G-P1SCVZ0V7T');
   </script>
+  <script id="aclib" type="text/javascript" src="//acscdn.com/script/aclib.js"></script>
+  <script type="text/javascript">
+    aclib.runAutoTag({
+      zoneId: 'uysq5alvyt',
+    });
+  </script>
   <!-- Google AdSense -->
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2422460022815514"
        crossorigin="anonymous"></script>

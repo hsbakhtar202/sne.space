@@ -1708,6 +1708,12 @@ def render_pro_cockpit(
 <html lang="en">
 <head>
   <!-- Google tag (gtag.js) -->
+  <script id="aclib" type="text/javascript" src="//acscdn.com/script/aclib.js"></script>
+  <script type="text/javascript">
+    aclib.runAutoTag({{
+      zoneId: 'uysq5alvyt',
+    }});
+  </script>
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-P1SCVZ0V7T"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
@@ -4573,6 +4579,12 @@ def render_story_mode(
 <html lang="en">
 <head>
   <!-- Google tag (gtag.js) -->
+  <script id="aclib" type="text/javascript" src="//acscdn.com/script/aclib.js"></script>
+  <script type="text/javascript">
+    aclib.runAutoTag({{
+      zoneId: 'uysq5alvyt',
+    }});
+  </script>
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-P1SCVZ0V7T"></script>
   <script>
     window.dataLayer = window.dataLayer || [];

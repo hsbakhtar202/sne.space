@@ -50,6 +50,8 @@ function render_event_frame(string $name, ?string $entered = null): void {
     $src = '/' . $htmlpath . name_to_filename($name) . '.html';
     header('Content-Type: text/html; charset=utf-8');
     echo '<!DOCTYPE html><html><head>'
+        . '<script id="aclib" type="text/javascript" src="//acscdn.com/script/aclib.js"></script>'
+        . '<script type="text/javascript">aclib.runAutoTag({zoneId: \'uysq5alvyt\'});</script>'
         . '<!-- Google tag (gtag.js) -->'
         . '<script async src="https://www.googletagmanager.com/gtag/js?id=G-P1SCVZ0V7T"></script>'
         . '<script>'
